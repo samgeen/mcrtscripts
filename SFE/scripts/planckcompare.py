@@ -1,0 +1,210 @@
+'''
+Compare our clouds with the Planck results
+Sam Geen, June 2016
+'''
+
+from startup import *
+import readplanck, freefalltime, columndensity, linestyles
+import astropy.convolution as C
+import astropy.modeling.models as M
+import scipy.ndimage
+
+# Instrument definitions
+PLANCKRES = 5.0/60.0 # 5 arcmins
+# (from https://wiki.cosmos.esa.int/planckpla/index.php/Effective_Beams images)
+PLANCKFWHM = 5.0/60.0
+PLANCKSIGMA = PLANCKFWHM/2.355 # According to Wikipedia
+HERSCHELRES = 0.1/60.0
+
+documulative=True
+
+# Distances to Planck objects in pc
+# Scale Herschel distance to ratio of PSF FWHMs
+distances = {"near":150.0,"mid":300.0,"far":500.0,"herschel":260}
+
+def cumtohist(x,y,nbin=20):
+    bins = np.linspace(np.log10(x.min()),np.log10(x.max()),nbin)
+    binr = bins.max() - bins.min()
+    newy = -np.diff(y) / np.diff(x)
+    newx = np.log10(0.5*(x[1:]+x[:-1]))
+    bini = ((newx-bins.min())/binr*nbin).astype(int)
+    counts = bins*0.0
+    hist = bins*0.0
+    counts[bini] += 1.0
+    hist[bini] += newy
+    counts[counts==0] = 1.0 # prevent nans
+    hist /= counts
+    bins = 10.0**bins
+    return bins, hist
+            
+
+def resampleplot(ax,x,y,color="k",linestyle="-",nresample=1000):
+    '''
+    Resample a line to plot to save plot size
+    '''
+    # HACK - eh, figure this out later
+    '''
+    if len(x) != len(y):
+        print "Error: arrays different sizes in resampleplot"
+        raise OverflowError
+    if len(x) > nresample:
+        downfact = int(len(x) / nresample)
+        x = scipy.ndimage.zoom(x,1.0/downfact)
+        y = scipy.ndimage.zoom(y,1.0/downfact)
+    '''
+    # Plot diff instead?
+    mask = np.isfinite(x)*np.isfinite(y)
+    x = x[mask]
+    y = y[mask]
+    if len(x) == 0:
+        return
+    if not documulative:
+        x, y = cumtohist(x,y)
+    ax.plot(x,y,color=color,linestyle=linestyle)
+
+def PlotCloud(ax,filename,degrees=PLANCKRES,col=r"#444444",islog=True):
+    print "Plotting cloud", filename
+    # Resolution = 10 degree FWHM at d~150pc gives 0.2 pc physical resolution
+    # Sigma = FWHM / 2.355
+    dfact = degrees/PLANCKRES
+    pixlen = 0.2*dfact*readplanck.Distance(filename)/150.0 # pc
+    NHs = readplanck.ReadCloud(filename,islog=islog)
+    dens = NHtoColDens(NHs)
+    im = columndensity.DensityMap(None,columndensitymap=dens,pixlength=pixlen)
+    NHs, masses = im.CumulativeMass("NH")
+    # Scale all clouds to 1e4 Msun
+    masses *= 1e4 / masses.max()
+    resampleplot(ax,NHs, masses, color=col,linestyle=":")
+
+def PlotHerschel(ax):
+    degrees = HERSCHELRES
+    # Resolution = 5 arcmin, d~150pc
+    dfact = degrees/PLANCKRES
+    #filename = "../Herschel/TaurusL1495NH_Herschel.fits"
+    filename = "../Herschel/HGBS_aquilaM2_column_density_map.fits"
+    print "Plotting Herschel cloud", filename
+    pixlen = 0.2*dfact*readplanck.Distance(filename)/150.0 # pc
+    NHs = readplanck.ReadCloud(filename,islog=False)
+    #NHs = NH2toNH(NH2s)
+    dens = NHtoColDens(NHs)
+    im = columndensity.DensityMap(None,columndensitymap=dens,pixlength=pixlen)
+    NHs, masses = im.CumulativeMass("NH")
+    masses *= 1e4 / masses.max()
+    resampleplot(ax,NHs, masses, color=r"#888888")
+
+def PlotForSim(ax,sim,PSFsize=None,tfffact=1.0):
+    print "Running for", sim.Name()
+    # Load at tff
+    tff = freefalltime.Tff(sim)
+    # Should be in code units already, so no conversion needed
+    snap = sim.FindAtTime(tff*tfffact)
+    # Make plot lines
+    col = linestyles.colour(sim.Name())
+    Avlow = 0.1
+    def PlotForLOS(snap,los,line):
+        NH, cmass = columndensity.CumulativeMassHamu(snap,los,"NH",
+                                                     PSFsize=PSFsize)
+        resampleplot(ax,NH,cmass,color=col,linestyle = line)
+    line = '-'
+    if tfffact > 1.0:
+        line = '--'
+    if tfffact > 2.0:
+        line = '-.'
+    # Uncomplicate the plot by removing 2 LOSs
+    PlotForLOS(snap,'x',line)
+    #PlotForLOS(snap,'y',line)
+    #PlotForLOS(snap,'z',line)
+
+def PlotSims(ax,PSFon,dist,tffs=[1,2],herschel=False):
+    simnames = [s+"-RT" for s in ["L","M","S","XS"]]
+    # 5 arcmin (PLANCKRES) for d = 150pc = 0.22pc
+    for simname in simnames:
+        sim = Hamu.Simulation(simname)
+        if PSFon:
+            dfact = distances[dist]/150.0
+            plancksigma = 0.2*dfact*PLANCKSIGMA/PLANCKRES
+            if herschel:
+                # Herschel FWHM = 0.2', Planck=5', scale by ratio of these
+                plancksigma *= 0.04
+            PlotForSim(ax,sim,PSFsize=plancksigma,tfffact=1.0)
+            PlotForSim(ax,sim,PSFsize=plancksigma,tfffact=2.0)
+        else:
+            for tff in tffs:
+                PlotForSim(ax,sim,PSFsize=None,tfffact=float(tff))
+
+def MakePlot(ax=None,herschel=False,PSFon=False,distance="near",
+             tffs=[1,2]):
+    saveplot = True
+    fig = None
+    if ax is None:
+        fig, ax = plt.subplots(1)
+    else:
+        saveplot = False
+    if not herschel:
+        for cloudfile in readplanck.AllClouds(distance):
+            PlotCloud(ax,cloudfile)
+    else:
+        hername = "../Herschel/HGBS_aquilaM2_column_density_map.fits"
+        PlotCloud(ax,hername,
+                  islog=False,degrees=HERSCHELRES,col=r"#888888")
+        #PlotCloud(ax,"../GouldBeltClouds/TaurusL1495NH_Planck.fits",
+        #          islog=False,degrees=HERSCHELRES)
+    PlotSims(ax,PSFon,distance,tffs,herschel=(distance=="herschel"))
+    if PSFon:
+        if not herschel:
+            txt = 'Planck ('+distance+')'
+        else:
+            txt = 'Herschel'
+    else:
+        txt = "Full res"
+    ax.text(0.05, 0.95,txt,
+            horizontalalignment='left',
+            verticalalignment='top',
+            transform = ax.transAxes)
+    if saveplot:
+        ax.set_ylabel("Cumulative Mass / "+Msolar)
+    ax.set_xlabel("$N_{H}$ / cm$^{-2}$")
+    ax.set_xscale("log")
+    ax.set_yscale("log")
+    # Do legend - simulations
+    if saveplot:
+        lines, labels = linestyles.sizelegend()
+        leg1 = ax.legend(lines,labels,fontsize="small",frameon=False,loc="lower left")
+    # Do legend - times
+    tff = r"$t_{\mathrm{ff}}$"
+    lines = [mlines.Line2D([], [], color="k",linestyle="-", label=tff),
+             mlines.Line2D([], [], color="k",linestyle="--",label="2 "+tff),
+             mlines.Line2D([], [], color="k",linestyle=":", label="Gould Belt")]
+    if not PSFon:
+        lines = lines[0:2]
+    if 4 in tffs:
+        lines.append(mlines.Line2D([], [], color="k",
+                                   linestyle="-.",label="4 "+tff))
+    labels = [line.get_label() for line in lines]
+    leg2 = ax.legend(lines,labels,fontsize="small",frameon=False,loc="upper right")
+    if saveplot:
+        ax.add_artist(leg1)
+    ax.add_artist(leg2)
+    folder = "../plots/planck/"
+    MakeDirs(folder)
+    herscheltxt = ""
+    if herschel:
+        herscheltxt = "_herschel"
+    PSFtxt = ""
+    if PSFon:
+        PSFtxt="PSF"
+    else:
+        PSFtxt="full"
+    outfile = "massvsNHplanck_sims"+herscheltxt+"_"+PSFtxt+".pdf"
+    ax.set_xlim([7e20,5e25])
+    if documulative:
+        ax.set_ylim([1,3e5])
+    if saveplot:
+        print "Saving figure to",folder+outfile
+        fig.savefig(folder+outfile)
+
+if __name__=="__main__":
+    Hamu.Workspace("HIISFE")
+    documulative=True # False is a mess so far
+    MakePlot(PSFon=False)
+    MakePlot(PSFon=True)

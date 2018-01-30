@@ -1,0 +1,61 @@
+'''
+Uniform line styles and colours for the project
+Sam Geen, May 2015
+'''
+
+import customplot
+import matplotlib.pyplot as plt
+
+cols = {}
+# Samples (greys + orange)
+cols["N48_M4_B02"] = "#252525"
+cols["N48_M4_B00"] = "#969696"
+cols["N00_M4_B02"] = "#d95f0e"
+
+# Fluxes (pink/purple)
+cols["N47_M4_B02"] = "#7a0177"
+cols["N49_M4_B02"] = "#f768a1"
+
+# Delayed start (greens)
+cols["N48_M4_B02_F2"] = "#006d2c"
+cols["N48_M4_B02_F3"] = "#74c476"
+
+# Compactness (blues)
+cols["N48_M4_B02_C"] = "#9ebcda"
+cols["N48_M4_B02_C2"] = "#045a8d"
+cols["N00_M4_B02_C"] = "#9ebcda"
+cols["N00_M4_B02_C2"] = "#045a8d"
+
+# 1D-like freefall runs
+cols["noturb48"] = "#fdcc8a"
+cols["noturb49"] = "#fc8d59"
+cols["noturb50"] = "#d7301f"
+
+lines = {}
+lines["N00_M4_B02_C"] = "--"
+lines["N00_M4_B02_C2"] = "--"
+
+# Convenience functions
+def col(simname):
+    return cols[simname]
+
+def line(simname):
+    if not simname in lines:
+        return "-"
+    else:
+        return lines[simname]
+
+
+if __name__=="__main__":
+    simnames = cols.keys()
+    isim = 1
+    for simname in simnames:
+        print simname, col(simname), line(simname)
+        plt.plot([0,1],[isim,isim],
+                 color=col(simname),
+                 linestyle=line(simname),
+                 label=simname)
+        isim += 1
+    plt.ylim([0,isim])
+    plt.legend(fontsize="xx-small",frameon=False)
+    plt.savefig("../plots/linestyletester.pdf")

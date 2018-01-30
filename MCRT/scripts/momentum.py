@@ -1,0 +1,87 @@
+'''
+Plot the ionised masses in each run to test convergence
+Sam Geen, February 2014
+'''
+                                                                                                                                                  
+import matplotlib as mpl
+mpl.use('Agg')
+
+import os
+import Hamu
+import numpy as np
+import matplotlib.pyplot as plt
+
+import pymses
+from pymses.filters import CellsToPoints
+from pymses.utils import constants as C
+
+def momentuminsnap(snap):
+    #h = snap.hamusnap
+    #path = h.Path()
+    #path = path[0:path.find("output_")]
+    #ro = pymses.RamsesOutput(path,h.OutputNumber())
+    amr = snap.amr_source(["rho","vel"])
+    print "Finding momentum..."
+    cell_source = CellsToPoints(amr)
+    cells = cell_source.flatten()
+    uvel = snap.info["unit_velocity"].express(C.cm/C.s)
+    rhos = cells["rho"]
+    vels = cells["vel"]
+    vols = (cells.get_sizes())**3.0
+    spds = np.sqrt(np.sum(vels**2.0,1))
+    pos = cells.points-0.5
+    rads = pos+0.0
+    dist = np.sqrt(np.sum(pos**2,1))
+    for i in range(0,3):
+        rads[:,i] /= dist
+    rvel = np.sum(rads*vels,1)
+    rvelp = rvel+0.0
+    rvelp[rvelp < 0.0] = 0.0
+    moms = rhos*rvelp*vols
+    mom =  np.sum(moms)
+    umass = snap.info["unit_mass"].express(C.g)
+    mom *= umass*uvel
+    time = snap.info["time"]*snap.info["unit_time"].express(C.Myr)
+    print "MOMENTUM FOUND @ ",time,"Myr:", mom
+    return mom
+    
+momentumHamu = Hamu.Algorithm(momentuminsnap)
+
+def momentumintime(sim):
+    times = sim.Times()
+    utime = sim.Snapshots()[0].RawData().info["unit_time"].express(C.Myr)
+    times = times * utime - 1.25
+    moms = list()
+    for snap in sim.Snapshots():
+        moms.append(momentumHamu(snap))
+    moms = np.array(moms)
+    return times, moms
+        
+def makeplot():
+    Myr = 3.15569e13
+    plt.clf()
+    ns = ["49","48","47","00"]
+    bs = ["02","00"]
+    cols = ["r","g","b","k"]
+    lines = ["-","--"]
+    for b, line in zip(bs, lines):
+        for n, col in zip(ns, cols):
+            simname = "MCRTN"+n+"B"+b
+            if "49" in simname:
+                simname += "T3"
+            if "48" in simname:
+                simname += "T6"
+            sim = Hamu.Simulation(simname)
+            times, moms = momentumintime(sim)
+            plt.plot(times, moms,col+line,label=simname)
+    plt.xlabel(r"Time / Myr")
+    plt.ylabel(r"Momentum / g cm/s")
+    plt.yscale("log")
+    plt.legend(ncol=2)
+    plt.savefig("../plots/momentum.pdf")
+
+def run():
+    makeplot()
+
+if __name__=="__main__":
+    run()

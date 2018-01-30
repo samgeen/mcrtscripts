@@ -1,0 +1,51 @@
+'''
+Plot the solution for the case where the ionisation front collapses
+Sam Geen, March 2016
+'''
+
+import Hamu
+
+from ragacompare import * # eeeehhhhh
+
+def findrs(flux,n):
+    return (flux * 3.0 / (4.0*np.pi*beta2*n**2.0))**(1.0/3.0)
+
+def findtff(profile):
+    n0 = profile._n0
+    rho0 = n0*mH/X
+    return np.sqrt(3.0*np.pi / (32.0*G*rho0))
+
+def analytic(sim):
+    flux = 10.0**float(sim.Name()[1:3])
+    profile = ProfAna(sim)
+    tff = findtff(profile)
+    rs = findrs(flux,profile._n0)
+    t = np.arange(0,3,0.05)*Myrins
+    psi = 4.0/7.0
+    r = rs*(cs / rs / psi * t * (1 - 0.5*t/tff))**psi
+    return t/Myrins, r / pcincm
+
+def run():
+    tstart = 2.531
+    simname = "N49-NSN"
+    sim = Hamu.Simulation(simname)
+    timeplot.starts[simname] = tstart
+    # Simulation result
+    tsim, rsim = timeplot.funcovertime(sim,radiimodule.MedianRadiusProfile)
+    plt.plot(tsim,rsim,"k-",label="Simulation")
+    # Analytic solution (no vext)
+    t, r = analytic(sim)
+    plt.plot(t,r,"k--",label="Analytic ($v_{ext} = 0$)")
+    # Numerical solution (dN values are unused variables)
+    tn, rn, d1, d2, d3, d4, d5, d6  = ComputeExpansion(sim,"full","ana",
+                                                       collapsemodel=True)
+    plt.plot(tn,rn,"k:",label="Analytic (Full)")
+    plt.xlim([0,3])
+    plt.ylabel("Radius / pc")
+    plt.xlabel("Time / Myr")
+    plt.legend(fontsize="small",frameon=False,loc="upper left")
+    plt.savefig("../plots/collapsesolution.pdf")
+    
+
+if __name__=="__main__":
+    run()

@@ -1,0 +1,284 @@
+'''
+Plot properties in simulations
+Sam Geen, November 2015
+'''
+
+import os, glob
+
+from startup import *
+
+import Hamu
+import pymses
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.cm as cm
+import matplotlib.lines as mlines
+from pymses.filters import CellsToPoints
+from pymses.utils import constants as C
+
+import linestyles
+
+gamma = 1.4 # Ramses default
+mH = 1.66e-24
+kB = 1.38e-16
+
+def massinsnap(snap,nHthresh=0.0):
+    print "Finding mass in snap", snap.iout
+    amr = snap.amr_source(["rho","P"])
+    cell_source = CellsToPoints(amr)
+    cells = cell_source.flatten()
+    vols = (cells.get_sizes())**3.0
+    dens = cells["rho"]
+    mass = dens*vols*snap.info["unit_mass"].express(C.Msun)
+    if nHthresh > 0.0:
+        mass = mass[dens > nHthresh]
+    return np.sum(mass)
+
+def etherminsnap(snap):
+    print "Finding max T in snap", snap.iout
+    amr = snap.amr_source(["rho","P"])
+    cell_source = CellsToPoints(amr)
+    cells = cell_source.flatten()
+    vols = (cells.get_sizes())**3.0
+    mass = cells["rho"]*vols*\
+        snap.info["unit_mass"].express(C.g)
+    temp = cells["P"]/cells["rho"]*snap.info["unit_temperature"].express(C.K)
+    time = snap.info["time"]*snap.info["unit_time"].express(C.Myr)
+    etherm = 1.0/(gamma - 1.0) * (mass / mH) * kB * temp
+    return np.sum(etherm)
+
+def ekininsnap(snap):
+    print "Finding kinetic energy in snap", snap.iout
+    amr = snap.amr_source(["rho","vel"])
+    cell_source = CellsToPoints(amr)
+    cells = cell_source.flatten()
+    umass = snap.info["unit_mass"].express(C.g) 
+    uvel = snap.info["unit_velocity"].express(C.cm/C.s)
+    ue = umass*uvel**2
+    rhos = cells["rho"]
+    vels = cells["vel"]
+    vols = (cells.get_sizes())**3.0
+    spds = np.sqrt(np.sum(vels**2.0,1))
+    ekin = 0.5*rhos*vols*spds**2
+    ekin =  np.sum(ekin)*ue
+    time = snap.info["time"]*snap.info["unit_time"].express(C.Myr)
+    print "KINETIC ENERGY FOUND @ ",time,"Myr:", ekin
+    return ekin
+
+def energyinsnap(snap):
+    time, etherm = etherminsnap(snap)
+    time, ekin = ekininsnap(snap)
+    etot = ekin+etherm
+    return time, (etherm,ekin,etot)
+
+def maxTinsnap(snap):
+    print "Finding max T in snap", snap.iout
+    amr = snap.amr_source(["rho","P"])
+    cell_source = CellsToPoints(amr)
+    cells = cell_source.flatten()
+    temp = cells["P"]/cells["rho"]*snap.info["unit_temperature"].express(C.K)
+    time = snap.info["time"]*snap.info["unit_time"].express(C.Myr)
+    maxT = temp.max()
+    return maxT
+
+def momentuminsnap(snap,nHlow=0.0,nHhigh=0.0):
+    print "Finding momentum in snap", snap.iout
+    amr = snap.amr_source(["rho","vel"])
+    cell_source = CellsToPoints(amr)
+    cells = cell_source.flatten()
+    uvel = snap.info["unit_velocity"].express(C.cm/C.s)
+    rhos = cells["rho"]
+    vels = cells["vel"]
+    vols = (cells.get_sizes())**3.0
+    spds = np.sqrt(np.sum(vels**2.0,1))
+    pos = cells.points-0.5
+    rads = pos+0.0
+    dist = np.sqrt(np.sum(pos**2,1))
+    for i in range(0,3):
+        rads[:,i] /= dist
+    rvel = np.sum(rads*vels,1)
+    rvelp = rvel+0.0
+    rvelp[rvelp < 0.0] = 0.0
+    moms = rhos*rvelp*vols
+    # Apply threshold?
+    if nHlow > 0.0:
+        moms = moms[rhos > nHlow]
+        rhos = rhos[rhos > nHlow]
+    if nHhigh > 0.0:
+        moms = moms[rhos < nHhigh]
+        rhos = rhos[rhos < nHhigh]
+    mom =  np.sum(moms)
+    umass = snap.info["unit_mass"].express(C.g)
+    mom *= umass*uvel
+    time = snap.info["time"]*snap.info["unit_time"].express(C.Myr)
+    print "MOMENTUM FOUND @ ",time,"Myr:", mom
+    return mom 
+
+def totalmomentuminsnap(snap,nHlow=0.0,nHhigh=0.0):
+    print "Finding *total* momentum in snap", snap.iout
+    amr = snap.amr_source(["rho","vel"])
+    cell_source = CellsToPoints(amr)
+    cells = cell_source.flatten()
+    uvel = snap.info["unit_velocity"].express(C.cm/C.s)
+    rhos = cells["rho"]
+    vels = cells["vel"]
+    vols = (cells.get_sizes())**3.0
+    spds = np.sqrt(np.sum(vels**2.0,1))
+    moms = rhos*spds*vols
+    # Apply threshold?
+    if nHlow > 0.0:
+        moms = moms[rhos > nHlow]
+        rhos = rhos[rhos > nHlow]
+    if nHhigh > 0.0:
+        moms = moms[rhos < nHhigh]
+        rhos = rhos[rhos < nHhigh]
+    mom =  np.sum(moms)
+    umass = snap.info["unit_mass"].express(C.g)
+    mom *= umass*uvel
+    time = snap.info["time"]*snap.info["unit_time"].express(C.Myr)
+    print "MOMENTUM FOUND @ ",time,"Myr:", mom
+    return mom 
+
+def radiusinsnap(snap):
+    print "Finding radius of blast in snap", snap.iout
+    amr = snap.amr_source(["rho","P","xHII"])
+    cell_source = CellsToPoints(amr)
+    cells = cell_source.flatten()
+    temp = cells["P"]/cells["rho"]*snap.info["unit_temperature"].express(C.K)
+    ion = cells["xHII"]
+    pos = cells.points-0.5
+    dist = np.sqrt(np.sum(pos**2,1))
+    thresh = 0.1 # HACK!
+    try:
+        maxrad = dist[np.where(ion > thresh)].max()
+    except:
+        maxrad = 0.0
+    maxrad *= snap.info["unit_length"].express(C.pc)
+    time = snap.info["time"]*snap.info["unit_time"].express(C.Myr)
+    print "RADIUS FOUND @ ",time,"Myr:", maxrad
+    return maxrad
+
+def funcinsim(sim,func,timerange=None,nsnsub=False):
+    times = []
+    hfunc = Hamu.Algorithm(func)
+    Ts = [] # Allows generic formats for non-scalar quantities, etc
+    #if nsnsub:
+    #    simname = sim.Name()
+    #    nsnname = simname.replace("-SN","-NSN")
+    #    nsnname = nsnname.replace("-MSN","-NSN")
+    #    nsnname = nsnname.replace("-HN","-NSN")
+    #    nsnname = nsnname.replace("-NE","-NSN")
+    #    nsnname = nsnname.replace("-ME","-NSN")
+    #    nsnname = nsnname.replace("-MNE","-NSN")
+    #    simnsn = Hamu.Simulation(nsnname)
+    if timerange is None:
+        timerange = [-1e30,1e30]
+    for snap in sim.Snapshots():
+        psnap = snap.RawData()
+        time = psnap.info["time"]*psnap.info["unit_time"].express(C.Myr)
+        if time >= timerange[0] and time <= timerange[1]:
+            T = hfunc(snap)
+            Ts.append(T)
+            times.append(time)
+    # Get value at tsn
+    times = np.array(times)
+    # Don't cast Ts in case it's a tuple or whatever
+    return times, Ts
+
+def run(func,simnames,linelabels=[],timerange=None,nsnsub=False,
+        tlog=False,filesuffix="",ylim=None,showwindlegend=True,
+        showphotonlegend=True):
+    global tsn
+    name = func.__name__
+    plt.clf()
+    # sims = ["N00-SN","N49-SN","N50-SN","N51-SN"]
+    # HACK - removed N00-SN as I forgot to run this, oops
+    for simname in simnames:
+        sim = Hamu.Simulation(simname)
+        times, Ts = funcinsim(sim,func,timerange,nsnsub=nsnsub)
+        if nsnsub:
+            Ts = np.array(Ts)
+            Ts[Ts < 0.0] = 0.0
+        if tlog:
+            times += 1e-6 # Limit -infinity errors
+        col = linestyles.colour(simname)
+        line = linestyles.line(simname)
+        try:
+            lt = len(Ts[0])
+        except:
+            lt = 1
+        if lt == 1:
+            try:
+                maxTs = np.max(Ts)
+            except:
+                maxTs = 0.0
+            if maxTs > 0.0 or not tlog:
+                plt.plot(times,Ts,label=sim.Label(),
+                         linestyle=line,
+                         color=col)
+        else:
+            iline = 0
+            label = folder
+            for iline in range(0,lt):
+                vals = [x[iline] for x in Ts]
+                plt.plot(times,vals,label=label,
+                         color=col,linestyle=lines[iline])
+                label = None
+    # Make emission rate legend
+    if showphotonlegend:
+        plotlines, labels = linestyles.rtlegend()
+        leg0 = plt.legend(plotlines,labels,loc="lower right",
+                          ncol=1,fontsize="small",frameon=False)
+    # Make Wind property legend
+    if showwindlegend:
+        plotlines, labels = linestyles.windlegend()
+        leg1 = plt.legend(plotlines,labels,loc="upper left",
+                          ncol=1,fontsize="small",frameon=False)
+        if showphotonlegend:
+            plt.gca().add_artist(leg0)
+        plt.gca().add_artist(leg1)
+    #leg0.get_frame().set_edgecolor('w')
+    if lt > 1:
+        print "Uh I sort of turned this off, figure out how to add it back?"
+        raise NotImplementedError 
+        plotlines = []
+        for line, label in zip(lines,linelabels):
+            plotlines.append(mlines.Line2D([], [], color='k', label=label,
+                                           linestyle=line))
+        leg1 = plt.legend(plotlines,ncol=2,fontsize="small",
+                          frameon=False,loc="upper left")
+        plt.gca().add_artist(leg0)
+    # Quantity-specific stuff
+    if name == "energyinsnap":
+        xlims = np.array(plt.gca().get_xlim())
+        plt.plot(xlims,xlims*0.0+1e51,"k:")
+        plt.ylim([1e49,2e51])
+    if tlog:
+        plt.xscale("log")
+        plt.xlim([1e-6,1])
+        
+    plt.yscale("log")
+    if "maxT" in name:
+        plt.ylabel("Temperature / K")
+    if "momentum" in name:
+        plt.ylabel("Total Momentum / g cm/s")
+    # Check for user-specified ylim
+    if ylim is not None:
+        plt.ylim(ylim)
+    if "radius" in name:
+        plt.ylabel("radius / pc")
+        plt.yscale("linear")
+    plt.xlabel("Time / Myr")
+    ws = Hamu.CurrentWorkspace()
+    suffix = filesuffix
+    if suffix == "":
+        if nsnsub:
+            suffix += "_nsnsub"
+        if tlog:
+            suffix += "_tlog"
+    plt.savefig("../plots/"+name+"_"+ws+suffix+".pdf")
+
+if __name__=="__main__":
+    simnames = ["NW-NRT","NW-RT","W-RT"]
+    run(massinsnap,simnames)
+    run(momentuminsnap,simnames)

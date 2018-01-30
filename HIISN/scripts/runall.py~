@@ -1,0 +1,164 @@
+'''
+Basic script designed to run all plots for the HIISN paper
+Sam Geen, January 2016
+'''
+
+import customplot
+import matplotlib.pyplot as plt
+
+import sys
+import findproperties, linestyles, escapefraction, multivis
+import Hamu
+
+sys.path.append("/home/sgeen/MC_RT/scripts")
+import rayprof, ragacompare, outflowmodel
+
+def runprofiles(beforehii=False):
+    # Run density profiles
+    # Run for all runs at tsn
+    # tsn = 5.52990445
+    # outsn = 36
+    if not beforehii:
+        simnames = ["N51-NSN","N50-NSN","N49-NSN","N00-NSN"]
+        for simname in simnames:
+            label = linestyles.emlabel(simname)
+            rayprof.plotgradient(simname,"rho",36,label)
+    else:
+        simnames = ["N00-NSN"]
+        for simname in simnames:
+            rayprof.plotgradient(simname,"rho",1,"$t=0$")
+            rayprof.plotgradient(simname,"rho",6,"$t=t_{ff}$")
+    #rayprof.plotgradient(simname,"vrad",output,label)
+
+def fescattsn():
+    tsn = 5.52990445
+    simnames = ["N51-NSN","N50-NSN","N49-NSN","N00-NSN"]
+    print escapefraction.RunAtTime(simnames,tsn)
+
+def disttoneutral():
+    tsn = 5.52990445
+    simnames = ["N51-NSN","N50-NSN","N49-NSN"]
+    escapefraction.PlotDistsAtTime(simnames,tsn)
+
+def hiimomentum():
+    tsn = 5.52990445
+    outsn = 36
+    simnames = ["N51-NSN","N50-NSN","N49-NSN","N00-NSN"]
+    findproperties.tsn = tsn
+    findproperties.run(findproperties.momentuminsnap,simnames,
+                       timerange=[0,tsn],
+                       filesuffix="presn")
+    
+def snmomentum():
+    tsn = 5.52990445
+    outsn = 36
+    simnames = ["N51-SN-bl4","N50-SN","N49-SN","N00-SN",
+                "N50-HN","N50-MSN",
+                "N51-NSN-bl4","N50-NSN","N49-NSN","N00-NSN"]
+    findproperties.tsn = tsn
+    findproperties.run(findproperties.momentuminsnap,simnames,
+                       timerange=[tsn-0.1,tsn+1.0],
+                       ylim=[1e42,5e44],
+                       filesuffix="postsn",showsnlegend=True,
+                       showphotonlegend=True)
+    simnames = ["N51-SN-bl4","N50-SN","N49-SN","N00-SN",
+                "N50-HN","N50-MSN"]
+    findproperties.run(findproperties.momentuminsnap,simnames,
+                       timerange=[tsn-0.1,tsn+1.0],
+                       filesuffix="postsn_subtracted",
+                       ylim=[1e42,5e44],
+                       nsnsub=True,tlog=True)
+
+def sntotalmomentum():
+    tsn = 5.52990445
+    outsn = 36
+    simnames = ["N51-SN-bl4","N50-SN","N49-SN","N00-SN",
+                "N50-HN","N50-MSN",
+                "N51-NSN-bl4","N50-NSN","N49-NSN","N00-NSN"]
+    findproperties.tsn = tsn
+    findproperties.run(findproperties.totalmomentuminsnap,simnames,
+                       timerange=[tsn-0.1,tsn+1.0],
+                       ylim=[1e42,5e44],
+                       filesuffix="postsn",showsnlegend=True,
+                       showphotonlegend=True)
+    simnames = ["N51-SN-bl4","N50-SN","N49-SN","N00-SN",
+                "N50-HN","N50-MSN"]
+    findproperties.run(findproperties.totalmomentuminsnap,simnames,
+                       timerange=[tsn-0.1,tsn+1.0],
+                       filesuffix="postsn_subtracted",
+                       ylim=[1e42,5e44],
+                       nsnsub=True,tlog=True)
+    
+
+def snmaxT():
+    tsn = 5.52990445
+    outsn = 36
+    simnames = ["N51-SN","N50-SN","N49-SN","N00-SN",
+                "N50-HN","N50-MSN",
+                "N51-NSN","N50-NSN","N49-NSN","N00-NSN"]
+    findproperties.tsn = tsn
+    findproperties.run(findproperties.maxTinsnap,simnames,
+                       timerange=[tsn-0.1,tsn+1.0],
+                       filesuffix="postsn",showsnlegend=True,
+                       showphotonlegend=True,tlog=True)
+
+def rcompare():
+    tuv = 2.529909
+    tsn = 5.52990445
+    outsn = 36
+    outflowmodel.tstart = tuv
+    simnames = ["N51-NSN","N50-NSN","N49-NSN"]
+    sims = [Hamu.Simulation(s) for s in simnames]
+    ragacompare.PlotForSims(sims,"photons","ana")
+    ragacompare.PlotForSims(sims,"photons","sim")
+                            
+def multivisus():
+    Hamu.Workspace("HIISN")
+    tsn = 5.52990445
+    tuv = 2.529909
+    #multivis.PlotForSims(["N50-SN"],[6.52],name="TESTRGB",
+    #                     hydro="RGB",imtype="projection")
+    #multivis.PlotForSims(["N50-SN"],[6.52],name="TESTXHII",
+    #                     hydro="xHII",imtype="projection")
+    simnames = ["N00-NSN","N49-NSN","N50-NSN","N51-NSN"]
+    times = [tuv,tuv+1.0,tuv+2.0,tuv+3.0]
+    multivis.PlotForSims(simnames,times,name="emission_presn",
+                         hydro="NH",imtype="column",
+                         tstart=(tuv,r"$t_{ff}$"))
+    # Emission rates (temperature/xHII slice)
+    times = [tsn-1e-5,tsn+0.5]
+    '''
+    multivis.PlotForSims(simnames,times,name="emission_slices",
+                         hydro="T",imtype="slice",
+                         tstart=(tsn,r"$t_{SN}$"))
+    '''
+    #multivis.PlotForSims(simnames,times,name="emission",
+    #                     hydro="T",imtype="projection")
+    #multivis.PlotForSims(simnames,times,name="emission",
+    #                     hydro="RGB",imtype="projection")
+    #multivis.PlotForSims(simnames,times,name="xHII_slices",
+    #                     hydro="xHII",imtype="slice")
+    # Emission rates (density projection)
+    multivis.PlotForSims(simnames,times,name="emissions",
+                         hydro="NH",imtype="column",
+                         tstart=(tsn,r"$t_{SN}$"))
+    # Hypernovae (density projection)
+    simnames = ["N00-SN","N50-SN","N50-HN","N50-MSN"]
+    times = [tsn+1.0]
+    multivis.PlotForSims(simnames,times,name="hypernovamultiplesn",
+                         tstart=(tsn,r"$t_{SN}$"))
+
+
+if __name__=="__main__":
+    Hamu.Workspace("HIISN")
+    #snmaxT()
+    multivisus()
+    #disttoneutral()
+    #snmomentum()
+    #sntotalmomentum()
+    #runprofiles()
+    #runprofiles(beforehii=True)
+    #hiimomentum()
+    #rcompare()
+    #plt.clf()
+    #fescattsn()

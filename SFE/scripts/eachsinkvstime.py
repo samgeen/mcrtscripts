@@ -1,0 +1,102 @@
+'''
+Plot of stellar mass / mass in gas A_k>0.8 / yso age vs time 
+'''
+
+from startup import *
+
+import freefalltime, shade4Myr
+import columndensity, images, sfeobs, sinks, snaptime, starsvsdensegas, ysos
+
+from pymses.utils import constants as C
+
+class SFEPlotter(starsvsdensegas.SFEPlotter):
+    def Plot(self,xtff):
+        tff = 0.0
+        if xtff:
+            tff = freefalltime.Tff(self._sim,Myr=True)
+        ymasses = {}
+        ytimes = {}
+        lasttime = 0.0
+        for snap in self._sim.Snapshots():
+            time = snaptime.Myr(snap)
+            ysomasses = sinks.FindSinks(snap).mass
+            for i in range(0,len(ysomasses)):
+                if not i in ymasses:
+                    ymasses[i] = [0.0]
+                    ytimes[i] = [lasttime]
+                ymasses[i].append(ysomasses[i])
+                ytimes[i].append(time)
+            lasttime = time
+        # TODO: Better interface to base class member variables
+        cols = ["#000000",
+                "#444444",
+                "#888888",
+                "#cccccc"]
+        isinks = ymasses.keys()
+        isinks.sort()
+        # Write log
+        f = open(self.Filename().replace("pdf","txt"),"w")
+        totaltime = 0.0
+        totalmass = 0.0
+        timemass = 0.0
+        acctimes = []
+        # Loop through sinks)
+        for i in isinks:
+            col = cols[i % len(cols)]
+            t = np.array(ytimes[i])
+            x = 0.5*(t[1:]+t[:-1]) # Get centre of timesteps
+            y = np.diff(np.array(ymasses[i])) / np.diff(t) # Get SFR
+            if len(x) == 1:
+                x = [x[0],x[0]]
+                y = [y[0],1.01*y[0]]
+            self._ax.plot(x-tff,y,linestyle=self.Line(),
+                          color = col)
+            nt = x[y > 0.0]
+            accretiontime = nt[-1] - nt[0]
+            totaltime += accretiontime
+            totalmass += ymasses[i][-1]
+            timemass += accretiontime * ymasses[i][-1]
+            f.write(str(accretiontime)+"\n")
+            #plt.scatter(x[-1],y[-1],c=self.Colour(),edgecolors='none')
+        f.write("Mean sink age = "+str(totaltime / float(len(isinks))))
+        f.write("Mean mass-weighted sink age = "+str(timemass / totalmass))
+        f.write("Mean mass-weighted sink age = "+str(timemass / totalmass))
+        self._ax.set_xlim([-0.75,time-tff])
+
+def MakeOnePlot(sims,Aklow=0.8,allstars=False,ysoage=0.0,ax=None,xtff=True):
+    print "PLOTTING SFR VS TIME FOR AKLOW=",Aklow,"ALLSTARS=",allstars
+    fig = None
+    if ax is None:
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+    # Simulations
+    for sim in sims:
+        plotter = SFEPlotter(sim,Aklow,allstars,ysoage,__name__+"_"+sim.Name(),
+                             axis=ax,figure=fig)
+        plotter.Plot(xtff)
+
+    # Lada+ 2010 fit (by eye, since they don't give an offset)
+    #tlada = np.array([0.0,20.0]) 
+    #sfelada = np.array([0.095,0.095])
+    #ax.plot(tlada,sfelada,color=r"#888888",linestyle="--")
+    # Do legends
+    plotter.Legend(clouds=False,rt="lower left",
+                   custom="upper left",
+                   customtxt="Cloud "+sim.Name()[0])
+    # Set up figure and output
+    mgas = "$M_{\mathrm{gas}}(>A_{k} = "+str(Aklow)+")$"
+    mstar = "$M_{*}$"
+    ysoagetxt = "(YSO Age / 1 Myr)"
+    if fig is not None:
+        ax.set_xlabel("Time / Myr")
+    ax.set_ylabel("d$M_*$/d$t$ / "+Msolar+" / Myr")
+    ax.set_yscale("log")
+    shade4Myr.run(ax)
+    plotter.Save()
+
+def MakePlot(sims,Aklow=0.8,allstars=False,ysoage=0.0):
+    rts = [sim for sim in sims if "-RT" in sim.Name()]
+    nrts = [sim for sim in sims if "-NRT" in sim.Name()]
+    for rt, nrt in zip(rts, nrts):
+        s = (rt,nrt)
+        MakeOnePlot(s,Aklow,allstars,ysoage)

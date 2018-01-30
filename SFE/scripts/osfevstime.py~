@@ -1,0 +1,52 @@
+'''
+Plot of stellar mass / mass in gas A_k>0.8 / yso age vs time 
+'''
+
+from startup import *
+
+import columndensity, images, sfeobs, sinks, starsvsdensegas
+
+from pymses.utils import constants as C
+
+class SFEPlotter(starsvsdensegas.SFEPlotter):
+    def Plot(self,los):
+        data = self._MakeForLOS(los)
+        x = data.times
+        # TODO: Better interface to base class member variables
+        y = data.stars / (data.stars+data.gas) / self._ysoage
+        self._ax.plot(x,y,linestyle=self.Line(),color=self.Colour())
+        self._ax.scatter(x[-1],y[-1],c=self.Colour(),edgecolors='none')
+
+def MakePlot(sims,Aklow=0.8,allstars=False,ysoage=0.0,ax=None):
+    print "PLOTTING SFR VS TIME FOR AKLOW=",Aklow,"ALLSTARS=",allstars
+    fig = None
+    if ax is None:
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+    # Simulations
+    for sim in sims:
+        plotter = SFEPlotter(sim,Aklow,allstars,ysoage,__name__,
+                             axis=ax,figure=fig)
+        plotter.PlotAll()
+    # Lada+ 2010 fit (by eye, since they don't give an offset)
+    tlada = np.array([0.0,20.0]) 
+    sfelada = np.array([0.05,0.05])
+    ax.plot(tlada,sfelada,color=r"#888888",linestyle="--")
+    sfelada = np.array([0.25,0.25])
+    ax.plot(tlada,sfelada,color=r"#888888",linestyle=":")
+    # Do legends
+    if fig is not None:
+        plotter.Legend()
+    # Set up figure and output
+    mgas = "$M_{"+str(Aklow)+"}$"
+    mstar = "$M_{YSO}$"
+    ysoagetxt = "$t_{YSO}$ / Myr$^{-1}$"
+    if fig is None:
+        ax.set_xlabel("Time / Myr")
+    ax.set_ylabel("OSFE = "+mstar+" / "+mgas+" / "+ysoagetxt)
+    if allstars:
+        ax.set_ylabel("$M_{*}$ (All stars) / "+Msolar)
+    ax.set_yscale("log")
+    ax.set_xlim([0,20])
+    ax.set_ylim([1e-3,1.0])
+    plotter.Save()

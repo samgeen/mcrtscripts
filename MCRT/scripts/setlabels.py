@@ -1,0 +1,46 @@
+'''
+Set the labels of each simulation in Hamu
+Sam Geen, June 2015
+'''
+
+import Hamu
+
+def run(simname):
+    label = ""
+    # Flux
+    flux = lambda f: "S$_{*} = "+f+"$ s$^{-1}$"
+    if "N00" in simname:
+        label += "No source" #flux("0") 
+    else:
+        label += flux("10^{"+simname[1:3]+"}")
+    # Compact?
+    if "_C2" in simname:
+        label += " (more compact)"
+    elif "_C" in simname:
+        label += " (most compact)"
+    # B-field?
+    if "B00" in simname:
+        label += " (B=0)"
+    # Delayed?
+    if "_F2" in simname:
+        label += " (starts at 2 t$_{ff}$)"
+    if "_F3" in simname:
+        label += " (starts at 3 t$_{ff}$)"
+    print simname, "-->", label
+    sim = Hamu.Simulation(simname)
+    sim.Label(label)
+
+def runforsims(simnames):
+    for simname in simnames:
+        run(simname)
+
+if __name__=="__main__":
+    simnames = ["N48_M4_B02","N48_M4_B00",
+                "N47_M4_B02","N49_M4_B02",
+                "N00_M4_B02",
+                "N00_M4_B02_C","N00_M4_B02_C2",
+                "N48_M4_B02_C","N48_M4_B02_C2",
+                "N48_M4_B02_F2","N48_M4_B02_F3"]
+    runforsims(simnames)
+
+

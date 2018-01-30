@@ -1,0 +1,51 @@
+'''
+Plot of stellar mass / yso age vs time 
+'''
+
+from startup import *
+
+import columndensity, images, sfeobs, sinks, starsvsdensegas
+
+from pymses.utils import constants as C
+
+class SFEPlotter(starsvsdensegas.SFEPlotter):
+    def Plot(self):
+        # TODO: Better interface to base class member variables                 
+        def yfunc(data):
+            return data.stars
+        def xfunc(data):
+            return data.times
+        self.PlotError(xfunc,yfunc)
+
+def MakePlot(sims,Aklow=0.8,allstars=False,ysoage=0.0):
+    print "PLOTTING SFR VS TIME FOR AKLOW=",Aklow,"ALLSTARS=",allstars
+    plt.clf()
+    # Simulations
+    for sim in sims:
+        plotter = SFEPlotter(sim,Aklow,allstars,ysoage,__name__)
+        plotter.Plot()
+    # Lada+ 2010 fit (by eye, since they don't give an offset)
+    #tlada = np.array([0.0,20.0]) 
+    #sfelada = np.array([0.095,0.095])
+    #plt.plot(tlada,sfelada,color=r"#888888",linestyle="--")
+    # Do legends
+    plotter.Legend()
+    # Set up figure and output
+    mgas = "$M_{\mathrm{gas}}(>A_{k} = "+str(Aklow)+")$"
+    mstar = "$M_{*}(< 3 Myr)$"
+    ysoagetxt = "3 Myr"
+    plt.xlabel("Time / Myr")
+    plt.ylabel(mstar+" / "+ysoagetxt)
+    #if allstars:
+    #    plt.ylabel("$M_{*}$ (All stars) / "+Msolar)
+    plt.yscale("log")
+    plt.xlim([0,20])
+    plt.ylim([1,1e4])
+    plotter.Save()
+
+if __name__=="__main__":
+    sims = [Hamu.Simulation(s) for s in ["L-NRT","L-RT"]]
+    Aklows = np.arange(-0.1,0.1,0.02)+0.8
+    ysoages = np.arange(-1.0,1.0,0.2)+3.0
+    MakePlot(sims,Aklow=Aklows,ysoage=ysoages)
+

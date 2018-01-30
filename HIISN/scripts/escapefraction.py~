@@ -1,0 +1,128 @@
+'''
+Calculate escape fraction from ray profiles
+Sam Geen, April 2015
+'''
+
+import customplot
+import matplotlib.pyplot as plt
+
+import linestyles
+
+import numpy as np
+
+import pymses
+from pymses.utils import constants as C
+
+import sys
+sys.path.append("/home/sgeen/MC_RT/scripts")
+
+import Hamu, rayprof
+
+nray = rayprof.nray
+nprofs = rayprof.nprofs
+
+# ionlim = some value where we assume everything is ionised
+def FEsc(snap,ionlim=0.5):
+    r, p = rayprof.makeprofsHamu(snap.hamusnap,"xHII")
+    radii = r[0:nray]
+    profs = np.reshape(p,(nprofs, nray)).T
+    nesc = 0.0
+    for i in range(0,nprofs):
+        if np.min(profs[:,i]) > ionlim:
+            nesc += 1.0
+    fesc = nesc / nprofs
+    return fesc
+
+FEscHamu = Hamu.Algorithm(FEsc)
+
+# Find the distance to the nearest neutral gas as a PDF
+# ionlim = some value where we assume everything is ionised
+def DistToNeutral(snap,ionlim=0.5):
+    r, p = rayprof.makeprofsHamu(snap.hamusnap,"xHII")
+    radii = r[0:nray]
+    profs = np.reshape(p,(nprofs, nray)).T
+    nesc = 0.0
+    dists = np.zeros((nprofs))
+    for i in range(0,nprofs):
+        # Find the distance to neutral gas in the ray
+        ray = profs[:,i]
+        if np.max(ray) > ionlim:
+            rs = radii[ray > ionlim]
+            dists[i] = rs.max()
+    return dists
+
+DistToNeutral = Hamu.Algorithm(DistToNeutral)
+
+def RunForSim(simname,tstart):
+    sim = Hamu.Simulation(simname)
+    fescs = []
+    myr = None
+    for snap in sim.Snapshots():
+        if myr is None:
+            myr = snap.RawData().info["unit_time"].express(C.Myr)
+        fescs.append(FEscHamu(snap))
+    times = sim.Times()*myr
+    times -= tstart
+    plt.plot(times,fescs,label=sim.Label()+" t$_{\mathrm{ff}}$="+str(tstart)+" Myr")
+    
+
+def Run(simnames,tstart):
+    plt.clf()
+    for simname in simnames:
+        RunForSim(simname,tstart)
+    plt.xlim([0,4])
+    plt.legend(fontsize=8,loc="lower left")
+    plt.xlabel("Time / Myr")
+    plt.ylabel("Escape Fraction")
+    plt.yscale("log")
+    plt.ylim([0.01,1])
+    plt.savefig("../plots/escapefractions/escapefractions_all.pdf")
+
+def RunAtTime(simnames,tstart):
+    fescs = {}
+    myr = None
+    for simname in simnames:
+        sim = Hamu.Simulation(simname)
+        if myr is None:
+            myr = sim.Snapshots()[0].RawData().info["unit_time"].express(C.Myr)
+        snap = sim.FindAtTime(tstart/myr)
+        fescs[simname] = FEscHamu(snap)
+    return fescs
+
+def DistAtTime(simnames,tstart):
+    myr = None
+    dists = {}
+    for simname in simnames:
+        sim = Hamu.Simulation(simname)
+        if myr is None:
+            myr = sim.Snapshots()[0].RawData().info["unit_time"].express(C.Myr)
+        snap = sim.FindAtTime(tstart/myr)
+        dists[simname] = DistToNeutral(snap)
+    return dists
+
+def PlotDistsAtTime(simnames,tstart):
+    dists = DistAtTime(simnames,tstart)
+    for simname in simnames:
+        d = dists[simname]
+        d.sort()
+        d = d[::-1] # display for P( > D)
+        label = linestyles.emlabel(simname)
+        col = linestyles.col(simname)
+        p = np.arange(0.0,1.0,1.0/float(len(d)))
+        plt.plot(d,p,color=col,linestyle="-",label=label)
+    boxrad = 86.3/2.0
+    plt.plot([boxrad,boxrad],
+             [0,1],
+             "k--")
+    plt.xscale("log")
+    plt.xlabel(r"D(source $ \rightarrow $ neutral gas) / pc")
+    plt.ylabel("P( $>$ D)")
+    plt.xlim([86.3/1024.0,50.0])
+    plt.legend(frameon=False,loc="center")
+    plt.savefig("../plots/diststoneutral.pdf")
+
+if __name__=="__main__":
+    tstart = 5.53
+    simnames = ["N00-NSN","N49-NSN","N50-NSN","N51-NSN"]
+    Run(simnames,tstart)
+    

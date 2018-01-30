@@ -1,0 +1,147 @@
+'''
+Find the distribution of radii to the diffuse medium from the source
+Sam Geen, February 2015
+'''
+
+import os, sys
+sys.path.append("/home/sgeen/MC_RT/scripts")
+
+import customplot, rayprof, profilesphere
+import pymses, Hamu
+
+import numpy as np
+import matplotlib.pyplot as plt
+from pymses.utils import constants as C
+
+rextent = 1.0
+pctocm = 3.08567758e18
+
+def DensInRInner(r,p,rinner):
+    p = p[1:]
+    r = r[1:]
+    p = p[r < rinner]
+    r = r[r < rinner]
+    notnan = np.logical_not(np.isnan(r*p))
+    r = r[notnan]
+    p = p[notnan]
+    p[p == 0.0] = p[p > 0.0].min() # Safety net
+    # Find mass inside rinner / 4pi
+    m = np.sum(p*r**2*(r[1]-r[0]))
+    # Find volume inside rinner / 4pi
+    v = (rinner**3.0)/3.0
+    # Mean density is...
+    mp = m/v
+    print "mean density inside rinner:", mp
+
+def FindFitExp(r,p,rcut=1e10,rinner=0.0,params=True):
+    p = p[r < rcut]
+    r = r[r < rcut]
+    p = p[1:]
+    r = r[1:]
+    p = p[r > rinner]
+    r = r[r > rinner]
+    notnan = np.logical_not(np.isnan(r*p))
+    r = r[notnan]
+    p = p[notnan]
+    p[p == 0.0] = p[p > 0.0].min() # Safety net
+    lnp = np.log(p)
+    lnr = np.log(r)
+    fit = np.polyfit(r,lnp,deg=1)
+    #     rho = rho0 * exp(-r/r0)
+    # --> ln(rho) = -r/r0 + ln(rho0)
+    mult,const = fit
+    rho0 = np.exp(const)
+    r0 = -1.0/mult
+    print "rho0, r0:", rho0, r0
+    pfit = rho0 * np.exp(-r/r0)
+    if params:
+        return rho0, r0
+    else:
+        return r,pfit
+
+def FindFitPow(r,p,rcut=1e10,rinner=0.0,params=True):
+    p = p[r < rcut]
+    r = r[r < rcut]
+    r = r[1:]
+    p = p[1:]
+    p = p[r > rinner]
+    r = r[r > rinner]
+    notnan = np.logical_not(np.isnan(r*p))
+    r = r[notnan]
+    p = p[notnan]
+    # Scale r with rinner
+    if rinner == 0.0:
+        rinner = 1.0
+    p[p == 0.0] = p[p > 0.0].min() # Safety net
+    lnp = np.log(p)
+    lnr = np.log(r/rinner)
+    fit = np.polyfit(lnr,lnp,deg=1)
+    #     rho = rho0 * r ^ (-n)
+    # --> ln(rho) = -n * ln(r/rinner) + ln(rho0)
+    mult,const = fit
+    rho0 = np.exp(const)
+    n = -mult
+    print "rho0, n:", rho0, n
+    pfit = rho0 * (r/rinner) ** (-n)
+    if params:
+        return rho0, n
+    else:
+        return r,pfit
+
+
+FindFit = FindFitPow
+
+def RunForSnap(snap,params=True,r=None,p=None):
+    # Run
+    boxrad = snap.RawData().info["boxlen"]/2.0
+    if r is None and p is None:
+        r,p = rayprof.medianprofileHamu(snap,"rho") 
+        #r,p = profilesphere.profileHamu(snap,"rho") 
+    fit = FindFit(r,p,
+                   rcut=boxrad*rextent,
+                   rinner=3.6, # Hard coded from initial conditions!
+                   params=params)
+    # Print mean density properties
+    r,p = rayprof.medianprofileHamu(snap,"rho") 
+    DensInRInner(r,p,rinner=3.6)
+    return fit
+
+def Run(simname,time,params=True):
+    print "Running testprofilefit for ", simname
+    # Find snapshot
+    sim = Hamu.Simulation(simname)
+    first = sim.Snapshots()[0]
+    tcode = time / first.RawData().info["unit_time"].express(C.Myr)
+    snap = sim.FindAtTime(tcode)
+    return RunForSnap(snap,params=params)
+
+def Plot(simname,time):
+    print "Running testprofilefit for ", simname
+    # Find snapshot
+    sim = Hamu.Simulation(simname)
+    first = sim.Snapshots()[0]
+    tcode = time / first.RawData().info["unit_time"].express(C.Myr)
+    snap = sim.FindAtTime(tcode)
+    # Run
+    r,p = rayprof.medianprofileHamu(snap,"rho") 
+    #r,p = profilesphere.profileHamu(snap,"rho") 
+    rf,pf = RunForSnap(snap,params=False,r=r,p=p)
+    # Plot
+    plt.clf()
+    plt.plot(r,p)
+    plt.plot(rf,pf,"--")
+    plt.yscale("log")
+    #plt.xscale("log")
+    plt.savefig("../plots/testprofilefit/testprofilefit_"+simname+".pdf")
+    print "Done for ", simname
+    print "-----------------"
+
+def printparams(simnames):
+    for simname in simnames:
+        pass # FINISH THIS
+
+if __name__=="__main__":
+    Hamu.Workspace("HIISN")
+    Plot("N50-NSN",2.53)
+    #Plot("N49-NSN",2.53)
+    #Plot("N51-NSN",2.53)

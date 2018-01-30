@@ -1,0 +1,53 @@
+'''
+Compare stellar mass in Ak=0.1 vs all stars < yso age
+'''
+
+from startup import *
+
+import columndensity, images, sfeobs, sinks, starsvsdensegas
+
+from pymses.utils import constants as C
+
+class SFEPlotter(starsvsdensegas.SFEPlotter):
+    def Plot(self,los):
+        # TODO: Better interface to base class member variables
+        # Two types of plotter to compare
+        # 1) stars inside Ak=0.1
+        # 2) stars < ysoage
+        Plotter = starsvsdensegas.SFEPlotterStarsvsDenseGas
+        plotspatial = Plotter(self._sim,Aklow=0.1,
+                              allstars=False,ysoage=0.0,name=__name__)
+        plotage = Plotter(self._sim,Aklow=0.0,
+                          allstars=True,ysoage=self._ysoage,name=__name__)
+        dataspatial = plotspatial._MakeForLOS(los)
+        dataage = plotage._MakeForLOS(los)
+        x = dataage.times
+        y = dataage.stars / dataspatial.stars
+        plt.plot(x,y,linestyle=self.Line(),color=self.Colour())
+        plt.scatter(x[-1],y[-1],c=self.Colour(),edgecolors='none')
+
+def MakePlot(sims,Aklow=0.8,allstars=False,ysoage=0.0):
+    print "PLOTTING STAR MASS COMPARE FOR AKLOW=",Aklow,"ALLSTARS=",allstars
+    plt.clf()
+    # Simulations
+    for sim in sims:
+        plotter = SFEPlotter(sim,Aklow,allstars,ysoage,__name__)
+        plotter.PlotAll()
+    # 1:1 line
+    x = np.array([0,20])
+    y = np.array([1.0,1.0]) 
+    plt.plot(x,y,color=r"#888888",linestyle="--")
+    # Do legends
+    plotter.Legend()
+    # Set up figure and output
+    mgas = "$M_{\mathrm{gas}}(>A_{k} = "+str(Aklow)+")$"
+    mstar = "$M_{*}$"
+    ysoagetxt = "(YSO Age / 1 Myr)"
+    ybottom = mstar+" ($> A_{k}$=0.1)"
+    ytop = mstar+" ($<$ "+str(ysoage)+" Myr)"
+    plt.xlabel("Time / Myr")
+    plt.ylabel(ytop + " / " + ybottom)
+    plt.yscale("log")
+    plt.xlim([0,20])
+    plt.ylim([0.1,10.0])
+    plotter.Save()

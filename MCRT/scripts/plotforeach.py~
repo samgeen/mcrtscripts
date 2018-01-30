@@ -1,0 +1,45 @@
+'''
+Plot individual figures for each output
+Sam Geen, July 2014
+'''
+
+import spheremap
+
+def plotspheres(snap,funcname,simnme):
+    '''
+    Plot a bunch of sphere maps
+    '''
+    # Plotting functions for each linear slice
+    def maxrho(samples,start,end):
+        return samples["rho"][start:end].max()
+    def rshell(samples,start,end):
+        rhomax =  samples["rho"][start:end].max()
+        imax = np.where(samples["rho"][start:end] == rhomax)
+        radii = np.sum(samples.points[start:end,:]**2.0,axis=1)
+        return np.sqrt(radii[imax])
+    def cdens(samples,start,end):
+        rhos =  samples["rho"][start:end]
+        radii = np.sum(samples.points[start:end,:]**2.0,axis=1)
+        lr = len(rhos)
+        rhoc = 0.5*(rhos[0:lr-1]+rhos[1:lr])
+        dr = np.abs(np.diff(radii))
+        return np.sum((dr * rhoc)[rhoc > 1.5e3])
+    funcs = {"maxrho": maxrho,
+             "rshell": rshell,
+             "cdens": cdens}
+    labels = {"maxrho": "Max Density",
+             "rshell": "Shell Radius",
+             "cdens": "Column Density"}
+    func = funcs[funcname]
+    label = labels[funcname]
+    amr = snap.amr_source(["rho"])
+    plotlog = True
+    if plotlog:
+        label = "log("+label+")"
+    image, imax, imin = SphereMap(amr,func,plotlog=plotlog,radius=0.5)
+    MakeCBar(image,(imin,imax),)
+    plt.savefig("../plots/spheres/"+simname+""+.png",bbox_inches="tight")
+    
+
+if __name__=="__main__":
+    plotspheres()

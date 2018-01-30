@@ -1,0 +1,67 @@
+'''
+Plot of stellar mass / mass in gas A_k>0.8 vs time 
+'''
+
+from startup import *
+
+import columndensity, images, sfeobs, sinks, starsvsdensegas
+
+from pymses.utils import constants as C
+
+def PlotForSim(sim,los,Aklow,allstars):
+    stars = []
+    gas = []
+    times = []
+    print "Plotting", sim.Name(), "for LOS", los
+    for snap in sim.Snapshots():
+        func = starsvsdensegas.StarsvsDenseGas
+        s, g = func(snap,los,Aklow=Aklow,allstars=allstars)
+        t = snaptime.Myr(snap)
+        if s > 0.0:
+            stars.append(s)
+            gas.append(g)
+            times.append(t)
+    stars = np.array(stars)
+    gas = np.array(gas)
+    times = np.array(times)
+    colour = linestyles.colour(sim.Name())
+    line = linestyles.line(sim.Name())
+    plt.plot(times,stars/gas,linestyle=line,color=colour)
+    plt.scatter(times[-1],stars[-1]/gas[-1],c=colour,edgecolors='none')
+
+def MakePlot(sims,Aklow=0.8,allstars=False):
+    print "PLOTTING RATIO VS TIME FOR AKLOW=",Aklow,"ALLSTARS=",allstars
+    plt.clf()
+    # Simulations
+    for sim in sims:
+        PlotForSim(sim,'x',Aklow,allstars)
+        PlotForSim(sim,'y',Aklow,allstars)
+        PlotForSim(sim,'z',Aklow,allstars)
+    # Lada+ 2010 fit (by eye, since they don't give an offset)
+    tlada = np.array([0.0,20.0]) 
+    sfelada = np.array([0.095,0.095])
+    plt.plot(tlada,sfelada,color=r"#888888",linestyle="--")
+    # Do legends
+    lines, labels = linestyles.sizelegend()
+    leg1 = plt.legend(lines,labels,fontsize="small",
+                      frameon=False,loc="upper left")
+    lines, labels = linestyles.rtlegend()
+    leg2 = plt.legend(lines,labels,fontsize="small",
+                      frameon=False,loc="lower right")
+    plt.gca().add_artist(leg1)
+    plt.gca().add_artist(leg2)
+    # Set up figure and output
+    mgas = "$M_{\mathrm{gas}}(>A_{k} = "+str(Aklow)+")$"
+    mstar = "$M_{*}$ / "
+    plt.xlabel("Time / Myr")
+    plt.ylabel(mstar+" / "+mgas)
+    if allstars:
+        plt.ylabel("$M_{*}$ (All stars) / "+Msolar)
+    plt.yscale("log")
+    plt.xlim([0,20])
+    Aktxt = "_Ak"+str(Aklow).replace(".","p")
+    allstarstxt = ""
+    if allstars:
+        allstarstxt = "_allstars"
+    plt.savefig("../plots/ratiovstime"+Aktxt+allstarstxt+".pdf")
+    

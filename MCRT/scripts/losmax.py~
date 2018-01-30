@@ -1,0 +1,54 @@
+'''
+Find the PDF of maximum density along a line of sight
+Sam Geen, May 2015
+'''
+
+import customplot
+import matplotlib.pyplot as plt
+
+from pymses.utils import constants as C
+
+import Hamu
+import rayprof, rdotplot
+
+import linestyles
+
+import numpy as np
+
+def findmaxes(snap):
+    r, profs = rayprof.makeprofsHamu(snap.hamusnap,"rho")
+    ninray = rayprof.nray
+    nprofs = rayprof.nprofs
+    profs = np.reshape(profs,(nprofs,ninray))
+    # shape of profs is (ninray, nprofs)
+    maxes = np.amax(profs,axis=1)
+    maxes = np.sort(maxes)
+    nums = np.arange(1,nprofs+1)
+    return nums, maxes
+
+findmaxesHamu = Hamu.Algorithm(findmaxes)
+
+def runforsims(simnames,labels):
+    plt.clf()
+    for simname, label in zip(simnames,labels):
+        sim = Hamu.Simulation(simname)
+        tff = rdotplot.Findtstart(simname)
+        utime = sim.Snapshots()[0].RawData().info["unit_time"].express(C.Myr)
+        start = sim.FindAtTime(tff/utime)
+        nums, maxes = findmaxesHamu(start)
+        nums = nums/float(rayprof.nprofs)
+        #nums = np.log10(nums)
+        plt.plot(maxes[::-1],nums,
+                 color=linestyles.col(simname),
+                 label=label)
+    plt.xlabel("Maximum n$_{\mathrm{H}}$ along line of sight / cm$^{-3}$")
+    plt.ylabel("P(>n$_{\mathrm{H}}$)")
+    plt.xscale("log")
+    plt.yscale("log")
+    plt.legend(fontsize="small",frameon=False)
+    plt.savefig("../plots/losmax/losmax.pdf")
+
+if __name__=="__main__":
+    simnames = ["N48_M4_B02","N48_M4_B02_C2","N48_M4_B02_C"]
+    labels = ["Fiducial","More Compact","Most Compact"]
+    runforsims(simnames,labels)

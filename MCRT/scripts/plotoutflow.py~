@@ -1,0 +1,12 @@
+'''
+Plot the solution for outflow radius
+Sam Geen, May 2015
+'''
+
+def run(simnames,cols):
+    
+
+
+if __name__=="__main__":
+    simnames = ["N47_M4_B02","N48_M4_B02","N48_M4_B00","N49_M4_B02"]
+    run(simnames,cols)

@@ -1,0 +1,35 @@
+'''
+Read the Planck clouds from Juan
+Sam Geen, June 2016
+'''
+
+from startup import *
+from astropy.io import fits
+import distances
+
+def ReadCloud(filename,islog=True):
+    hdulist = fits.open(filename)
+    NHs = hdulist["PRIMARY"].data.flatten()
+    NHs[np.isnan(NHs)] = 0.0
+    NHs[NHs < 0.0]     = 0.0
+    if islog:
+        NHs = 10.0**NHs
+    NHs = np.sort(NHs)[::-1]
+    return NHs
+
+def Distance(filename):
+    for name, dist in distances.dists.iteritems():
+        if name in filename:
+            return dist
+    print "No distance for this filename!", filename
+    raise KeyError
+
+def AllClouds(loc=""):
+    # loc = near, mid, far
+    filenames = glob.glob("../NewPlanck/"+loc+"/*.fits")
+    return filenames
+
+if __name__=="__main__":
+    for filename in filenames:
+        print filename
+        print readcloud(filename)

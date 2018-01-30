@@ -1,0 +1,59 @@
+'''
+Find the SFE of a snapshot as per Lada 2010
+Sam Geen, June 2016
+'''
+
+from startup import *
+
+import columndensity, images, sinkextinction, sinks
+
+TWOMASSFWHM = 1.0/6.0 # Degrees
+# 5 arcmin (PLANCKRES) for d = 150pc = 0.22pc
+TWOMASSSIGMA = TWOMASSFWHM/2.355 # Wikifacts
+DISTANCE = 150.0 # pc
+TWOMASSRES = 150.0 * np.tan(TWOMASSSIGMA/360.0*2.0*np.pi)
+# NOTE: THE ABOVE IS LEFT FOR NOW BUT OUR MAP RESOLUTION IS WORSE THAN
+#       THE 2MASS PSF SIGMA, SO I'M NOT DOING A PSF ON THE MAPS FOR NOW
+
+def SFEobs(snap,los,frontToBack=True,extinctioncut=True,extincthigh=False,
+           extinctlimit=5.0):
+    # Some initial variables
+    up = columndensity.ups[los]
+    across = columndensity.acrosses[los]
+    boxlen = snap.info["boxlen"]
+    # Get column density map
+    dmap = columndensity.DensityMap(snap,los)    
+    xl = columndensity.IMSIZE
+    yl = columndensity.IMSIZE
+    # Scale im to NH from g/cm^2
+    im = dmap.NH() 
+    # Get sink positions
+    sinkx, sinky, sinkm = images.ProjectSinks(snap.hamusnap,los)
+    def NHAtPos(x,y):
+        # Find the column density in im at x,y
+        # x,y position is in coordinates (0,boxlen)
+        px = (xl*x/boxlen).astype(int)
+        py = (yl*y/boxlen).astype(int)
+        return im[px,py]
+    # Get list of column densities
+    NHs = NHAtPos(sinkx, sinky)
+    # Cut any stars above an extinction limit
+    if extinctioncut:
+        ftb, btf = sinkextinction.SinkExtinctionHamu(snap.hamusnap,'z')
+        extinct = ftb
+        if not frontToBack:
+            extinct = btf
+    # Find mass of sinks above NH threshold and below extinction limit
+    NHthresh = AktoNH(0.1)
+    ysomass = np.sum(sinkm[(NHs >= NHthresh)*(extinct < extinctlimit)])
+        
+    # Find cloud mass between NH thresholds
+    dmap.NHlow(NHthresh)
+    NHhigh = AktoNH(extinctlim5Bit)
+    if NHhigh is not None:
+        dmap.NHhigh(NHhigh)
+    cloudmass = np.sum(dmap.Mass())
+    # Return SFE (YSO mass / total mass)
+    return ysomass / (ysomass + cloudmass)
+    
+SFEobsHamu = Hamu.Algorithm(SFEobs)

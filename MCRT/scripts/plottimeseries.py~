@@ -1,0 +1,342 @@
+'''
+Plot multiple time series
+Sam Geen, February 2014
+'''
+
+import timeplot, massplot
+
+import momentum
+import Hamu
+import numpy as np
+import matplotlib.pyplot as plt
+import pymses
+from pymses.filters import CellsToPoints
+from pymses.utils import constants as C
+import matzner2002, hennebellemodel, outflowmodel, franco1990
+
+import rayprof, profilesphere, linestyles, radii
+
+# Using version in momentum.py
+'''
+def momentuminsnap(snap):
+    #h = snap.hamusnap
+    #path = h.Path()
+    #path = path[0:path.find("output_")]
+    #ro = pymses.RamsesOutput(path,h.OutputNumber())
+    amr = snap.amr_source(["rho","P","vel"])
+    cell_source = CellsToPoints(amr)
+    cells = cell_source.flatten()
+    uvel = snap.info["unit_length"].express(C.cm)/snap.info["unit_time"].express(C.s)
+    rhos = cells["rho"]*snap.info["unit_density"].express(C.g_cc)
+    vels = cells["vel"]*uvel
+    lens = cells.get_sizes()*snap.info["unit_length"].express(C.cm)
+    vols = lens**3.0
+    spds = np.sqrt(np.sum(vels**2.0,1))
+    moms = rhos*spds*vols
+    mom =  np.sum(moms)
+    time = snap.info["time"]*snap.info["unit_time"].express(C.Myr)
+    print "MOMENTUM FOUND @ ",time,"Myr:", mom
+    return mom
+'''
+momentuminsnap = momentum.momentuminsnap
+
+def sfdensityinsnap(snap, rlim=2912.0):
+    '''
+    Actually mass, sorry
+    '''
+    kB = 1.3806488e-16
+    amr = snap.amr_source(["rho","P"])
+    cell_source = CellsToPoints(amr)
+    cells = cell_source.flatten()
+    rhos = cells["rho"]*snap.info["unit_density"].express(C.H_cc)
+    cellsizes = cells.get_sizes()*snap.info["unit_length"].express(C.pc)
+    T = cells["P"]/cells["rho"]*snap.info["unit_temperature"].express(C.K)
+    cs = np.sqrt(1.4*kB*T/1.6/1.66e-24)/1e5 # in km/s
+    nsf = 1e3 * ((cellsizes/0.4) / (cs/0.2))**(-2.0)
+    masses = cells["rho"]*cells.get_sizes()**3.0
+    masses *= snap.info["unit_mass"].express(C.Msun)
+    #rlim = 2912.0 # cm-3; given cs = 0.1km/s, l_jeans = 120pc/2^10
+    sfcells = rhos > nsf
+    try:
+        mass = np.sum(masses[sfcells])
+    except:
+        mass = 0.0
+    return mass
+
+def maxradius(snap):
+    amr = snap.amr_source(["rho","xHII"])
+    cell_source = CellsToPoints(amr)
+    cells = cell_source.flatten()
+    rhos = cells["rho"]
+    ions = cells["xHII"]
+    posns = cells.points-0.5
+    radii = np.sqrt(np.sum(posns**2,1))
+    thresh = 0.9
+    try:
+        rion = radii[ions > thresh]
+        rmax = rion.max()
+    except:
+        return 0.0
+    rmax *= snap.info["unit_length"].express(C.pc)
+    return rmax
+
+def meanradius(snap):
+    amr = snap.amr_source(["rho","xHII"])
+    cell_source = CellsToPoints(amr)
+    cells = cell_source.flatten()
+    rhos = cells["rho"]
+    ions = cells["xHII"]
+    masses = rhos*cells.get_sizes()**3
+    posns = cells.points-0.5
+    radii = np.sqrt(np.sum(posns**2,1))
+    thresh = 0.9
+    try:
+        ionised = ions > thresh
+        rion = radii[ionised]
+        mion = masses[ionised]
+        rmean = np.sum(rion*mion)/np.sum(mion)
+    except:
+        return 0.0
+    rmean *= snap.info["unit_length"].express(C.pc)
+    rmean *= 4.0/3.0 # Integration constant that gives r for a sphere
+    return rmean
+
+medianradius = radii.MedianRadiusProfile
+
+def centreofmass(snap):
+    amr = snap.amr_source(["rho"])
+    cell_source = CellsToPoints(amr)
+    cells = cell_source.flatten()
+    rhos = cells["rho"]
+    masses = rhos*cells.get_sizes()**3
+    posns = cells.points-0.5
+    com = np.array([np.sum(masses * posns[:,0]),
+                    np.sum(masses * posns[:,1]),
+                    np.sum(masses * posns[:,2])])/np.sum(masses)
+    return np.sqrt(np.sum(com**2)) * snap.info["unit_length"].express(C.pc)
+
+def ionisedmass(snap):
+    amr = snap.amr_source(["rho","xHII"])
+    cell_source = CellsToPoints(amr)
+    cells = cell_source.flatten()
+    masses = cells["rho"]*cells.get_sizes()**3.0
+    masses *= snap.info["unit_mass"].express(C.Msun)
+    masses *= cells["xHII"] # mass in ions = mass in cell * ionisation fraction
+    return np.nansum(masses)
+
+def maxtemperature(snap):
+    mufunc = lambda dset: 1./(0.76*(1.+dset["xHII"]) + \
+                             0.25*0.24*(1.+dset["xHeII"]+2.*dset["xHeIII"]))
+    unit = snap.info["unit_temperature"].express(C.K)
+    amr = snap.amr_source(["rho","P","xHII","xHeII","xHeIII"])
+    cell_source = CellsToPoints(amr)
+    cells = cell_source.flatten()
+    Ts = cells["P"]/cells["rho"]*unit*mufunc(cells)
+    return Ts.max()
+    
+def meaniontemperature(snap):
+    mufunc = lambda dset: 1./(0.76*(1.+dset["xHII"]) + \
+                             0.25*0.24*(1.+dset["xHeII"]+2.*dset["xHeIII"]))
+    unit = snap.info["unit_temperature"].express(C.K)
+    amr = snap.amr_source(["rho","P","xHII","xHeII","xHeIII"])
+    cell_source = CellsToPoints(amr)
+    cells = cell_source.flatten()
+    Ts = cells["P"]/cells["rho"]*unit*mufunc(cells)
+    ions = cells["xHII"]
+    Tions = Ts * ions
+    meanT = np.sum(Tions) / np.sum(ions)
+    return meanT
+
+
+
+def runDEPRECATED(func, name, ylabel,ylog=True):
+    Myr = 3.15569e13
+    plt.clf()
+    ns = ["49","48","47","00"]
+    bs = ["02","00","04"]
+    cols = ["r","g","b","k"]
+    lines = ["-","--",":"]
+    for b, line in zip(bs, lines):
+        for n, col in zip(ns, cols):
+            simname = "MCRTN"+n+"B"+b
+            if "49" in simname:
+                simname += "T3"
+            if "48" in simname:
+                simname += "T6"
+            sim = Hamu.Simulation(simname)
+            times, results = funcovertime(sim,func)
+            plt.plot(times, results,col+line,label=simname)
+    plt.xlabel(r"Time / Myr")
+    plt.ylabel(ylabel)
+    #plt.ylabel(r"Momentum / g cm/s")
+    if ylog:
+        plt.yscale("log")
+    plt.legend(ncol=len(bs),loc="best")
+    plt.savefig("../plots/"+name)
+
+def runforsims(name):
+    Hamu.Workspace("MCRT")
+    Msun = "M$_{\odot}$"
+    print "Running for group", name
+    reload(timeplot)
+    # Set up sims + labellings
+    #timeplot.sims["MCMCtestTable"] = "b-"
+    #timeplot.sims["MCMCtestConst"] = "r--"
+    #timeplot.sims["MCMCtestTLowC"] = "g--"
+    #timeplot.sims["MCMCtestTLDly"] = "c--"
+    timeplot.ncol = 2
+    if name == "photons":
+        timeplot.sims["N00_M4_B02"] = "k"
+        timeplot.sims["N47_M4_B02"] = "b"
+        timeplot.sims["N48_M4_B02"] = "r"
+        timeplot.sims["N49_M4_B02"] = "c"
+        timeplot.sims["N48_M4_B00"] = "m"
+        timeplot.starts["N00_M4_B02"   ] = 1.25
+        timeplot.starts["N47_M4_B02"   ] = 1.25
+        timeplot.starts["N48_M4_B02"   ] = 1.25
+        timeplot.starts["N48_M4_B00"   ] = 1.25
+        timeplot.starts["N49_M4_B02"   ] = 1.25
+    if name == "tstart":
+        timeplot.ncol = 1
+        #timeplot.sims["N00_M4_B02"   ] = "k"
+        timeplot.sims["N48_M4_B02"   ] = "r"
+        timeplot.sims["N48_M4_B02_F2"] = "m"
+        timeplot.sims["N48_M4_B02_F3"] = "b"
+        #timeplot.starts["N00_M4_B02"   ] = 1.25
+        timeplot.starts["N48_M4_B02"   ] = 1.25
+        timeplot.starts["N48_M4_B02_F2"] = 1.25*2
+        timeplot.starts["N48_M4_B02_F3"] = 1.25*3
+    if name == "compact":
+        timeplot.sims["N00_M4_B02"] = "k"
+        timeplot.sims["N48_M4_B02"   ] = "r"
+        timeplot.sims["N00_M4_B02_C" ] = 'c'
+        timeplot.sims["N48_M4_B02_C" ] = 'b'
+        timeplot.sims["N00_M4_B02_C2"] = 'c'
+        timeplot.sims["N48_M4_B02_C2"] = 'm'
+        timeplot.starts["N00_M4_B02"   ] = 1.25
+        timeplot.starts["N48_M4_B02"   ] = 1.25
+        timeplot.starts["N00_M4_B02_C" ] = 0.15625
+        timeplot.starts["N48_M4_B02_C" ] = 0.15625
+        timeplot.starts["N00_M4_B02_C2"] = 1.25 * 0.75**3 
+        timeplot.starts["N48_M4_B02_C2"] = 1.25 * 0.75**3 
+    if name == "rtpressure":
+        timeplot.sims["N00_M4_B02"    ] = "k"
+        timeplot.sims["N48_M4_B02"    ] = "r"
+        timeplot.sims["N48_M4_B02_RP"] = "b"
+        timeplot.starts["N00_M4_B02"    ] = 1.25
+        timeplot.starts["N48_M4_B02"    ] = 1.25
+        timeplot.starts["N48_M4_B02_RP"] = 1.25
+
+    # HACK - USE LINESTYLES.PY COLOURS INSTEAD
+    for simname in timeplot.sims.iterkeys():
+        timeplot.sims[simname] = linestyles.col(simname)
+
+    #timeplot.sims["N48_M4_B02_HR"] = "r:"
+    timeplot.xlim = [0,5]
+    timeplot.folder = name
+    # Run for each function
+    # HACK!
+    #hlabel = "Franco 1990"
+    #hfunc = franco1990.Findrcore
+    
+    #hlabel = "Hennebelle Power Law"
+    #hfunc = hennebellemodel.Findriipowerprofile
+    #hlabel = "Hennebelle Flat"
+    #hfunc = hennebellemodel.Findrii
+    hlabel = "Power Law model"
+    hfunc = outflowmodel.FindriiPowerLaw
+    #hlabel = "Spizter + Outflow model"
+    #hfunc = outflowmodel.Findrii
+    hlabel2 = None
+    hfunc2 = None
+    # Draw 2nd function
+    if name == "compact":
+        hlabel2 = "Accretion model"
+        hfunc2 = outflowmodel.FindriiAccretion
+    #hlabel = "Matzner (2002) Fit"
+    #hfunc = matzner2002.Findrii
+    #if name == "photons" or name == "tstart":
+    #    hlabel2 = "Power Law model"
+    #    hfunc2 = outflowmodel.FindriiPowerLaw
+    #if name == "tstart":
+    #    rayprof.rextent = 1.0 # pc
+    #    profilesphere.rextent = 1.0 # pc
+    #else:
+    #    rayprof.rextent = None
+    #    profilesphere.rextent = None
+    compares = {hlabel:hfunc}
+    if not hlabel2 is None:
+        compares[hlabel2] = hfunc2
+    
+    timeplot.dolegend = True
+
+    
+    hfunc = outflowmodel.FindMomPowerLaw
+    timeplot.run(momentuminsnap, "momentum.pdf", ylabel="Momentum / g cm/s",
+                 compares={hlabel:hfunc},
+                 ylim=[1e42,2e43],
+                 simgroup=name)
+
+    #timeplot.run(centreofmass, "centreofmass.pdf", 
+    #             ylabel="|Centre of mass - centre of sim| / pc",
+    #             compares={},
+    #             ylim=[0.01,20],ylog=True)
+
+
+
+    #massplot.run()
+
+    if name == "photons":
+        timeplot.dolegend = False
+
+    legpos = None
+    if name == "tstart":
+        legpos = "upper left"
+
+    #timeplot.run(meanradius, "meanradius.pdf", 
+    #             ylabel="Mass-Weighted Radius / pc",
+    #             compares=compares,
+    #             ylim=[0.1,15],ylog=False)
+
+    timeplot.run(medianradius, "medianradius.pdf", 
+                 ylabel="Median Radius / pc",
+                 compares=compares,
+                 ylim=[0.1,15],ylog=False,legpos=legpos)
+    
+
+    hfunc = outflowmodel.FindMdestPowerLaw
+    timeplot.run(ionisedmass, "ionisedmass.pdf", ylabel="Ionised Mass / "+Msun,
+                 compares={hlabel:hfunc,
+                           #"M02lim":matzner2002.FindMdestMax},ylim=[1e1,1e4])
+                           },ylim=[1e1,1e4])
+    #timeplot.run(sfdensityinsnap, "sfmass.pdf", \
+    #                 ylabel="Star-forming Mass / M$_{\odot}$",ylim=[1e3,1e4])
+
+
+    # Plot outflow model
+    timeplot.dolegend = True
+    outflowmodel.powerlaw = False
+    outflowmodel.accretion_on = False
+    hlabel = "Outflow Model"
+    hfunc = outflowmodel.Findrii   
+    timeplot.run(medianradius, "medianradius_outflow.pdf", 
+                 ylabel="Median Radius / pc",
+                 compares={hlabel:hfunc},
+                 ylim=[0.1,15],ylog=False,legpos="upper right") 
+
+
+
+    # Old figures
+    #timeplot.run(meaniontemperature, "meaniontemperature.pdf", 
+    #             ylabel="$\Sigma$Tx_{HII}$ / $\Sigma$x$_{HII}$ / K")
+    #timeplot.run(maxtemperature, "maxtemperature.pdf", ylabel="T$_{max}$ / K")
+    #timeplot.run(maxradius, "maxradius.pdf", ylabel="Max Radius / pc",
+    #            compares={mlabel:matzner2002.Findrii,
+    #            #          "F90":franco1990.Findrcore},ylim=[0.1,60])
+    #                      },ylim=[0.1,15],ylog=False)
+
+if __name__=="__main__":
+    #runforsims("rtpressure")
+    runforsims("photons")
+    runforsims("compact")
+    runforsims("tstart")

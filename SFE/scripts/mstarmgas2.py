@@ -1,0 +1,57 @@
+'''
+Plot of stellar mass / mass^n in gas A_k>0.8 / yso age vs time 
+'''
+
+from startup import *
+
+import columndensity, images, sfeobs, sinks, starsvsdensegas
+
+from pymses.utils import constants as C
+
+class SFEPlotter(starsvsdensegas.SFEPlotter):
+    def __init__(self,sim,Aklow,allstars,ysoage,name,powerindex,axis,figure):
+        self._powerindex = powerindex
+        name += "_pow"+str(powerindex).replace(".","p")
+        super(SFEPlotter, self).__init__(sim,Aklow,allstars,ysoage,name,
+                                         axis,figure)
+
+    def Plot(self):
+        # TODO: Better interface to base class member variables                 
+        def yfunc(data):
+            return data.stars / (data.gas**self._powerindex)
+        def xfunc(data):
+            return data.times
+        self.PlotError(xfunc,yfunc)
+
+def MakePlot(sims,Aklow=[0.8],allstars=False,ysoage=[0.0],powerindex=2.0):
+    print "PLOTTING SFR VS TIME FOR AKLOW=",Aklow,"ALLSTARS=",allstars
+    plt.clf()
+    # Simulations
+    fig = plt.figure()
+    axis = fig.add_subplot(111)
+    for sim in sims:
+        plotter = SFEPlotter(sim,Aklow,allstars,ysoage,__name__,powerindex,
+                             figure=fig,axis=axis)
+        plotter.Plot()
+    # Lada+ 2010 fit (by eye, since they don't give an offset)
+    tlada = np.array([0.0,20.0]) 
+    sfelada = np.array([0.095,0.095])
+    plt.plot(tlada,sfelada,color=r"#888888",linestyle="--")
+    # Do legends
+    plotter.Legend()
+    # Set up figure and output
+    mgas = "$M_{\mathrm{gas}}(>A_{k} = "+str(np.median(Aklow))+")$"
+    mstar = "$M_{*}$"
+    ysoagetxt = "(YSO Age / 1 Myr)"
+    plt.xlabel("Time / Myr")
+    plt.ylabel(mstar+" / "+mgas+"$^{"+str(powerindex)+"}$)")# / "+ysoagetxt)
+    if allstars:
+        plt.ylabel("$M_{*}$ (All stars) / "+Msolar)
+    plt.yscale("log")
+    plt.xlim([0,20])
+    if np.median(Aklow) == 0.8:
+        if powerindex == 2.0:
+            plt.ylim([1e-4,1e-1])
+        if powerindex == 1.4:
+            plt.ylim([1e-3,1e0])
+    plotter.Save()

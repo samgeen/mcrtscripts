@@ -1,0 +1,82 @@
+'''
+Uniform line styles and colours for the project
+Sam Geen, January 2016
+'''
+
+import Hamu
+import customplot
+import matplotlib.pyplot as plt
+import matplotlib.lines as mlines
+from collections import OrderedDict
+
+'''
+Sims:
+IR? IRP, IRNP, NIR
+UV? UVP, UVNP, NUV
+'''
+
+def finditem(tosearch,simname):
+    for key in tosearch.iterkeys():
+        if key == simname:
+            return tosearch[key]
+    # Oops! Not found the result?
+    print "Error: No result for", simname, "in keys",tosearch.keys()
+    raise KeyError
+
+colours = {}
+irs = ["IRP","IRNP","NIR"]
+# Pink colour scheme
+# Varied colours with different lightness scheme
+cols = ['#000000', '#1a6433', '#2a76d4']
+colours = OrderedDict()
+for key, value in zip(irs,cols):
+    colours[key] = value
+
+def colour(simname):
+    return finditem(colours,simname.split("-")[0])
+
+lines = {}
+lines["UVP"] = "-"
+lines["UVNP"] = "--"
+lines["NUV"] = ":"
+
+def line(simname):
+    return finditem(lines,simname.split("-")[1])
+
+irlabels = {}
+irlabels["IRP"] = r"IR Pressure"
+irlabels["IRNP"]  = r"IR, No Pressure"
+irlabels["NIR"]  = r"No IR"
+
+def irlabel(simname):
+    return finditem(irlabels,simname.split("-")[0])
+
+uvlabels = {}
+uvlabels["UVP"]  = r"UV Photoionisation + Pressure"
+uvlabels["UVNP"] = r"UV Photoionisation only"
+uvlabels["NUV"] = r"No UV"
+
+def uvlabel(simname):
+    return finditem(uvlabels,simname.split("-")[0])
+
+def irlegend():
+    plotlines = []
+    for size, col in colours.iteritems():
+        plotlines.append(mlines.Line2D([], [], 
+                                       color=col,
+                                       linestyle="-",
+                                       label=irlabel(size)))
+    labels = [line.get_label() for line in plotlines]
+    return plotlines, labels
+
+def uvlegend():
+    plotlines = []
+    for rt, line in lines.iteritems():
+        plotlines.append(mlines.Line2D([], [], 
+                                       color="k",
+                                       linestyle=line,
+                                       label=uvlabel(rt)))
+    labels = [line.get_label() for line in plotlines]
+    return plotlines, labels
+
+

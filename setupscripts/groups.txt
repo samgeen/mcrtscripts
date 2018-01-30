@@ -1,0 +1,6 @@
+In RamsesRT simulations, we typically use three photon packages
+– Hi, Hei and Heii ionizing – defined by the frequency intervals
+[ ν 10 , ν 11 ] = [ ν Hi , ν Hei ] = [ 3.29, 5.95 ] 10 15 Hz,
+[ ν 20 , ν 21 ] = [ ν Hei , ν Heii ] = [ 5.95, 13.2 ] 10 15 Hz,
+[ ν 30 , ν 31 ] = [ ν Heii , ∞ [ = [ 13.2, ∞ [
+10 15 Hz

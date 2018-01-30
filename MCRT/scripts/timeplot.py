@@ -1,0 +1,182 @@
+'''
+Generic plotting of runs as a time series
+Sam Geen, February 2014
+'''
+                                                                                                                                                  
+import matplotlib as mpl
+mpl.use('Agg')
+
+import os
+import Hamu
+import numpy as np
+import customplot
+import matplotlib.pyplot as plt
+import matplotlib.lines as mlines
+
+import matzner2002, hennebellemodel, outflowmodel
+
+import pymses
+from pymses.filters import CellsToPoints
+from pymses.utils import constants as C
+colconv = mpl.colors.ColorConverter()
+
+from collections import OrderedDict
+
+sims = OrderedDict()
+xlim = None
+folder = ""
+starts = OrderedDict()
+
+import momentum
+momentuminsnapHamu = Hamu.Algorithm(momentum.momentuminsnap)
+
+ncol = 2
+dolegend = True
+
+# Limits when HII region leaves the box first in Myr
+outlims = {}
+outlims["N49_M4_B02"] = 1.0
+outlims["N48_M4_B02"] = 1.6
+outlims["N47_M4_B02"] = 3.4
+
+def FindMomBack(sim,tstart):
+    first = sim.Snapshots()[0]
+    tcode = tstart / first.RawData().info["unit_time"].express(C.Myr)
+    snap = sim.FindAtTime(tcode)
+    return momentuminsnapHamu(snap)
+
+def funcovertime(sim, func):
+    times = sim.Times()
+    utime = sim.Snapshots()[0].RawData().info["unit_time"].express(C.Myr)
+    tstart = 1.25
+    try:
+        tstart = starts[sim.Name()]
+    except:
+        print "Didn't find tstart, using default 1.25Myr"
+    times = times * utime - tstart
+    results = list()
+    funcHamu = Hamu.Algorithm(func)
+    for snap in sim.Snapshots():
+        results.append(funcHamu(snap))
+    results = np.array(results)
+    print "Times, results for sim ",sim.Name()
+    print times, results
+    return times, results
+        
+def runOLD(func, name, ylabel,ylog=True):
+    Myr = 3.15569e13
+    plt.clf()
+    ns = ["49","48","47","00"]
+    bs = ["02","00","04"]
+    cols = ["r","g","b","k"]
+    lines = ["-","--",":"]
+    for b, line in zip(bs, lines):
+        for n, col in zip(ns, cols):
+            simname = "MCRTN"+n+"B"+b
+            if "49" in simname:
+                simname += "T3"
+            if "48" in simname:
+                simname += "T6"
+            sim = Hamu.Simulation(simname)
+            times, results = funcovertime(sim,func)
+            plt.plot(times, results,col+line,label=sim.Label())
+    plt.xlabel(r"Time / Myr")
+    plt.ylabel(ylabel)
+    #plt.ylabel(r"Momentum / g cm/s")
+    if ylog:
+        plt.yscale("log")
+    plt.legend(ncol=len(bs),loc="best")
+    plt.savefig("../plots/"+name)
+
+def run(func, name, ylabel,ylog=True,compares={},ylim=None,legpos=None,
+        simgroup = ""):
+    global xlim, folder, starts
+    if folder:
+        try:
+            os.mkdir("../plots/"+folder)
+        except:
+            pass # Eh
+    Myr = 3.15569e13
+    plt.clf()
+    for simname, colline in sims.iteritems():
+        line = "-"
+        if simname == "N00_M4_B02_C" or simname == "N00_M4_B02_C2":
+            line = ":"
+        # Plot simulation results
+        if not "N00" in simname or "momentum" in name:
+            sim = Hamu.Simulation(simname)
+            times, results = funcovertime(sim,func)
+            plt.plot(times, results,color=colline,linestyle=line,
+                     label=sim.Label())
+            if simname in outlims:
+                plt.plot(np.zeros((2))+outlims[simname],ylim,
+                         color=colline,linestyle=':')
+    firstc = True
+    for simname, colline in sims.iteritems():
+        # Plot lines to compare to
+        ncol = 1
+        sim = Hamu.Simulation(simname)
+        tstart = 1.25
+        try:
+            tstart = starts[sim.Name()]
+        except:
+            print "Didn't find tstart in timeplot.run, using default 1.25Myr"
+            print sim.Name(), starts.keys()
+        matzner2002.tstart = tstart
+        hennebellemodel.tstart = tstart
+        outflowmodel.tstart = tstart
+        lines = ["-","-","--",":"]
+        if "momentum" in name:
+            outflowmodel.momback = FindMomBack(sim, starts[simname])
+        for clabel, comp in compares.iteritems():
+            ncol += 1
+            #newcol = colconv.to_rgb(colline[0]) # THIS SHOULD BE A COLOUR
+            #r,g,b = newcol
+            #newcol = (min(r+0.333*(ncol-1),1.0),
+            #          min(g+0.333*(ncol-1),1.0),
+            #          min(b+0.333*(ncol-1),1.0))
+            #newline = colline[1:] # copy
+            #newline = newline
+            # HACK - now use dots and dashes for compares
+            newcol = colline
+            newline = lines[ncol]
+            #if len(newline) == 0:
+            #    newline = "-"
+            if not "N00" in sim.Name():
+                ctimes, cline = comp(sim)
+                currlabel = clabel
+                if not sim.Name() == "N48_M4_B02":
+                    currlabel = ""
+                plt.plot(ctimes,cline,color=newcol,
+                         linestyle=newline)#,
+                         #label=currlabel)
+        firstc = False
+    plt.xlabel(r"Time / Myr")
+    plt.ylabel(ylabel)
+    #plt.ylabel(r"Momentum / g cm/s")
+    if ylog:
+        plt.yscale("log")
+    if ylim:
+        plt.ylim(ylim)
+    if xlim:
+        plt.xlim(xlim)
+    if dolegend:
+        typeloc = "upper right"
+        if simgroup == "compact":
+            typeloc = "lower right"
+        if legpos is None:
+            legpos = "best"
+        leg1 = plt.legend(ncol=ncol,loc=legpos,
+                          fontsize="x-small",frameon=False)
+        sline = mlines.Line2D([], [], color='k', label='Simulation')
+        pline = mlines.Line2D([], [], color='k', linestyle="--",
+                              label='Power Law Model')
+        leg2 = plt.legend(handles=[sline,pline],ncol=1,fontsize="small",
+                          frameon=False,loc=typeloc)
+        plt.gca().add_artist(leg1)
+
+    plt.savefig("../plots/"+folder+"/"+name)
+
+if __name__=="__main__":
+    import momentum
+    run(momentum.momentuminsnap, "momentum.pdf", ylabel="Momentum / g cm/s")

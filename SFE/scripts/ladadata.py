@@ -1,0 +1,25 @@
+'''
+Data from Lada+ 2010
+Sam Geen, June 2017
+'''
+
+from startup import *
+
+def process(txt):
+    return float(txt.replace(",","").replace(" ",""))
+
+lada = {}
+mstar = 0.5
+
+def readtable():
+    filename = "ladatable.txt"
+    lines = open(filename).readlines()
+    ncl = int(lines[0])
+    lada["names"] = [x.replace("\n","") for x in lines[1:ncl+1]]
+    lada["M0.1"] = [process(x) for x in lines[1+ncl:2*ncl+1]]
+    lada["M0.8"] = [process(x) for x in lines[1+2*ncl:3*ncl+1]]
+    lada["NYSO"] = [process(x) for x in lines[1+3*ncl:4*ncl+1]]
+    lada["SFR"]  = [process(x) for x in lines[1+4*ncl:5*ncl+1]]
+    lada["MYSO"] = np.array(lada["NYSO"])*mstar
+    
+readtable()

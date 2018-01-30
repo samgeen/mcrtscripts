@@ -1,0 +1,161 @@
+'''
+Functions defining hydro variables in RAMSES for use by pymses
+Sam Geen, November 2014
+'''
+
+import numpy as np
+from pymses.utils import constants as C
+
+def hydro_label(hydro):
+    '''
+    Returns a label for the given hydro variable in some default units
+    '''
+    if hydro == "rho":
+        return "Density / atoms/cm$^{3}$"
+    if hydro == "NH":
+        return "$N_{\mathrm{H}}$ / cm$^{-2}$"
+    if hydro == "P":
+        return "Pressure / ergs/cm$^3$"
+    if hydro == "T":
+        return "Temperature / K"
+    if "xH" in hydro:
+        return "Ionisation Fraction "+hydro
+    if hydro == "gpe":
+        return "Gravitational Potential Energy"
+    if hydro == "Bmag":
+        return "|B| / $\mu G$"
+    if hydro == "vrad":
+        return "V$_{radial}$ / km/s"
+    if hydro == "spd":
+        return "Gas Speed / km/s"
+    if hydro == "Pram":
+        return "Ram Pressure / ergs/cm$^3$"
+    if hydro == "vx":
+        return "Velocity X / km/s"
+    if hydro == "vy":
+        return "Velocity Y / km/s"
+    if hydro == "vz":
+        return "Velocity Z / km/s"
+
+def scale_by_units(ro, hydro):
+    '''
+    Returns a lambda function that scales a dataset by some default units
+    '''
+    if hydro == "rho":
+        unit = ro.info["unit_density"].express(C.H_cc)
+        return lambda dset: dset["rho"]*unit
+    if hydro == "NH":
+        unit = ro.info["unit_density"].express(C.g_cc) * \
+               ro.info["unit_length"].express(C.cm)
+        return scop(lambda dset: dset["rho"]*unit)
+    if hydro == "P":
+        unit = ro.info["unit_pressure"].express(C.barye)
+        return lambda dset: dset["P"]*unit
+    if hydro == "T":
+        mufunc = lambda dset: 1./(0.76*(1.+dset["xHII"]) + \
+                     0.25*0.24*(1.+dset["xHeII"]+2.*dset["xHeIII"]))
+        unit = ro.info["unit_temperature"].express(C.K)
+        return lambda dset: dset["P"]/dset["rho"]*unit*mufunc(dset)
+    if "xH" in hydro:
+        unit = 1.0
+        return lambda dset: dset[hydro]*unit
+    if hydro == "Bmag":
+        def bmagfunc(dset):
+            b = 0.5*(dset["B-left"]+dset["B-right"])
+            up = ro.info["unit_pressure"].express(C.barye)
+            unit = np.sqrt(up/(4.0*np.pi))*1e-6 # microGauss
+            # Magnitude of the 3-vector for each cell
+            return np.sqrt((b**2).sum(axis=1))*unit
+        return bmagfunc
+    if hydro == "vrad":
+        unit = ro.info["unit_velocity"].express(C.km/C.s)
+        def findvrad(dset):
+            pos = dset.points-0.5
+            rad = pos # Be careful here! Reference, not value copy
+            dist = np.sqrt(np.sum(pos**2,1))
+            for i in range(0,3):
+                rad[:,i] /= dist
+            return np.sum(rad*dset["vel"],1)*unit
+        return findvrad
+    if hydro == "vx":
+        unit = ro.info["unit_velocity"].express(C.km/C.s)
+        return lambda dset: dset["vel"][:,0]*unit
+    if hydro == "vy":
+        unit = ro.info["unit_velocity"].express(C.km/C.s)
+        return lambda dset: dset["vel"][:,1]*unit
+    if hydro == "vz":
+        unit = ro.info["unit_velocity"].express(C.km/C.s)
+        return lambda dset: dset["vel"][:,2]*unit
+    if hydro == "spd":
+        unit = ro.info["unit_velocity"].express(C.km/C.s)
+        return lambda dset: np.sqrt(np.sum(dset["vel"]**2,1))*unit
+    if hydro == "Pram":
+        unit = ro.info["unit_pressure"].express(C.barye)
+        return lambda dset: dset["rho"]*np.sum(dset["vel"]**2,1)*unit
+    # None of those? Return unitless
+    return lambda dset: dset[hydro]
+
+def amr_source(ro, hydro,extra=[]):
+    '''
+    Load the necessary data from the hydro files
+    '''
+    hydros = [hydro] # default is just the variable we need
+    if hydro == "NH":
+        hydros == ["rho"]
+    if hydro == "T":
+        hydros = ["rho","P","xHII","xHeII","xHeIII"]
+    if hydro == "Bmag":
+        hydros = ["B-left","B-right"]
+    if hydro[0] == "v": # Any velocity
+        hydros = ["vel"]
+    if hydro == "spd":
+        hydros = ["vel"]
+    if hydro == "Pram":
+        hydros = ["rho","vel"]
+    # Add extras
+    for e in extra:
+        if not e in hydros:
+            hydros.append(e)
+    return ro.amr_source(hydros)
+    
+
+def yscale(hydro):
+    '''
+    Returns whether this function takes a log scale or not
+    '''
+    if hydro == "rho":
+        return "log"
+    if hydro == "NH":
+        return "log"
+    if hydro == "P":
+        return "log"
+    if hydro == "T":
+        return "log"
+    if "xH" in hydro:
+        return "linear"
+    if hydro == "Bmag":
+        return "log"
+    if hydro[0] == "v": # any velocity
+        return "linear"
+    if hydro == "spd":
+        return "linear"
+    if hydro == "Pram":
+        return "log"
+    # None of those? Return false
+    return "linear"
+
+def hydro_range(hydro):
+    if hydro == "rho":
+        return (0, 8)
+    if hydro == "NH":
+        return (20.5,23.0)
+    if hydro == "P":
+        return (None, None) # No idea
+    if hydro == "T":
+        return (0,5)
+    if "xH" in hydro:
+        return (-6,0)
+    if hydro == "gpe":
+        return (None, None)
+    if hydro == "Bmag":
+        return (None, None)

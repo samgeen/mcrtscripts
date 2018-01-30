@@ -1,0 +1,191 @@
+! Find the triaxial structure of a series of points
+! Sam Geen, January 2018
+
+subroutine findaxes(mass,x,y,z,ncells,a,b,c)
+
+    ! determine the principal axis of the system
+
+    implicit none
+    ! Interface variables
+    integer,intent(in)::ncells ! Number of cells in mass,x,y,z
+    real(kind=8),dimension(1:ncells),intent(in)::mass,x,y,z ! Weight of cells (e.g. mass), xyz position
+    real(kind=8),intent(out)::a,b,c ! Triaxial ellipsoid values
+
+    ! Internal variables
+    integer::nrot
+    real(kind=8)::mat(1:3,1:3)
+    real(kind=8)::d(3),v(3,3),com(3)
+    
+    ! Centre of mass
+    call findcom(mass,x,y,z,ncells,com)
+
+    ! Find inertial tensor
+    call det_inertial_tensor(mass,x,y,z,ncells,com,mat)
+
+    ! OK at this point I'm going to stop pretending I understand what I copy pasted from HaloMaker
+    call jacobi(mat,3,d,v,nrot)
+
+    d = sqrt(d/sum(mass))
+    a = d(1)
+    b = d(2)
+    b = d(3)
+
+end subroutine findaxes
+
+subroutine findcom(mass,x,y,z,ncells,com)
+
+    ! Find centre of mass of system
+
+    implicit none
+
+    integer,intent(in)::ncells ! Number of cells in mass,x,y,z
+    real(kind=8),dimension(1:ncells),intent(in)::mass,x,y,z ! Weight of cells (e.g. mass), xyz position
+    real(kind=8),intent(out)::com(1:3)
+
+    integer::i
+    real(kind=8)::mtot
+
+    mtot = sum(mass)
+
+    com(1) = sum(mass*x)/mtot
+    com(2) = sum(mass*y)/mtot
+    com(3) = sum(mass*z)/mtot
+
+end subroutine findcom
+
+! COPIED FROM HALOMAKER, CHANGE
+!***********************************************************************
+subroutine det_inertial_tensor(mass,x,y,z,ncells,com,md)
+
+  ! Compute inertial tensor with respect to center of halo (either cdm or mbp)
+
+    implicit none
+
+    integer,intent(in)::ncells ! Number of cells in mass,x,y,z
+    real(kind=8),dimension(1:ncells),intent(in)::mass,x,y,z ! Weight of cells (e.g. mass), xyz position
+    real(kind=8),intent(in)::com(1:3)
+    real(kind=8),intent(out)::md(1:3,1:3)
+
+    integer::indexp
+    real(kind=8)::dx,dy,dz,m
+
+    md = 0d0   
+
+    do indexp=1,ncells
+        m = mass(indexp)
+        dx=x(indexp)-com(1)
+        dy=y(indexp)-com(2)
+        dz=z(indexp)-com(3)
+
+        md(1,1) = md(1,1) + m*dx*dx
+        md(1,2) = md(1,2) + m*dx*dy
+        md(1,3) = md(1,3) + m*dx*dz
+        md(2,1) = md(2,1) + m*dx*dy
+        md(2,2) = md(2,2) + m*dy*dy
+        md(2,3) = md(2,3) + m*dy*dz
+        md(3,1) = md(3,1) + m*dx*dz
+        md(3,2) = md(3,2) + m*dy*dz
+        md(3,3) = md(3,3) + m*dz*dz
+
+    end do
+
+end subroutine det_inertial_tensor
+
+!***********************************************************************
+subroutine jacobi(a,np,d,v,nrot)
+! Honestly for all I know how this works it could be emailing Derek Jacobi for 3 numbers
+
+  implicit none
+
+  integer :: np,nrot
+  integer,parameter :: nmax = 500
+  real(kind=8) :: a(np,np),d(np),v(np,np)
+  integer :: i,ip,iq,j
+  real(kind=8) :: c,g,h,s,sm,t,tau,theta,tresh,b(nmax),z(nmax)
+
+  v = 0.
+  do ip = 1,np
+     v(ip,ip) = 1.
+  end do
+  z = 0.
+  do ip = 1,np
+     b(ip) = a(ip,ip)
+     d(ip) = b(ip)
+  end do
+  nrot = 0
+  do i = 1,50
+     sm = 0.
+     do ip = 1,np-1
+        do iq = ip+1,np
+           sm = sm+abs(a(ip,iq))
+        end do
+     end do
+     if (sm .eq. 0.) return
+     if (i .lt. 4) then
+        tresh = 0.2*sm/np**2
+     else
+        tresh = 0.
+     endif
+     do ip = 1,np-1
+        do iq = ip+1,np
+           g = 100.*abs(a(ip,iq))
+           if ((i .gt. 4) .and. (abs(d(ip))+g .eq. abs(d(ip))) .and. (abs(d(iq))+g .eq. abs(d(iq)))) then
+              a(ip,iq) = 0.
+           else if (abs(a(ip,iq)) .gt. tresh) then
+              h = d(iq)-d(ip)
+              if (abs(h)+g .eq. abs(h)) then
+                 t     = a(ip,iq)/h
+              else
+                 theta = 0.5*h/a(ip,iq)
+                 t     = 1./(abs(theta)+sqrt(1.+theta**2))
+                 if (theta .lt. 0.0) t = -t
+              endif
+              c        = 1./sqrt(1+t**2)
+              s        = t*c
+              tau      = s/(1.+c)
+              h        = t*a(ip,iq)
+              z(ip)    = z(ip)-h
+              z(iq)    = z(iq)+h
+              d(ip)    = d(ip)-h
+              d(iq)    = d(iq)+h
+              a(ip,iq) = 0.0
+              do j = 1,ip-1
+                 g       = a(j,ip)
+                 h       = a(j,iq)
+                 a(j,ip) = g-s*(h+g*tau)
+                 a(j,iq) = h+s*(g-h*tau)
+              end do
+              do j = ip+1,iq-1
+                 g       = a(ip,j)
+                 h       = a(j,iq)
+                 a(ip,j) = g-s*(h+g*tau)
+                 a(j,iq) = h+s*(g-h*tau)
+              end do
+              do j = iq+1,np
+                 g       = a(ip,j)
+                 h       = a(iq,j)
+                 a(ip,j) = g-s*(h+g*tau)
+                 a(iq,j) = h+s*(g-h*tau)
+              end do
+              do j = 1,np
+                 g       = v(j,ip)
+                 h       = v(j,iq)
+                 v(j,ip) = g-s*(h+g*tau)
+                 v(j,iq) = h+s*(g-h*tau)
+              end do
+              nrot = nrot+1
+           endif
+        enddo
+     enddo
+     do ip = 1,np
+        b(ip) = b(ip)+z(ip)
+        d(ip) = b(ip)
+        z(ip) = 0.0
+     end do
+  end do
+
+  stop 'too many iterations in jacobi'
+
+  return
+
+end subroutine jacobi

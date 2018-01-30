@@ -1,0 +1,53 @@
+
+'''
+Profiles set by Franco 1990
+Sam Geen, November 2014
+'''
+
+import numpy as np
+import matzner2002
+import profilesphere
+
+def Coeffs(sim):
+    # Get snapshot at t=0 (1.25Myr)
+    # Hard-code rc from inspection
+    rc = 2.0 # pc
+    unit_time_Myr = matzner2002.unittimeMyr(sim)
+    snap = sim.FindAtTime(1.25/unit_time_Myr)
+    r, prof = profilesphere.profileHamu(snap,"rho",rcut=0.25)
+    r /= rc
+    pout = prof[r > 1.0]
+    rout = r[r > 1.0]
+    pin = prof[r <= 1.0]
+    rin = prof[r <= 1.0]
+    power, coeff = np.polyfit(np.log(rout), np.log(pout),deg=1)
+    # n = nc(r/rc)^(-w)
+    w = -power
+    nc = np.exp(1)**coeff
+    delta = 0.55 * (w - 3.0) + 2.8 # eqn 26b
+    print sim.Name(), "coefficients (nc, rc, w, delta):", nc, rc, w, delta
+    return nc, rc, w, delta
+
+#COPIED FROM MATZNER AS REFERENCE
+TODO : COMPARE THIS TO THE MAXIMUM EXTENT OF THE CHAMPAGNE FLOWS
+def Findrcore(sim):
+    '''
+    Find extent of HII region in pc with simulation snapshot time
+    eqn 26a
+    '''
+    unit_time_Myr = matzner2002.unittimeMyr(sim)
+    times = sim.Times()*unit_time_Myr - 1.25
+    times = times[times >= 0.0]
+    nc, rc, w, delta = Coeffs(sim)
+    ci = 9.55908274 # in km/s for 8400K
+    timemult = 1.02269032 # 1 km/s * 1 Myr / 1pc
+    # This is for w=3
+    #rcore = 3.2*rc*(ci*times/rc*timemult)**1.1
+    # This is for 3/2 > w > 3
+    rcore = rc + (1.0 + (3.0 / (3.0 - w))**0.5)*ci * times * timemult
+    # This is only valid for w > 3
+    #rcore = rc * (1.0 + (4.0 / (w - 3))**0.5 * ((delta + 2.0 - w) / 2.0) * \
+    #          (ci * times / rc) * timemult)**(2 / (delta + 2 - w))
+    return times, rcore
+
+

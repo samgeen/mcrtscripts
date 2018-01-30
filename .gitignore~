@@ -1,0 +1,12 @@
+*.o
+*.mod
+*.pdf
+*.png
+*.eps
+*.ps
+StellarSources/
+runs_anais/
+cubes/
+runs/
+runs_anais
+runs

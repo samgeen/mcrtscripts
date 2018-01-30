@@ -1,0 +1,94 @@
+'''
+Uniform line styles and colours for the project
+Sam Geen, January 2016
+'''
+
+import Hamu
+import customplot
+import matplotlib.pyplot as plt
+import matplotlib.lines as mlines
+from collections import OrderedDict
+
+'''
+Sims:
+Size - L, M, S, XS
+RT? - RT, NRT
+'''
+
+def finditem(tosearch,simname):
+    for key in tosearch.iterkeys():
+        if key in simname:
+            return tosearch[key]
+    # Oops! Not found the result?
+    print "Error: No result for", simname, "in keys",tosearch.keys()
+    raise KeyError
+
+colours = {}
+#OLD
+#colours["L"] = r"#d7191c"
+#colours["M"] = r"#111111"
+#colours["S"] = r"#74add1"
+#colours["XS"] = r"#4575b4"
+clouds = ["L","M","S","XS"][::-1]
+# Pink colour scheme
+cols = filter(None,'''
+#fbb4b9
+#f768a1
+#c51b8a
+#7a0177
+'''.split("\n"))
+# Varied colours with different lightness scheme
+cols = ['#000000', '#1a6433', '#2a76d4', '#f18c8d'][::-1]
+colours = {key: value for (key, value) in zip(clouds, cols)}
+
+def colour(simname):
+    return finditem(colours,simname)
+
+lines = {}
+lines["-RT"] = "-"
+lines["-NRT"] = "--"
+
+def line(simname):
+    return finditem(lines,simname)
+
+sizelabels = {}
+#sizelabels["L"] = r"$R/R_0 = 2.25$"
+#sizelabels["M"] = r"$R/R_0 = 1$"
+#sizelabels["S"] = r"$R/R_0 = 0.5625$"
+#sizelabels["XS"] = r"$R/R_0 = 0.25$"
+sizelabels["L"]  = r"L (Most Diffuse)"
+sizelabels["M"]  = r"M (Fiducial)"
+sizelabels["S"]  = r"S (More Compact)"
+sizelabels["XS"] = r"XS (Most Compact)"
+
+def sizelabel(simname):
+    return finditem(sizelabels,simname)
+
+rtlabels = {}
+rtlabels["-RT"] = r"Radiation Included"
+rtlabels["-NRT"] = r"No radiation"
+
+def rtlabel(simname):
+    return finditem(rtlabels,simname)
+
+def sizelegend():
+    plotlines = []
+    for size, col in colours.iteritems():
+        plotlines.append(mlines.Line2D([], [], 
+                                       color=col,
+                                       linestyle="-",
+                                       label=sizelabel(size)))
+    labels = [line.get_label() for line in plotlines]
+    return plotlines, labels
+
+def rtlegend():
+    plotlines = []
+    for rt, line in lines.iteritems():
+        plotlines.append(mlines.Line2D([], [], 
+                                       color="k",
+                                       linestyle=line,
+                                       label=rtlabel(rt)))
+    labels = [line.get_label() for line in plotlines]
+    return plotlines, labels
+
+

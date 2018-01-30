@@ -1,0 +1,374 @@
+'''
+Compare to the Raga solution (c.f. Pascal Tremblin's work)
+Sam Geen, April 2015
+'''
+
+import os
+
+import customplot
+import matplotlib.pyplot as plt
+
+import scipy.interpolate
+
+import Hamu
+
+import numpy as np
+
+import profilesphere, outflowmodel, plottimeseries, timeplot
+
+from pymses.utils import constants as C
+
+# Some global properties
+# BE VERY CAREFUL TO MAKE SURE THAT THESE ARE GOOOOOOOOD!
+# Embedded -> star at centre of cloud (embedded = True)
+# Blister -> star at edge of cloud (embedded = False)
+Te = 8400.0 # K
+Text = 50.0 # K, I dunno
+kB = 1.3806e-16 # erg / K
+gamma = 1.4
+X = 0.74
+#mu = X*2.0 + 0.25*(1-X)*2.0 # Ionised hydrogen plus once-ionised He
+mu = 0.61 # From Matzner 2002
+mH = 1.67e-24 # g
+cs = np.sqrt(gamma * kB * Te / (mH*mu))
+c0 = np.sqrt(gamma * kB * Text / (mH*mu))
+print "USING cs = ", cs/1e5, "km/s"
+def alpha_B_HII(T):
+    # input  : T in K
+    # output : HII recombination rate (in cm3 / s)
+    l = 315614./T
+    a = 2.753e-14 * l**1.5 / (1. + (l/2.74)**0.407)**2.242
+    return a
+beta2 = alpha_B_HII(Te)
+#beta2 = 2e-10 * Te**(-0.75) # cm^3/s
+G = 6.674e-8
+pcincm = 3.08567758e18
+Myrins = 3.15569e13
+#profilemodule = rayprof
+profilemodule = profilesphere
+
+def smooth(x,window_len=11,window='hanning'):
+ 
+    if x.ndim != 1:
+        raise ValueError, "smooth only accepts 1 dimension arrays."
+        
+    if x.size < window_len:
+        raise ValueError, "Input vector needs to be bigger than window size."
+  
+    if window_len<3:
+        return x
+        
+  
+    if not window in ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']:
+        raise ValueError, "Window is on of 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'"
+  
+   
+    s=np.r_[x[window_len-1:0:-1],x,x[-1:-window_len:-1]]
+    #print(len(s))
+    if window == 'flat': #moving average
+        w=np.ones(window_len,'d')
+    else:
+        w=eval('np.'+window+'(window_len)')
+  
+    y=np.convolve(w/w.sum(),s,mode='valid')
+    return y
+
+class Profiles(object):
+    def __init__(self, sim,hydro):
+        self._sim = sim
+        self._proffunc = None
+        self._lasttime = 0.0
+        self._hydro = hydro
+        self._Setup()
+        
+    def _Setup(self):
+        # Gather profiles
+        profs = []
+        r = None
+        t = []
+        myr = None
+        profs = None
+        rs = None
+        ts = None
+        nt = len(self._sim.Times())
+        iprof = 0
+        for snap in self._sim.Snapshots():
+            if myr is None:
+                myr = snap.RawData().info["unit_time"].express(C.Myr)
+            r, prof = profilemodule.profileHamu(snap,self._hydro,1e6)
+            time = snap.Time()*myr*Myrins
+            if profs is None:
+                nr = len(r)
+                profs = np.zeros((nr*nt))
+                ones = np.ones((nr))
+                rs = profs+0.0
+                ts = profs+0.0
+            profs[iprof:iprof+nr] = prof
+            rs[iprof:iprof+nr] = r
+            ts[iprof:iprof+nr] = ones*time
+            iprof += nr
+        #import pdb; pdb.set_trace()
+        #nt = len(t)
+        #for i in range(0,nr):
+        #    profs[i,:] = smooth(profs[i,:],window_len=10)[0:nt]
+        rs *= pcincm
+        self._lasttime = time
+        # Make interpolator
+        # TODO: CHECK CORRECT x, y AXIS ORIENTATION
+        self._proffunc = scipy.interpolate.interp2d(rs,ts,profs,kind="linear")
+
+    def LastTime(self):
+        return self._lasttime
+
+    def __call__(self, radii, times):
+        return self._proffunc(radii, times)
+
+class SolutionFull(object):
+    '''
+    Full Raga + infall solution
+    '''
+    def __init__(self,n0,rs,rcloud):
+        self._n0 = n0
+        self._rs = rs
+        self._rcloud = rcloud
+
+    def fracs(self,r,n,vr,turb):
+        '''
+        Compute fractions from inputs
+        '''
+        vdispsq = (turb*1e5)**2 + c0**2
+        return r/self._rs, n/self._n0, vr/cs, vdispsq/cs**2
+
+    def __call__(self,r,n,vr,turb):
+        rs = self._rs
+        n0 = self._n0
+        #import pdb; pdb.set_trace()
+        vdispsq = (turb*1e5)**2 + c0**2
+        #print "vs:", turb*1e5, vr*1e5,c0,cs
+        #print "rs:", r, rs
+        #print "ns:", n, n0
+        #vdispsq = c0**2
+        # OUTFLOW HACK
+        #if r > self._rcloud:
+        #    return cs
+        return cs*((rs/r)**(3./4.)*np.sqrt(n0/n)-vdispsq/cs**2/((rs/r)**(3./4.)*np.sqrt(n0/n))+vr*1e5/cs)
+
+class SolutionSpitzerLike(object):
+    '''
+    Just the Spitzer-like parts
+    '''
+    def __init__(self,n0,rs,rcloud):
+        self._n0 = n0
+        self._rs = rs
+        self._rcloud = rcloud
+
+    def fracs(self,r,n,vr,turb):
+        '''
+        Compute fractions from inputs
+        '''
+        vdispsq = (turb*1e5)**2 + c0**2
+        return r/self._rs, n/self._n0, vr/cs, vdispsq/cs**2
+
+    def __call__(self,r,n,vr,turb):
+        rs = self._rs
+        n0 = self._n0
+        #if r > self._rcloud:
+        #    return cs
+        return cs*((rs/r)**(3./4.)*np.sqrt(n0/n))
+
+def ComputeExpansion(sim,solntype="full"):
+    '''
+    Compute the solution by integrating in time
+    '''
+    simname = sim.Name()
+    fluxstr = simname[1:3]
+    tend = 5.0
+    tini = 1.25
+    nofluxsim = Hamu.Simulation(simname.replace(fluxstr,"00"))
+    rcloud = 5.0*pcincm
+    if "F2" in simname:
+        tini = 1.25*2.0
+        nofluxsim = Hamu.Simulation("N00_M4_B02")
+    elif "F3" in simname:
+        tini = 1.25*3.0
+        nofluxsim = Hamu.Simulation("N00_M4_B02")
+        tend = 7.0
+    elif "_C2" in simname:
+        rcloud *= 0.75**2
+        tini = 1.25*0.75**3
+    elif "_C" in simname:
+        rcloud *= 0.5**2
+        tini = 1.25*0.5**3
+        nofluxsim = Hamu.Simulation("N00_M4_B02_C8")
+    outflowmodel.tstart = tini
+    timeplot.starts[simname] = tini
+    n0 = outflowmodel.FindnH(sim)
+    rs = outflowmodel.Findrstromgren(sim,dens=n0)
+    # Set function to use
+    if solntype == "full":
+        soln = SolutionFull(n0,rs,rcloud)
+    elif solntype == "spitzlike":
+        soln = SolutionSpitzerLike(n0,rs,rcloud)
+    else:
+        print "Oops, we don't have this type of solution:", solntype
+        raise ValueError
+    # Get profile info
+    nprof = Profiles(nofluxsim,"rho")
+    vrprof = Profiles(nofluxsim,"vrad")
+    spdprof = Profiles(nofluxsim,"spd")
+    
+    # Run integrator
+        
+    dt = 1e-4
+    numr = int((tend-tini)/dt+1)
+    rii = np.zeros((numr))
+    times = np.zeros((numr))
+    rfracs = np.zeros((numr))
+    nfracs = np.zeros((numr))
+    vrfracs = np.zeros((numr))
+    vtfracs = np.zeros((numr))
+    rii[0] = rs
+    times[0] = tini*Myrins
+    tend *= Myrins
+    dt *= Myrins
+    itime = 0
+    print numr
+    while itime < numr-1: #(times[itime] < tend):
+        # Sample simulation values
+        ncurr = nprof(rii[itime],times[itime])[0]
+        vrcurr = vrprof(rii[itime],times[itime])[0]
+        spdcurr = spdprof(rii[itime],times[itime])[0]
+        spdcent = spdprof(0,times[itime])[0]
+        turbcurr = spdcent#np.sqrt(np.max([(spdcurr**2 - vrcurr**2,0.0)]))
+        # Compute solutions
+        drdt = soln(rii[itime],ncurr,vrcurr,turbcurr)
+        if np.isnan(drdt) or np.isinf(drdt):
+           drdt = 0.0 
+        rii[itime+1] = rii[itime]+drdt*dt
+        if rii[itime+1] < 0:
+            rii[itime+1] = 0.0
+        # Compute fractional values from model inputs
+        rfracs[itime],nfracs[itime],vrfracs[itime],vtfracs[itime] = \
+            soln.fracs(rii[itime],ncurr,vrcurr,turbcurr)
+        # Update time
+        times[itime+1] = times[itime]+dt
+        itime += 1
+
+    # Cut solution after last time in profile data
+    rii = rii[times < nprof.LastTime()]
+    rfracs = rfracs[times < nprof.LastTime()]
+    nfracs = nfracs[times < nprof.LastTime()]
+    vrfracs = vrfracs[times < nprof.LastTime()]
+    vtfracs = vtfracs[times < nprof.LastTime()]
+    times = times[times < nprof.LastTime()]
+    # Scale outputs
+    rii /= pcincm
+    times /= Myrins
+    times -= tini
+    return times, rii, rfracs, nfracs, vrfracs, vtfracs
+
+def PlotForSims(sims,name):
+    plt.clf()
+    cols = ["r","m","b"]
+    try:
+        os.mkdir("../plots/raga/"+name)
+    except:
+        pass
+    solnsfull = {}
+    solnsspitz = {}
+    for sim in sims:
+        # Run this first to set the tstart values in timeplot
+        solnsfull[sim.Name()]  = ComputeExpansion(sim,"full")
+        solnsspitz[sim.Name()] = ComputeExpansion(sim,"spitzlike")
+    icol = 0
+    for sim in sims:
+        col = cols[icol]
+        tsim, rsim = timeplot.funcovertime(sim,plottimeseries.meanradius)
+        plt.plot(tsim,rsim,col+"-",label=sim.Label()+" sim")
+        icol += 1
+    icol = 0
+    for sim in sims:
+        col = cols[icol]
+        # d[1-4] are dummy variables we don't need here
+        traga, rraga, d1, d2, d3, d4 = solnsspitz[sim.Name()]
+        plt.plot(traga,rraga,col+":",label="Spitzer-Like")
+        icol += 1
+    icol = 0
+    for sim in sims:
+        col = cols[icol]
+        # d[1-4] are dummy variables we don't need here
+        traga, rraga, d1, d2, d3, d4 = solnsfull[sim.Name()]
+        plt.plot(traga,rraga,col+"--",label="Raga+infall")
+        icol += 1
+    plt.xlim([0,4])
+    plt.ylim([0.01,14])
+    plt.yscale("log")
+    plt.xlabel("Time / Myr")
+    plt.ylabel("Radius / pc")
+    leg = plt.legend(fontsize=9,loc="lower right",
+                     ncol=3,frameon=False)
+    # Re-align the y-axes THANK YOU VERY MUCH FOR DOING THIS YOURSELF PYPLOT
+    txts = leg.get_texts()
+    nsim = len(sims)
+    for itxt in range(0,nsim):
+        left = txts[itxt]
+        right = txts[itxt+nsim]
+        right.set_y(left.get_position()[1])
+        left.set_verticalalignment("baseline")
+        right.set_verticalalignment("baseline")
+    plt.savefig("../plots/raga/"+name+"/ragacompare.pdf")
+    # Now plot the fractional values
+    plt.clf()
+    icol = 0
+    for sim in sims:
+        col = cols[icol]
+        traga,rraga,rfrac,nfrac,vrfrac,vtfrac = solnsfull[sim.Name()]
+        # Don't do rfrac, makes plot too busy, kinda already done in other plot
+        #plt.plot(traga,rfrac,"-"+col,label=sim.Label()+ "r/r$_s$")
+        plt.plot(traga,nfrac,col+"-",label=sim.Label()+ " n/n$_0$")
+        icol += 1
+    icol = 0
+    for sim in sims:
+        col = cols[icol]
+        traga,rraga,rfrac,nfrac,vrfrac,vtfrac = solnsfull[sim.Name()]
+        # Remove negative values
+        vrfrac = -vrfrac # Only show infall
+        vrfrac[vrfrac <= 0] = vrfrac[vrfrac > 0].min()
+        plt.plot(traga,vrfrac,col+"--",label="v$_{r}$/c$_i$")
+        icol += 1
+    icol = 0
+    for sim in sims:
+        col = cols[icol]
+        traga,rraga,rfrac,nfrac,vrfrac,vtfrac = solnsfull[sim.Name()]
+        plt.plot(traga,vtfrac,col+":",label="v$_{t}^{2}$/c$_{i}^{2}$")
+        icol += 1
+    plt.plot([0,4],[1,1],"k--")
+    plt.xlim([0,4])
+    plt.xlabel("Time / Myr")
+    plt.ylabel("Fractional Value")
+    plt.yscale("log")
+    leg = plt.legend(fontsize=9,loc="lower right",
+                     ncol=3,frameon=False)
+    txts = leg.get_texts()
+    nsim = len(sims)
+    for itxt in range(0,nsim):
+        left = txts[itxt]
+        right = txts[itxt+nsim]
+        right.set_y(left.get_position()[1])
+        left.set_verticalalignment("baseline")
+        right.set_verticalalignment("baseline")
+    plt.savefig("../plots/raga/"+name+"/ragafractionals.pdf")
+
+if __name__=="__main__":
+    #sims = [Hamu.Simulation(s) for s in ["N47_M4_B02",
+    #                                     "N48_M4_B02",
+    #                                     "N49_M4_B02"]]
+    #PlotForSims(sims,"photons")
+    sims = [Hamu.Simulation(s) for s in ["N48_M4_B02",
+                                         "N48_M4_B02_C2",
+                                         "N48_M4_B02_C"]]
+    PlotForSims(sims,"compact")
+    #sims = [Hamu.Simulation(s) for s in ["N48_M4_B02",
+    #                                     "N48_M4_B02_F2",
+    #                                     "N48_M4_B02_F3"]]
+    #PlotForSims(sims,"tstart")

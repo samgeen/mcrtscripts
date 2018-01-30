@@ -1,0 +1,119 @@
+'''
+Functions taken from Matzner 2002 to compare to sim results
+Sam Geen, November 2014
+'''
+
+from pymses.utils import constants as C
+import profilesphere
+
+# NOTE!!!! THERE IS SOME HARD-CODING IN THIS, BE SUPER CAREFUL
+
+# Some global properties
+# BE VERY CAREFUL TO MAKE SURE THAT THESE ARE GOOOOOOOOD!
+# Embedded -> star at centre of cloud (embedded = True)
+# Blister -> star at edge of cloud (embedded = False)
+embedded = True
+rcoeff = {False: 23.0, True: 19.0}
+momcoeff = {False:2.4e5, True: 2.2e5}
+mdestcoeff = 1.2e4
+eta = 4.0/7.0
+Mcloud = 1e4
+tstart = 1.25
+
+def unittimeMyr(sim):
+    return sim.Snapshots()[0].RawData().info["unit_time"].express(C.Myr)
+
+def FindNH22(sim):
+    # Calculate the column density at t=1.25Myr the start of the sim
+    unit_time_Myr = unittimeMyr(sim)
+    start = sim.FindAtTime(tstart/unit_time_Myr)
+    # 0.25 is the radius of the dense sphere
+    NH22 = profilesphere.column_density(start,rcut=0.25)/1e22
+    print "Using a value of N_H22 = ",NH22
+    return NH22
+
+def FindFlux(sim):
+    '''
+    Find the flux. This uses the naming convention NXX_MY_BZZ
+    '''
+    fluxstr = sim.Name()[1:3]
+    return 10.0**float(fluxstr)
+
+def FindMass(sim):
+    '''
+    Find the cloud mass. This uses the naming convention NXX_MY_BZZ
+    '''
+    massstr = sim.Name()[5:6]
+    return 10.0**float(massstr)
+
+def Findrii(sim):
+    '''
+    Find extent of HII region in pc with simulation snapshot time
+    '''
+    print "Finding Matzner 2002 radius for sim ", sim.Name()
+    unit_time_Myr = unittimeMyr(sim)
+    times = sim.Times()*unit_time_Myr - tstart
+    times = times[times >= 0.0]
+    NH22 = FindNH22(sim)
+    mass = FindMass(sim)
+    flux = FindFlux(sim)
+    print "For", sim.Name(), "NH22, mass, flux =", NH22,mass,flux
+    rii = rcoeff[embedded] * ( (times/3.7)**4 * (NH22/1.5)**(-3) * \
+        (mass/1e6) * (flux/1e49) )**(1.0/7.0)
+    print "RADIUS DEBUG", rii
+    if len(rii) == 0:
+        import pdb; pdb.set_trace()
+    return times, rii
+
+def FindMom(sim):
+    '''
+    Find the momentum of the shell in g cm/s with simulation snapshot time
+    '''
+    print "Finding Matzner 2002 momentum for sim ", sim.Name()
+    msolarkmps_cgs = 1.9891e38 # 1 Msolar km/s in g cm/s
+    unit_time_Myr = unittimeMyr(sim)
+    times = sim.Times()*unit_time_Myr - tstart
+    times = times[times >= 0.0]
+    NH22 = FindNH22(sim)
+    mass = FindMass(sim)
+    flux = FindFlux(sim)
+    mom = momcoeff[embedded] * ( (times/3.7)**9 * (NH22/1.5)**(-1.5) * \
+        (mass/1e6)**0.5 * (flux/1e49)**4 )**(1.0/7.0) * msolarkmps_cgs
+    mom += 3.56571525e+42 # Initial momentum of cloud
+    return times, mom
+
+def FindMdest(sim):
+    '''
+    Find the evaporated mass in msolar with simulation snapshot time
+    Equation 19 plus the limit given in Equation 20
+    NOTE/WARNING: Matzner 2002 only quotes for a blister region
+    '''
+    print "Finding Matzner 2002 ionised mass for sim ", sim.Name()
+    unit_time_Myr = unittimeMyr(sim)
+    times = sim.Times()*unit_time_Myr - tstart
+    times = times[times >= 0.0]
+    NH22 = FindNH22(sim)
+    mass = FindMass(sim)
+    flux = FindFlux(sim)
+    mdest = mdestcoeff * ( (times/3.7)**9 * (NH22/1.5)**(-1.5) * \
+        (mass/1e6)**0.5 * (flux/1e49)**4 )**(1.0/7.0)
+    mmax = 4.6e4 * (NH22/1.5)**(-3.0/8.0) * (mass/1e6)**(7.0/8.0) * \
+        (flux/1e49)**(1.0/4.0)
+    mdest[mdest > mmax] = mmax
+    return times, mdest
+
+def FindMdestMax(sim):
+    '''
+    Equation 20, limit on ionised mass
+    Returns a flat function in time at mdest,max
+    '''
+    unit_time_Myr = unittimeMyr(sim)
+    times = sim.Times()*unit_time_Myr - tstart
+    times = times[times >= 0.0]
+    NH22 = FindNH22(sim)
+    mass = FindMass(sim)
+    flux = FindFlux(sim)
+    mmax = 4.6e4 * (NH22/1.5)**(-3.0/8.0) * (mass/1e6)**(7.0/8.0) * \
+        (flux/1e49)**(1.0/4.0)
+    return times, times*0.0+mmax
+    
