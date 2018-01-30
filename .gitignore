@@ -5,6 +5,8 @@
 *.eps
 *.ps
 *.fits
+*~
+*.pyc
 StellarSources/
 runs_anais/
 cubes/
