@@ -23,6 +23,7 @@ import pymses
 import sinks
 import stellars
 import timefuncs
+import singlestar
 
 #Hamu.Workspace("HIISFE")
 
@@ -90,6 +91,9 @@ hamusims = {}
 for simname in allsims:
     hamusims[simname] = _MakeSim(simname)
 
+# Set up single star module
+startableloc = "/home/sgeen/MC_RT/StellarSources/Compressed/singlestar_z0.014"
+singlestar.star_setup(startableloc)
 
 # Useful functions
 # N_H to/from A_k (from Lombardi+ 2010)
