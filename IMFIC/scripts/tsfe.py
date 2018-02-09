@@ -8,6 +8,8 @@ from pymses.utils import constants as C
 
 from startup import *
 
+import matplotlib.patheffects as pe
+
 def _tsfeinsnap(snap):
     sink = sinks.FindSinks(snap)
     mgas = 1e4
@@ -24,7 +26,8 @@ def run(simnames,plotname):
     plt.clf()
     for simname in simnames:
         t, sfe = runforsim(simname)
-        plt.plot(t,sfe,color=linestyles.Colour(simname),label=simname)
+        plt.plot(t,sfe,color=linestyles.Colour(simname),label=simname,
+                 path_effects=[pe.Stroke(linewidth=5, foreground='k'), pe.Normal()])
     plt.xlabel("Time / Myr")
     plt.ylabel("$M_{stars} / M_{ini}$")
     plt.legend(frameon=False,fontsize="x-small")

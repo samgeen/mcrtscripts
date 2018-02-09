@@ -16,13 +16,44 @@ from prettyplotlib import brewer2mpl
 icmap = brewer2mpl.get_map('RdPu', 'Sequential', 9,reverse=True).mpl_colormap
 imfmap = brewer2mpl.get_map('OrRd', 'Sequential', 9,reverse=True).mpl_colormap
 
-def Colour(simname):
+imfabbrevs = "STE,GIL,STU,THV,POT,ASK,HUR,SKY,BJU,GLU,GAT,KET,KER".split(",")
+icabbrevs = "GRY,JOL,JOU,GAL,TIO,CAG,SNE,BEF,STL,MAR,TAN,OLD,YAG".split(",")
+starsub = r"$_{\normalfont\textsc{stars}}$"
+turbsub = r"$_{\normalfont\textsc{turb}}$"
+
+def RunNum(simname):
     if "IMF" in simname:
+        run = "imf"
+    else:
+        run = "ic"
+    num = int(simname[-2:])
+    return run, num
+
+def Colour(simname):
+    run, num = RunNum(simname)
+    if run == "imf":
         colmap = imfmap
     else:
         colmap = icmap
-    num = float(simname[-2:])
     # TODO: REMOVE TOO-LIGHT COLOURS
-    col = colmap(num/13.0)
+    col = colmap(float(num)/13.0)
     return col
 
+def Label(simname,sub=False):
+    run, num = RunNum(simname)
+    if run == "imf":
+        label = imfabbrevs[num-1]
+        if sub:
+            label += starsub
+        return label
+    else:
+        label = icabbrevs[num-1]
+        if sub:
+            label += turbsub
+        return label
+    print "Oops, something went wrong in linestyles.Labels for simname",simname
+    raise ValueError
+
+#def Legend(run,scatter=True):
+#    if run == "imf":
+        
