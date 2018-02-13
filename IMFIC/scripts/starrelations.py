@@ -31,7 +31,7 @@ def findclustercompactness(snap):
                     np.sum(z*m)/mtot])
     var = np.sum((x-com[0])**2+(y-com[1])**2+(z-com[2])**2) / float(len(m))
     stddev = np.sqrt(var)
-    return c
+    return stddev
 
 def _findmaxstar(snap):
     stellar = stellars.FindStellar(snap)
@@ -71,8 +71,9 @@ def runforsim(simname):
     mmax = 0.0
     tcreatedlist = {}
     if toplot == "compactness":
-        snap = sim.FindAtTime(tffcloud_code)
+        snap = sim.FindAtTime(1.5*tffcloud_code)
         c = findclustercompactness(snap)
+        mmax = c
     for snap in sim.Snapshots():
         if toplot == "alltimemax":
             mmax = max(findmaxstar(snap),mmax)
@@ -140,6 +141,8 @@ def run(simnames,plotname,toplotin=None):
         plt.xlabel("Peak cluster UV photon emission rate / Hz")
     if toplot == "nphotonstot":
         plt.xlabel("Total number of UV photons emitted before 7 Myr")
+    if toplot == "compactness":
+        plt.xlabel("Stddev of sink separation / pc")
     allstartxt = "_"+toplot
     plt.ylabel("$\%$ TSFE (final)")
     plt.xscale("log")
