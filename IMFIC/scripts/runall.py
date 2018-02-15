@@ -14,6 +14,7 @@ def runall():
 def runstarrelations():
     for toplotnow in ["compactness","alltimemax","firstmass","firsttime","nphotons","nphotonstot"]:
         starrelations.run(imfsims,"imf",toplotnow)
+        starrelations.run(icsims,"ic",toplotnow)
 
 def runcorrelatestructure():
     for toplotnow in "F,T,L,M,S,C".split(","):

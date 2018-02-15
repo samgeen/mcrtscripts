@@ -25,6 +25,8 @@ def findclustercompactness(snap):
     y = sink.y
     z = sink.z
     m = sink.mass
+    if len(m) <= 1:
+        return None
     mtot = np.sum(m)
     com = np.array([np.sum(x*m)/mtot,
                     np.sum(y*m)/mtot,
@@ -115,14 +117,15 @@ def run(simnames,plotname,toplotin=None):
     cols = []
     for simname in simnames:
         sfe, F, col = runforsim(simname)
-        tsfes.append(sfe)
-        Fs.append(F)
-        cols.append(col)
-        label = linestyles.Label(simname)
-        plt.scatter(F,sfe*100,s=80,
-                    marker="o",c=col,edgecolors="k",
-                    label=label,zorder=2)
-        plt.gca().annotate(r".\ "+label, (F,sfe*100),fontsize="x-small",zorder=1)
+        if F is not None:
+            tsfes.append(sfe)
+            Fs.append(F)
+            cols.append(col)
+            label = linestyles.Label(simname)
+            plt.scatter(F,sfe*100,s=80,
+                        marker="o",c=col,edgecolors="k",
+                        label=label,zorder=2)
+            plt.gca().annotate(r".\ "+label, (F,sfe*100),fontsize="x-small",zorder=1)
     tsfes = np.array(tsfes)
     Fs = np.array(Fs)
     #plt.scatter(Fs,tsfes*100,s=80,marker="o",c=cols,edgecolors='k')
@@ -147,7 +150,7 @@ def run(simnames,plotname,toplotin=None):
     plt.ylabel("$\%$ TSFE (final)")
     plt.xscale("log")
     plt.yscale("log")
-    plotname = "../plots/starrelations"+allstartxt+".pdf"
+    plotname = "../plots/starrelations"+allstartxt+plotname+".pdf"
     regression.writecoeff(np.log10(Fs),np.log10(tsfes*100),plotname.replace(".pdf","_rxy.txt"))
     plt.savefig(plotname)
 
