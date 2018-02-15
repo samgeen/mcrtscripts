@@ -13,6 +13,8 @@ import pymses
 
 import numpy as np
 
+CACHEPATH = None
+
 class CacheFile(object):
     def __init__(self, snapshot, algorithm):
         self._snapshot = snapshot
@@ -173,7 +175,10 @@ class PymsesSnapshot(object):
         #    pathname = self._name
         #pathname = pathname.replace("/","__").replace("~","TILDE")
         #path = "./cache/"+pathname+"/output_"+str(self.OutputNumber()).zfill(5)+"/"
-        pathname = self._folder
+        if CACHEPATH is not None:
+            pathname = CACHEPATH+"/"+self._folder
+        else:
+            pathname = self._folder
         # Put the cache files in the simulation folder itself
         path = pathname+"/cache/output_"+str(self.OutputNumber()).zfill(5)+"/"
         if not os.path.exists(path):
