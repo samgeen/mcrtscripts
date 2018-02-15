@@ -5,32 +5,44 @@ Make a table of all the R values by plot
 from startup import *
 import glob
 
-def run(relation,params,labels,caption):
+def rstr(rin):
+    fr = float(rin)
+    rout =  "%.3g" % fr
+    if len(rout[rout.find("."):]) == 3:
+        rout = rout+r"0"
+    if rout[0] != "-":
+        #rout = r"\hphantom{-}"+rout
+        rout = r"+"+rout
+    return rout
+
+def run(relation,params,labels):
     nl = os.linesep
     print "Making table for", relation
     intro = r'''
-    \begin{table*}
     \begin{center}
     \begin{tabular}{llllllll}
-    \textbf{Quantity} & \textbf{Correlation coefficient} \\
+    \textbf{Quantity} & \multicolumn{3}{|c|}{\textbf{Correlation coefficient}} \\
     '''
+    # Comparison didn't work super well for IC runs here so I left it out
+    #if relation == "starrelations":
+    #    intro += r"Run = & \textsc{stars} & \textsc{turb} \\ "+os.linesep+" "
     if relation == "correlatestructure":
         intro += r"$n_{\mathrm{H}}\mathrm{(cutoff)/cm}^{-3} = $ & 10 & 100 & 1000 \\ "+os.linesep+" "
     intro += r"\hline "+os.linesep+" "
     outro = r'''
     \end{tabular}
     \end{center}
-    \caption{CAPTION}
-    \label{Rtable} 
-    \end{table*}
-    '''.replace("CAPTION",caption)
+    '''
 
     table = intro+""
     for param,label in zip(params,labels):
         if relation == "starrelations":
-            fname = "../plots/"+relation+"_"+param+"_rxy.txt"
-            rvalue = open(fname,"r").read().strip()
-            table += label+" & "+rvalue+" \\\\ "+os.linesep+" "
+            fnameic = "../plots/"+relation+"_"+param+"ic_rxy.txt"
+            fnameimf = "../plots/"+relation+"_"+param+"imf_rxy.txt"
+            rvalueic = rstr(open(fnameic,"r").read().strip())
+            rvalueimf = rstr(open(fnameimf,"r").read().strip())
+            #table += label+" & "+rvalueimf+" & "+rvalueic+" \\\\ "+os.linesep+" "
+            table += label+" & "+rvalueimf+" \\\\ "+os.linesep+" "
         else:
             table += label+" & "
             first = True
@@ -40,7 +52,7 @@ def run(relation,params,labels,caption):
                 else:
                     table += " & "
                 fname = "../plots/"+relation+"_"+param+"_n"+n+"parameter_rxy.txt"
-                rvalue = open(fname,"r").read().strip()
+                rvalue = rstr(open(fname,"r").read().strip())
                 table +=rvalue+" "
             table += "\\\\ "+os.linesep+" "
     table += outro
@@ -54,10 +66,8 @@ def run(relation,params,labels,caption):
 if __name__=="__main__":
     run("correlatestructure",
         ["T","L","M","S","C"],
-        ["Triaxiality","Longest Axis","Middlemost Axis","Shortest Axis","Compactness"],
-        "CAPTION HERE")
+        ["Triaxiality","Longest Axis","Middlemost Axis","Shortest Axis","Compactness"])
     run("starrelations",
         ["alltimemax","compactness","firstmass","nphotons","nphotonstot"],
         ["Most Massive Star","Cluster Compactness","Mass of First Star Formed","Peak Photon Emission Rate",
-         "Total Photons Emitted By Cluster"],
-        "CAPTION GOES HERE")
+         "Total Photons Emitted By Cluster"])

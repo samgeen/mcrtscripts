@@ -18,7 +18,7 @@ import astropy.convolution as conv
 ups = {'x':'z','y':'x','z':'y'}
 acrosses = {'x':'y','y':'z','z':'x'}
 
-IMSIZE = 4*1024
+IMSIZE = 1024
 
 def NH_op(snap):
     unit = snap.info["unit_density"].express(C.g_cc) * \

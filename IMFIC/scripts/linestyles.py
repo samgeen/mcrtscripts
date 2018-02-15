@@ -21,6 +21,12 @@ icabbrevs = "GRY,JOL,JOU,GAL,TIO,CAG,SNE,BEF,STL,MAR,TAN,OLD,YAG".split(",")
 starsub = r"$_{\normalfont\textsc{stars}}$"
 turbsub = r"$_{\normalfont\textsc{turb}}$"
 
+def ColourMap(simname):
+    if "imf" in simname.lower():
+        return imfmap
+    else:
+        return icmap
+
 def RunNum(simname):
     if "IMF" in simname:
         run = "imf"
