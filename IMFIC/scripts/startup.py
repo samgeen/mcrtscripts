@@ -29,11 +29,15 @@ import singlestar
 
 # Physical conversions
 X = 0.76
+mH = 1.6735326381e-24
 kB = 1.38062e-16
+G = 6.674e-8
+gamma = 1.4 # RAMSES hard-coded
 pcincm = 3.086e18
 Msuning = 1.9891e33
 mHing = 1.66e-24
 Myrins = 3.1556926e13
+
 
 # Simulation units (to prevent need to dig into code)
 unit_l      =  0.308000000000000E+19
@@ -137,5 +141,13 @@ def MakeDirs(folder):
     except:
         print "Not making directory", folder, "- it already exists!"
         pass
+
+def alpha_B_HII(T):
+    # HII recombination rate
+    # input  : T in K 
+    # output : HII recombination rate (in cm3 / s)
+    l = 315614./T
+    a = 2.753e-14 * l**1.5 / (1. + (l/2.74)**0.407)**2.242
+    return a   
 
 print "Imported various project-global modules"

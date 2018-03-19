@@ -20,6 +20,8 @@ imfabbrevs = "STE,GIL,STU,THV,POT,ASK,HUR,SKY,BJU,GLU,GAT,KET,KER".split(",")
 icabbrevs = "GRY,JOL,JOU,GAL,TIO,CAG,SNE,BEF,STL,MAR,TAN,OLD,YAG".split(",")
 starsub = r"$_{\normalfont\textsc{stars}}$"
 turbsub = r"$_{\normalfont\textsc{turb}}$"
+starsc  = r"\textsc{stars}"
+turbsc  = r"\textsc{turb}"
 
 def ColourMap(simname):
     if "imf" in simname.lower():

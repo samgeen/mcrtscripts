@@ -9,15 +9,18 @@ import pymses
 from pymses.filters import CellsToPoints 
 from pymses.utils import constants as C
 
-import tsfe, regression
+import tsfe, regression, trackstars, findproperties
 
-toplot = "alltimemax"
-toplot = "firstmass"
+# List of possible plotting values
+#toplot = "alltimemax"
+#toplot = "firstmass"
 # Of course every sim formed first star at first time in the IMF runs
-toplot = "firsttime"
-toplot = "nphotons"
-toplot = "nphotonstot"
-toplot = "compactness"
+#toplot = "firsttime"
+#toplot = "nphotons"
+#toplot = "nphotonstot"
+#toplot = "compactness"
+#toplot = "tracklength"
+#toplot = "nphotonstff"
 
 def findclustercompactness(snap):
     sink = sinks.FindSinks(snap)
@@ -66,34 +69,42 @@ def _findNphotons(snap,dtins=1.0):
     return nphotons
 findNphotons = Hamu.Algorithm(_findNphotons)
 
-def runforsim(simname):
+def runforsim(simname,xvalue,yvalue="sfe"):
     print "Running for simulation", simname
     sim = hamusims[simname]
-    # Find last TSFE
-    mmax = 0.0
+    FindStellarHamu = Hamu.Algorithm(stellars.FindStellar)
+    xout = 0.0
     tcreatedlist = {}
+    toplot = xvalue
     if toplot == "compactness":
         snap = sim.FindAtTime(1.5*tffcloud_code)
         c = findclustercompactness(snap)
-        mmax = c
+        xout = c
+    if toplot == "tracklength":
+        tracks = trackstars.runforsim(simname)
+        tracklength = 0.0
+        for track in tracks.itervalues():
+            tracklength += np.sqrt(np.sum((track[0,:]-track[track.shape[0]-1,:])**2))
+        tracklength /= float(len(tracks.keys()))
+        xout = tracklength
     for snap in sim.Snapshots():
         if toplot == "alltimemax":
-            mmax = max(findmaxstar(snap),mmax)
+            xout = max(findmaxstar(snap),xout)
         if toplot == "firstmass":
-            mmax = findmaxstar(snap)
-            if mmax > 0.0:
+            xout = findmaxstar(snap)
+            if xout > 0.0:
                 break
         if toplot == "firsttime":
             tcreated = findtcreated(snap)
             if tcreated > 0.0:
-                mmax = tcreated
+                xout = tcreated
                 break
         if toplot == "nphotons":
             nphot = findNphotons(snap)
             nUV = np.sum(nphot[3:5])
-            mmax = max(mmax,nUV)
-        if toplot == "nphotonstot":
-            stellar = stellars.FindStellar(snap)
+            xout = max(xout,nUV)
+        if toplot == "nphotonstot" or toplot == "nphotonstff":
+            stellar = FindStellarHamu(snap)
             for mass, tcreated in zip(stellar.mass, stellar.tcreated):
                 if not mass in tcreatedlist:
                     tcreatedlist[mass] = tcreated
@@ -102,38 +113,47 @@ def runforsim(simname):
         for mass, tcreated in tcreatedlist.iteritems():
             ageins = lasttimeins - tcreated*Myrins
             nphotons = singlestar.star_radiation(mass,0.0,ageins)
-            mmax += np.sum(nphotons[3:5])
-    sfe = tsfe.tsfeinsnap(sim.Snapshots()[-1])
-    col = linestyles.Colour(simname)
-    return sfe,mmax,col
+            xout += np.sum(nphotons[3:5])
+    if toplot == "nphotonstff":
+        lasttimeins = tffcloud_Myr * Myrins
+        for mass, tcreated in tcreatedlist.iteritems():
+            ageins = lasttimeins - tcreated*Myrins
+            nphotons = singlestar.star_radiation(mass,0.0,ageins)
+            xout += np.sum(nphotons[3:5])
+    if yvalue == "sfe":
+        yout = tsfe.tsfeinsnap(sim.Snapshots()[-1]) * 100 # as a percentage
+    if yvalue == "momentum":
+        func = Hamu.Algorithm(findproperties.totalmomentuminsnap)
+        yout = func(sim.FindAtTime(tffcloud_code))
+    if xvalue == "momentum":
+        func = Hamu.Algorithm(findproperties.totalmomentuminsnap)
+        xout = func(sim.FindAtTime(tffcloud_code))
+    rfunc = Hamu.Algorithm(findproperties.radiusinsnap)
+    if xvalue == "radius":
+        xout = rfunc(sim.FindAtTime(tffcloud_code))
+    if yvalue == "radius":
+        yout = rfunc(sim.FindAtTime(tffcloud_code))
+    return xout,yout
 
-def run(simnames,plotname,toplotin=None):
-    global toplot
-    if toplotin is not None:
-        toplot = toplotin
+def run(simnames,plotname,xvalue,yvalue="sfe"):
     plt.clf()
-    tsfes = []
-    Fs = []
-    cols = []
+    xvals = []
+    yvals = []
     for simname in simnames:
-        sfe, F, col = runforsim(simname)
-        if F is not None:
-            tsfes.append(sfe)
-            Fs.append(F)
-            cols.append(col)
+        xval, yval = runforsim(simname,xvalue,yvalue)
+        col = linestyles.Colour(simname)
+        if xval is not None:
+            xvals.append(xval)
+            yvals.append(yval)
             label = linestyles.Label(simname)
-            plt.scatter(F,sfe*100,s=80,
+            plt.scatter(xval,yval,s=80,
                         marker="o",c=col,edgecolors="k",
                         label=label,zorder=2)
-            plt.gca().annotate(r".\ "+label, (F,sfe*100),fontsize="x-small",zorder=1)
-    tsfes = np.array(tsfes)
-    Fs = np.array(Fs)
-    #plt.scatter(Fs,tsfes*100,s=80,marker="o",c=cols,edgecolors='k')
-    #xlim = plt.gca().get_xlim()
-    #plt.xlim([xlim[0],xlim[1]*2.0])
-    #leg = plt.legend(fontsize="x-small")
-    #leg.get_frame().set_facecolor('none')
-    #linestyles.Legend("imf")
+            plt.gca().annotate(". "+label, (xval,yval),fontsize="x-small",zorder=1,clip_on=True)
+    xvals = np.array(xvals)
+    yvals = np.array(yvals)
+    # Set xlabel
+    toplot = xvalue
     if toplot == "alltimemax":
         plt.xlabel("Most massive star / "+Msolar)
     if toplot == "firstmass":
@@ -143,17 +163,39 @@ def run(simnames,plotname,toplotin=None):
     if toplot == "nphotons":
         plt.xlabel("Peak cluster UV photon emission rate / Hz")
     if toplot == "nphotonstot":
-        plt.xlabel("Total number of UV photons emitted before 7 Myr")
+        plt.xlabel("Total number of UV photons before 7 Myr")
+    if toplot == "nphotonstff":
+        plt.xlabel(r"Total number of UV photons in 1 freefall time")
     if toplot == "compactness":
         plt.xlabel("Stddev of sink separation / pc")
+    if toplot == "tracklength":
+        plt.xlabel("Average distance a massive star travels / pc")
     allstartxt = "_"+toplot
-    plt.ylabel("$\%$ TSFE (final)")
     plt.xscale("log")
     plt.yscale("log")
+    momtxt = "Momentum / g cm / s"
+    if xvalue == "momentum":
+        plt.xlabel(momtxt)
+    if yvalue == "momentum":
+        plt.ylabel(momtxt)
+    if yvalue == "sfe":
+        plt.ylabel("$\%$ TSFE (final)")
+    rtxt = "Mean radius of HII region / pc"
+    if yvalue == "radius":
+        plt.ylabel(rtxt)
+    if xvalue == "radius":
+        plt.xlabel(rtxt)
+    if yvalue != "sfe":
+        allstartxt += "_"+yvalue
+    # Stop outflowing labels ruining the plot area
+    xlim = plt.gca().get_xlim()
+    plt.xlim([xlim[0],xlim[1]*1.9])
+    plt.ylim([5.0,22.0])
     plotname = "../plots/starrelations"+allstartxt+plotname+".pdf"
-    regression.writecoeff(np.log10(Fs),np.log10(tsfes*100),plotname.replace(".pdf","_rxy.txt"))
-    plt.savefig(plotname)
+    regression.writecoeff(np.log10(xvals),np.log10(yvals),plotname.replace(".pdf","_rxy.txt"))
+    #plt.gcf().set_size_inches(18.5, 10.5)
+    plt.savefig(plotname,bbox_inches='tight',dpi=150)
 
 if __name__=="__main__":
-    run(imfsims,"imf")
+    run(imfsims,"imf","nphotonstff","sfe")
 
