@@ -7,7 +7,7 @@ from startup import *
 
 from pymses.utils import constants as C
 
-import columndensity, sinks, ysos
+import columndensity, sinks, ysos, trackstars
 
 IMSIZE = columndensity.IMSIZE
 
@@ -53,7 +53,7 @@ def DrawPieChart(ax,X, Y, ratios, size):
         ax.scatter([X],[Y] , marker=(xyi,0), s=size, facecolor=colours[i],
                    lw=0.5)
 
-def MakeImage(snap,los,ax,dolengthscale,cmap,label=None,dpi=200.0):
+def MakeImage(snap,los,ax,dolengthscale,cmap,label=None,dpi=200.0,simname=None):
     imtype = "columndensity"
     cax = None
     if snap is not None:
@@ -92,6 +92,12 @@ def MakeImage(snap,los,ax,dolengthscale,cmap,label=None,dpi=200.0):
         #        numpy/pyplot image axes
         #if ysoage == 0.0:
         ax.scatter(sinky,sinkx,s=area,c="w",alpha=0.5,edgecolors='w')
+
+        # Draw star tracks
+        if simname is not None:
+            tracks = trackstars.runforsim(simname)
+            for track in tracks.itervalues():
+                ax.plot(track[:,1],track[:,0],alpha=0.5,color="w")
 
         # Add scale axis
         scalecol = "w"
@@ -141,7 +147,7 @@ def MakeFigure(simnames,time,name,los,nonamelabel=False,shape=None,dpi=200.0):
         snap = sim.FindAtTime(time)
         ax = axes.flatten()[isim]
         im = MakeImage(snap,los,ax,dolengthscale,cmap,
-                       label = linestyles.Label(simname),dpi=dpi)
+                       label = linestyles.Label(simname),dpi=dpi, simname=simname)
         dolengthscale = False
     # Make empty frames to remove axis scales, etc
     for irest in range(isim,nrows*ncols):

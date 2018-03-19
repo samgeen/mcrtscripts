@@ -12,9 +12,11 @@ from pymses.utils import constants as C
 import triaxfinder, tsfe, regression
 
 #parameter = "F" # Form factor a*b/c2
-# Options: F, T, L, M, S, C
-parameter = "C" # (1-b^2) / (1-g^2)
-rhofloor = 100.0
+# Options: F, T, L, M, S, C, V
+parameter = "V" # (1-b^2) / (1-g^2)
+rhofloor = 10.0
+
+tff_fact = None
 
 def _findtriax(snap,massweight=True,cutrho=10.0):
     # Find the triaxial structure of the cloud
@@ -73,6 +75,9 @@ def FormParameter(a,b,c):
     if parameter == "C":
         # Basic compactness, radial size of dense parts
         return np.sqrt(np.sum(axes**2))
+    if parameter == "V":
+        # Volume 4.0/3.0*pi*a*b*c
+        return 4.0/3.0*np.pi*a*b*c
     if parameter == "L":
         # Longest axis
         return axes[2]
@@ -83,12 +88,14 @@ def FormParameter(a,b,c):
         # Sweet baby axis
         return axes[0]
 
-
 def runforsim(simname):
     print "Running for simulation", simname
     sim = hamusims[simname]
     # Find form factor at 0.5 t_ff
     tcode = tffcloud_code/2.0
+    # Use different time?
+    if tff_fact is not None:
+        tcode = tffcloud_code * tff_fact
     snap = sim.FindAtTime(tcode)
     a,b,c = findtriax(snap,cutrho=rhofloor)
     F = FormParameter(a,b,c)
@@ -100,6 +107,7 @@ def runforsim(simname):
     return sfe,F,col
 
 def run(simnames,plotname):
+    print "Running for parameter", parameter
     plt.clf()
     tsfes = []
     Fs = []
@@ -133,9 +141,14 @@ def run(simnames,plotname):
         plt.xlabel("Length of middlest axis / pc")
     if parameter == "S":
         plt.xlabel("Length of shortest axis / pc")
+    if parameter == "V":
+        plt.xlabel("Volume of ellipsoid / pc$^3$")
     plt.ylabel("$\%$ TSFE (final)")
     plt.yscale("log")
-    plotname = "../plots/correlatestructure_"+parameter+"_n"+str(rhofloor).replace(".","p")+"parameter.pdf"
+    tfftxt = ""
+    if tff_fact is not None:
+        tfftxt = "_"+str(tff_fact).replace(".","p")+"tff_"
+    plotname = "../plots/correlatestructure_"+parameter+"_n"+str(rhofloor).replace(".","p")+tfftxt+"parameter.pdf"
     plt.savefig(plotname)
     regression.writecoeff(np.log10(Fs),np.log10(tsfes*100),plotname.replace(".pdf","_rxy.txt"))
     

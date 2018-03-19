@@ -28,6 +28,8 @@ def run(relation,params,labels):
     #    intro += r"Run = & \textsc{stars} & \textsc{turb} \\ "+os.linesep+" "
     if relation == "correlatestructure":
         intro += r"$n_{\mathrm{H}}\mathrm{(cutoff)/cm}^{-3} = $ & 10 & 100 & 1000 \\ "+os.linesep+" "
+    if relation == "correlatestructure_time":
+        intro += r"$t / t_{ff} = $  & 0.5 & 1 & 1.5 & 2 \\ "+os.linesep+" "
     intro += r"\hline "+os.linesep+" "
     outro = r'''
     \end{tabular}
@@ -43,7 +45,7 @@ def run(relation,params,labels):
             rvalueimf = rstr(open(fnameimf,"r").read().strip())
             #table += label+" & "+rvalueimf+" & "+rvalueic+" \\\\ "+os.linesep+" "
             table += label+" & "+rvalueimf+" \\\\ "+os.linesep+" "
-        else:
+        elif relation == "correlatestructure":
             table += label+" & "
             first = True
             for n in ["10p0","100p0","1000p0"]:
@@ -52,6 +54,19 @@ def run(relation,params,labels):
                 else:
                     table += " & "
                 fname = "../plots/"+relation+"_"+param+"_n"+n+"parameter_rxy.txt"
+                rvalue = rstr(open(fname,"r").read().strip())
+                table +=rvalue+" "
+            table += "\\\\ "+os.linesep+" "
+        else:
+            table += label+" & "
+            first = True
+            n = "10p0"
+            for t in ["0p5","1p0","1p5","2p0"]:
+                if first:
+                    first = False
+                else:
+                    table += " & "
+                fname = "../plots/correlatestructure_"+param+"_n"+n+"_"+t+"tff_parameter_rxy.txt"
                 rvalue = rstr(open(fname,"r").read().strip())
                 table +=rvalue+" "
             table += "\\\\ "+os.linesep+" "
@@ -68,6 +83,10 @@ if __name__=="__main__":
         ["T","L","M","S","C"],
         ["Triaxiality","Longest Axis","Middlemost Axis","Shortest Axis","Compactness"])
     run("starrelations",
-        ["alltimemax","compactness","firstmass","nphotons","nphotonstot"],
+        ["alltimemax","compactness","firstmass","nphotons","nphotonstot","nphotonstff","tracklength"],
         ["Most Massive Star","Cluster Compactness","Mass of First Star Formed","Peak Photon Emission Rate",
-         "Total Photons Emitted By Cluster"])
+         "Total Photons Emitted By Cluster","Photons Emitted in One Freefall Time","Distance Travelled By Star"])
+    run("correlatestructure_time",
+        ["T","L","M","S","C"],
+        ["Triaxiality","Longest Axis","Middlemost Axis","Shortest Axis","Compactness"])
+
