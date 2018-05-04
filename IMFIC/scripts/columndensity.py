@@ -27,12 +27,12 @@ def NH_op(snap):
 
 
 
-def _MapColDens(snap,los='z'):
+def _MapColDens(snap,los='z',zoom=1.0):
     # NOTE!! FINDS COLUMN DENSITY IN g cm^2
     hydro = "rho"
     amr = hydrofuncs.amr_source(snap,hydro)
     hydro_op = NH_op(snap)
-    size = np.zeros(2)+1.0
+    size = np.zeros(2)+zoom
     centre = np.zeros(3)+0.5
     up = ups[los]
 
@@ -56,7 +56,7 @@ class DensityMap(object):
     Map of densities with ability to convert & assign thresholds
     '''
     def __init__(self,snap,los='z',NHlow=None,NHhigh=None,
-                 columndensitymap=None,pixlength=None,PSFsize=None):
+                 columndensitymap=None,pixlength=None,PSFsize=None,zoom=1.0):
         '''
         los                         - Line of sight (strings 'x','y','z')
         NHlow                       - Values below this are set to zero
@@ -66,12 +66,14 @@ class DensityMap(object):
                  USE FUNCTIONS IN startup.py TO REMAP TO THESE UNITS
         pixlength                   - Length of pixels in parsecs
         PSFsize                     - Size of the PSF in parsecs (consistent with pixlen)
+        zoom                        - Factor to zoom (<1 = zoom, 1 = full box)
         '''
         self._snap = snap
         self._los = los
+        self._zoom = zoom
         if pixlength is None:
             # NOTE: boxlen should be in pc!!
-            pixlength = snap.info["boxlen"] / float(IMSIZE)
+            pixlength = snap.info["boxlen"] * zoom / float(IMSIZE)
         self._pixlength = pixlength
         self._PSFsize = PSFsize
         self._NHlow = NHlow
@@ -87,7 +89,8 @@ class DensityMap(object):
         return DensityMap(self._snap,self._los,
                           self._NHlow,self._NHhigh,
                           columndensitymap=newmap,
-                          pixlength=self._pixlength)
+                          pixlength=self._pixlength,
+                          zoom=self._zoom)
 
     def Flatten(self):
         newmap = self._Clone()
@@ -96,7 +99,7 @@ class DensityMap(object):
         return newmap
 
     def _SetupMap(self):
-        self._coldens = _MapColDensHamu(self._snap.hamusnap,self._los)
+        self._coldens = _MapColDensHamu(self._snap.hamusnap,self._los,self._zoom)
         # Apply PSF to image
         if self._PSFsize is not None:
             width = self._PSFsize / self._pixlength

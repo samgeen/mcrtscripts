@@ -9,7 +9,10 @@ import pymses
 from pymses.filters import CellsToPoints 
 from pymses.utils import constants as C
 
-import tsfe, regression, trackstars, findproperties
+import regression, trackstars, findproperties, plotproperties
+
+from matplotlib.ticker import (MultipleLocator, FormatStrFormatter,
+                               AutoMinorLocator)
 
 # List of possible plotting values
 #toplot = "alltimemax"
@@ -121,7 +124,7 @@ def runforsim(simname,xvalue,yvalue="sfe"):
             nphotons = singlestar.star_radiation(mass,0.0,ageins)
             xout += np.sum(nphotons[3:5])
     if yvalue == "sfe":
-        yout = tsfe.tsfeinsnap(sim.Snapshots()[-1]) * 100 # as a percentage
+        yout = plotproperties.tsfeinsnap(sim.Snapshots()[-1]) * 100 # as a percentage
     if yvalue == "momentum":
         func = Hamu.Algorithm(findproperties.totalmomentuminsnap)
         yout = func(sim.FindAtTime(tffcloud_code))
@@ -135,8 +138,7 @@ def runforsim(simname,xvalue,yvalue="sfe"):
         yout = rfunc(sim.FindAtTime(tffcloud_code))
     return xout,yout
 
-def run(simnames,plotname,xvalue,yvalue="sfe"):
-    plt.clf()
+def makeplot(ax,simnames,plotname,xvalue,yvalue="sfe",yon=True):
     xvals = []
     yvals = []
     for simname in simnames:
@@ -146,56 +148,134 @@ def run(simnames,plotname,xvalue,yvalue="sfe"):
             xvals.append(xval)
             yvals.append(yval)
             label = linestyles.Label(simname)
-            plt.scatter(xval,yval,s=80,
+            ax.scatter(xval,yval,s=80,
                         marker="o",c=col,edgecolors="k",
                         label=label,zorder=2)
-            plt.gca().annotate(". "+label, (xval,yval),fontsize="x-small",zorder=1,clip_on=True)
+            ax.annotate(". "+label, (xval,yval),fontsize="x-small",zorder=1,clip_on=True)
     xvals = np.array(xvals)
     yvals = np.array(yvals)
     # Set xlabel
     toplot = xvalue
+    plotminor = True
+    plotnox = False
     if toplot == "alltimemax":
-        plt.xlabel("Most massive star / "+Msolar)
+        xtxt = "Most massive star $M_{max}$ / "+Msolar
+        ax.set_xlim([5,120])
+        ax.get_xaxis().set_major_locator(MultipleLocator(20))
+        #ax.get_xaxis().set_minor_locator(MultipleLocator(20000))
+        plotminor = False
+        #ax.tick_params(axis='x',which='minor',bottom='off')
     if toplot == "firstmass":
-        plt.xlabel("Mass of first star / "+Msolar)
+        xtxt = "Mass of first star $M_{first}$ / "+Msolar
+        ax.set_xlim([5,100])
+        ax.get_xaxis().set_major_locator(MultipleLocator(20))
+        #ax.tick_params(axis='x',which='minor',bottom='off')
+        plotminor = False
     if toplot == "firsttime":
-        plt.xlabel("Time first star formed / Myr")
+        xtxt = "Time first star formed / Myr"
     if toplot == "nphotons":
-        plt.xlabel("Peak cluster UV photon emission rate / Hz")
+        xtxt = "Peak photon emission rate $S_{*,max}$ / Hz"
     if toplot == "nphotonstot":
-        plt.xlabel("Total number of UV photons before 7 Myr")
+        xtxt = "Total photons before 7 Myr, $N_{tot}$"
     if toplot == "nphotonstff":
-        plt.xlabel(r"Total number of UV photons in 1 freefall time")
+        xtxt = r"Total photons in first $t_{ff}$, $N_{ff}$"
     if toplot == "compactness":
-        plt.xlabel("Stddev of sink separation / pc")
+        xtxt = "Cluster Compactness $R_{RMS}$ / pc"
+        xticks = [5,6,7,8,9]
+        xticklabels = [str(x) for x in xticks]
+        plotnox = True
     if toplot == "tracklength":
-        plt.xlabel("Average distance a massive star travels / pc")
+        xtxt = "Average distance a massive star travels $D_{track}$ / pc"
+        xticks = [3,4,5,6,7,8,9,10]
+        xticklabels = [str(x) for x in xticks]
+        plotnox = True
     allstartxt = "_"+toplot
-    plt.xscale("log")
-    plt.yscale("log")
+    ax.set_xscale("log")
+    ax.set_yscale("log")
     momtxt = "Momentum / g cm / s"
     if xvalue == "momentum":
-        plt.xlabel(momtxt)
+        xtxt = momtxt
     if yvalue == "momentum":
-        plt.ylabel(momtxt)
+        ytxt = momtxt
     if yvalue == "sfe":
-        plt.ylabel("$\%$ TSFE (final)")
+        ytxt = "SFE (final)"
     rtxt = "Mean radius of HII region / pc"
     if yvalue == "radius":
-        plt.ylabel(rtxt)
+        ytxt = rtxt
     if xvalue == "radius":
-        plt.xlabel(rtxt)
+        xtxt = rtxt
     if yvalue != "sfe":
         allstartxt += "_"+yvalue
     # Stop outflowing labels ruining the plot area
-    xlim = plt.gca().get_xlim()
-    plt.xlim([xlim[0],xlim[1]*1.9])
-    plt.ylim([5.0,22.0])
+    xlim = ax.get_xlim()
+    ax.set_xlim([xlim[0],xlim[1]*1.2])
+    #ax.set_ylim([5.0,22.0])    
+    ax.set_xlabel(xtxt)
+    ticks = range(5,23)
+    ticklabels = {tick:" " for tick in ticks}
+    ticklabelsempty = {tick:" " for tick in ticks}
+    ticklabels[5] = "5\%"
+    ticklabels[10] = "10\%"
+    ticklabels[20] = "20\%"
+    if xlim[1] < 1000:
+        if plotnox:
+            ax.xaxis.set_major_locator(plt.NullLocator())
+            ax.xaxis.set_minor_locator(plt.NullLocator())
+            ax.set_xticks(xticks)
+            ax.set_xticklabels(xticklabels)
+        else:
+            if plotminor:
+                ax.get_xaxis().set_minor_formatter(plt.ScalarFormatter())
+            ax.get_xaxis().set_major_formatter(plt.ScalarFormatter())
+        #else:
+        #    ax.xaxis.set_minor_locator(plt.NullLocator())
+    ax.yaxis.set_major_locator(plt.NullLocator())
+    ax.yaxis.set_minor_locator(plt.NullLocator())
+    if yon:
+        ax.set_ylabel(ytxt)
+        ax.set_yticks(ticks)
+        ax.set_yticklabels(ticklabels.values())
+    else:
+        ax.set_yticks(ticks)
+        ax.set_yticklabels(ticklabelsempty.values())
     plotname = "../plots/starrelations"+allstartxt+plotname+".pdf"
     regression.writecoeff(np.log10(xvals),np.log10(yvals),plotname.replace(".pdf","_rxy.txt"))
     #plt.gcf().set_size_inches(18.5, 10.5)
-    plt.savefig(plotname,bbox_inches='tight',dpi=150)
+    
+def run(simnames,plotname,xvalues,yvalue="sfe",suffix="all"):
+    nplots = len(xvalues)
+    ncols  = 3
+    nrows  = nplots/ncols
+    if nplots < ncols:
+        ncols = nplots
+        nrows = 1
+    if nrows*ncols < nplots:
+        nrows += 1
+    fig, axes = plt.subplots(nrows,ncols)#,sharey=True)
+    try:
+        dum = axes.shape
+    except:
+        axes = np.array([axes])
+    irow = 0
+    icol = 0
+    yon = True
+    for ax, xvalue in zip(axes.flatten(), xvalues):
+        makeplot(ax,simnames,plotname,xvalue,yvalue="sfe",yon=yon)
+        yon = False
+        icol += 1
+        #if not yon:
+        #    ax.get_yaxis().set_ticklabels([])
+        if icol == ncols:
+            icol = 0
+            irow += 1
+            yon = True
+    fig.subplots_adjust(wspace=0,hspace=0.3)
+    fig.set_size_inches(6*ncols,5*nrows)
+    plotname = "../plots/starrelations_"+suffix+"_"+plotname+".pdf"
+    fig.savefig(plotname,bbox_inches='tight',dpi=150)
 
 if __name__=="__main__":
-    run(imfsims,"imf","nphotonstff","sfe")
+    run(imfsims,"imf",["tracklength"],"sfe","tracklength")
+    xvalues = ["compactness","firstmass","alltimemax","nphotons","nphotonstot","nphotonstff"]
+    run(imfsims,"imf",xvalues,"sfe","all")
 
