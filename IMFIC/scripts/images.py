@@ -53,14 +53,14 @@ def DrawPieChart(ax,X, Y, ratios, size):
         ax.scatter([X],[Y] , marker=(xyi,0), s=size, facecolor=colours[i],
                    lw=0.5)
 
-def MakeImage(snap,los,ax,dolengthscale,cmap,label=None,dpi=200.0,simname=None):
+def MakeImage(snap,los,ax,dolengthscale,cmap,label=None,dpi=200.0,simname=None,zoom=1.0):
     imtype = "columndensity"
     cax = None
     if snap is not None:
         boxlen = snap.RawData().info["boxlen"]
         numtxt = str(snap.RawData().iout).zfill(5)
         hydro = "NH"
-        dmap = columndensity.DensityMap(snap.RawData(),los)
+        dmap = columndensity.DensityMap(snap.RawData(),los,zoom=zoom)
         im = dmap.NH()
         # Plot image map
         yscale = hydrofuncs.yscale(hydro)
@@ -69,19 +69,21 @@ def MakeImage(snap,los,ax,dolengthscale,cmap,label=None,dpi=200.0,simname=None):
             vmin, vmax = hydrofuncs.hydro_range(hydro)
         # Make image mesh
         xl, yl = im.shape
-        xarr = np.arange(0,boxlen*1.0000001,boxlen/(xl-1.0))
-        yarr = np.arange(0,boxlen*1.0000001,boxlen/(yl-1.0))
+        xarr = np.arange(0,zoom*boxlen*1.0000001,zoom*boxlen/(xl-1.0))
+        yarr = np.arange(0,zoom*boxlen*1.0000001,zoom*boxlen/(yl-1.0))
     
         # Plot the mesh
         #cmap = "YlGnBu_r"
         #cmap = "RdPu_r"
         cax = ax.pcolormesh(xarr,yarr,im,vmin=vmin,vmax=vmax,cmap=cmap)
         cax.set_rasterized(True)
-        ax.set_xlim(0,boxlen)
-        ax.set_ylim(0,boxlen)
+        ax.set_xlim(0,zoom*boxlen)
+        ax.set_ylim(0,zoom*boxlen)
 
         # Plot sinks
         sinkx, sinky, sinkm = ProjectSinks(snap,los)
+        sinkx -= 0.5*(1.0-zoom)*boxlen
+        sinky -= 0.5*(1.0-zoom)*boxlen
         try:
             lenm = len(np.atleast_1d(sinkm))
         except:
@@ -97,20 +99,21 @@ def MakeImage(snap,los,ax,dolengthscale,cmap,label=None,dpi=200.0,simname=None):
         if simname is not None:
             tracks = trackstars.runforsim(simname)
             for track in tracks.itervalues():
+                track -= 0.5*(1.0-zoom)*boxlen
                 ax.plot(track[:,1],track[:,0],alpha=0.5,color="w")
 
         # Add scale axis
         scalecol = "w"
         if dolengthscale:
             # length scale in pc (hopefully this is what units boxlen is in)
-            lscale = FindLscale(boxlen)
-            x1 = 0.1 * boxlen
+            lscale = FindLscale(boxlen*zoom)
+            x1 = 0.1 * boxlen*zoom
             x2 = x1 + lscale
-            y1 = 0.9 * boxlen
+            y1 = 0.9 * boxlen*zoom
             y2 = y1
             ax.plot([x1,x2],[y1,y2],scalecol)
             ax.text(x2,y2, "  "+str(lscale)+" pc",color=scalecol,
-                    verticalalignment="center",fontsize="large")
+                    verticalalignment="center",fontsize="x-large")
         # Add label
         if label is not None:
             xt = 0.9 * boxlen
@@ -118,14 +121,14 @@ def MakeImage(snap,los,ax,dolengthscale,cmap,label=None,dpi=200.0,simname=None):
             ax.text(xt,yt,label,
                     horizontalalignment="right",
                     verticalalignment="center",
-                    color=scalecol,fontsize="medium")
+                    color=scalecol,fontsize="x-large")
     # Finish up
     #ax.set_axis_off()
     #ax.set_aspect("equal","datalim")
     #ax.axis("off")
     return cax
 
-def MakeFigure(simnames,time,name,los,nonamelabel=False,shape=None,dpi=200.0):
+def MakeFigure(simnames,time,name,los,nonamelabel=False,shape=None,dpi=200.0,zoom=1.0):
     hydro = "NH"
     nrows = 4
     ncols = 4
@@ -147,7 +150,7 @@ def MakeFigure(simnames,time,name,los,nonamelabel=False,shape=None,dpi=200.0):
         snap = sim.FindAtTime(time)
         ax = axes.flatten()[isim]
         im = MakeImage(snap,los,ax,dolengthscale,cmap,
-                       label = linestyles.Label(simname),dpi=dpi, simname=simname)
+                       label = linestyles.Label(simname),dpi=dpi, simname=simname,zoom=zoom)
         dolengthscale = False
     # Make empty frames to remove axis scales, etc
     for irest in range(isim,nrows*ncols):
@@ -159,8 +162,8 @@ def MakeFigure(simnames,time,name,los,nonamelabel=False,shape=None,dpi=200.0):
     label = hydrofuncs.hydro_label((hydro))
     if not "xH" in hydro:
         label = "log("+label+")"
-    cbar.set_label(label,fontsize="medium",color="k")
-    cbar.ax.tick_params(labelsize="medium",labelcolor="k")
+    cbar.set_label(label,fontsize="x-large",color="k")
+    cbar.ax.tick_params(labelsize="x-large",labelcolor="k")
     cbar.solids.set_edgecolor("face")
     # Save figure
     suffix = ""
@@ -171,7 +174,7 @@ def MakeFigure(simnames,time,name,los,nonamelabel=False,shape=None,dpi=200.0):
     MakeDirs(folder)
     figname = folder+"multiray_"+hydro+suffix+".pdf"
     print "Saving figure "+figname+"..."
-    fig.subplots_adjust(hspace=0.0, wspace=0.0, 
+    fig.subplots_adjust(hspace=0.02, wspace=0.02, 
                         left=0.20,right=1.0,
                         bottom=0.00,top=1.0)
     fig.set_size_inches(finches*nrows/0.8,finches*ncols)
@@ -184,5 +187,6 @@ def MakeFigure(simnames,time,name,los,nonamelabel=False,shape=None,dpi=200.0):
 
 if __name__=="__main__":
     time = 1.5*tffcloud_code
-    MakeFigure(imfsims,time,name="imf",los='z')
-    MakeFigure(icsims,time,name="ic",los='z')
+    zoom = 0.7 # 1.0
+    MakeFigure(imfsims,time,name="imf",los='z',zoom=zoom)
+    MakeFigure(icsims,time,name="ic",los='z',zoom=zoom)

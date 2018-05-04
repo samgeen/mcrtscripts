@@ -275,6 +275,10 @@ def plotgradient(simname,hydro,time,centre,label=None,xlims=None,powfile=None,su
         if powfile is not None:
             powfile.write(simname+" "+str(outnum)+" w, r0, nfit:"+str(power)+" "+str(factor)+" "+str(nfit)+"\n ")
             powfile.flush()
+        # Mask out parts of the mean line with no values
+        mask = psph != 0
+        rsph = rsph[mask]
+        psph = psph[mask]
         plt.plot(rsph,psph,"k--")
         # Make min/max lines
         plt.plot(radii,percs[0:nprofs,0], "k",alpha=0.3)
@@ -302,8 +306,8 @@ def plotgradient(simname,hydro,time,centre,label=None,xlims=None,powfile=None,su
             ylims = plt.gca().get_ylim()
             xr = xlims[1] - xlims[0]
             yr = ylims[1] - ylims[0]
-            plt.text(xlims[1]-0.05*xr,
-                     ylims[1]*0.1,
+            plt.text(xlims[1]-0.1*xr,
+                     ylims[1]*0.5,
                      label,
                      horizontalalignment='right',
                      verticalalignment='top')
@@ -329,8 +333,8 @@ if __name__ == "__main__":
     for simname in imfsims:
         time = 3.38 # Time of first sink formation
         starpos = findstarpos(simname,time)
-        plotgradient(simname,"rho",time,starpos,linestyles.Label(simname),
+        plotgradient(simname,"rho",time,starpos,"Star's Position",
                      xlims=[0.03,25.0],powfile=powfile,suffix="starpos")
-        plotgradient(simname,"rho",time,np.array([0.5,0.5,0.5]),linestyles.Label(simname),
+        plotgradient(simname,"rho",time,np.array([0.5,0.5,0.5]),"Geometric Centre",
                      xlims=[0.03,25.0],powfile=powfile,suffix="centre")
     powfile.close()

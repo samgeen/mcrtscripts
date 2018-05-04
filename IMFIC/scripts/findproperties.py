@@ -177,6 +177,31 @@ def radiusinsnap(snap):
     #print "RADIUS FOUND", radius
     return radius
 
+def radiusinsnap3(snap):
+    '''
+    2nd implementation: measure volume of ionised gas and sphericise
+    '''
+    print "Finding radius of HII region in snap", snap.iout
+    boxlen = snap.info["boxlen"]
+    amr = snap.amr_source(["rho","P","xHII"])
+    cell_source = CellsToPoints(amr)
+    cells = cell_source.flatten()
+    temp = cells["P"]/cells["rho"]*snap.info["unit_temperature"].express(C.K)
+    ion = cells["xHII"]
+    vols = (cells.get_sizes())**3.0
+    pos = cells.points+0.0
+    rhos = cells["rho"]
+    mcode = vols*rhos
+    msum = np.sum(mcode)
+    # Get volume of ionised gas
+    # Assume gas is either fully ionised or neutral on a sub-grid scale
+    # Also include a basic threshold
+    thresh = 0.1 # HACK!
+    mask = np.where(ion > thresh)
+    ionvol = np.sum(vols[mask]*ion[mask])
+    ionrad = ionvol**(1.0/3.0) * (3.0 / 4.0 / np.pi)
+    return ionrad*boxlen
+
 def run(func,simnames,plotname):
     name = func.__name__
     plt.clf()
