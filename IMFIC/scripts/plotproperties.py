@@ -43,8 +43,8 @@ def radius2(simname):
     tcreated, sfe = starrelations.runforsim(simname,"firsttime")  
     t,r = timefuncs.timefunc(sim,radiusinsnap2)
     # HACK - fix boxlen error
-    boxlen = 0.121622418993404E+03
-    r *= boxlen
+    #boxlen = 0.121622418993404E+03
+    #r *= boxlen
     t -= tcreated
     return t, r
 
@@ -153,9 +153,11 @@ def run(simfunc,simnamesets,plotlabels):
                 ax.set_ylabel("SFE $\equiv M_{stars} / M_{ini}$")
             if funcname == "momentum":
                 ax.set_xlim([6e-3,12])
-                ax.set_ylabel("Momentum / g cm / s")
-            if funcname == "radius" or funcname == "radius2":
+                ax.set_ylabel("Momentum / g cm s$^{-1}$")
+            if funcname == "radius":
                 ax.set_ylabel("Mean HII Region radius / pc")
+            if funcname == "radius2":
+                ax.set_ylabel("Sphericised HII Region radius / pc")
             if funcname == "nphotonsHII":
                 ax.set_ylabel("Ionising Photon Emission Rate / s$^{-1}$")
         leg = ax.legend(fontsize="x-small",loc="upper left")
