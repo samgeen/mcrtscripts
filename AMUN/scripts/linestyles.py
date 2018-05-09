@@ -25,39 +25,27 @@ cmap = brewer2mpl.get_map('OrRd', 'Sequential', 9,reverse=True).mpl_colormap
 def ColourMap(simname=None):
     return cmap
 
-def _RunIndex(simname):
-    d = {""}
+def RunNum(simname):
+    run, num = simname.split("_")
+    num = int(num)
+    return run, num
 
 def Colour(simname):
     # Colour palette is 4-class Paired from ColorBrewer2.org
-    colors = ["#a6cee3",
-              "#1f78b4",
-              "#b2df8a",
-              "#33a02c"]
+    colours = ["#a6cee3",
+               "#1f78b4",
+               "#b2df8a",
+               "#33a02c"]
     run, num = RunNum(simname)
-    if run == "imf":
-        colmap = imfmap
-    else:
-        colmap = icmap
-    # TODO: REMOVE TOO-LIGHT COLOURS
-    col = colmap(float(num)/13.0)
-    return col
+    return colours[num-1]
 
-def Label(simname,sub=False):
+def Linestyle(simname):
     run, num = RunNum(simname)
-    if run == "imf":
-        label = imfabbrevs[num-1]
-        if sub:
-            label += starsub
-        return label
-    else:
-        label = icabbrevs[num-1]
-        if sub:
-            label += turbsub
-        return label
-    print "Oops, something went wrong in linestyles.Labels for simname",simname
-    raise ValueError
 
-#def Legend(run,scatter=True):
-#    if run == "imf":
-        
+def Label(simname):
+    run, num = RunNum(simname)
+    labels = ["No Feedback",
+              "UV Only",
+              "Winds Only",
+              "Winds \& UV"]
+    return labels[num-1]
