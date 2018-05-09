@@ -95,7 +95,7 @@ def _MakeSims():
         if not simexists:
             label = simname
             sim = Hamu.MakeSimulation(simname,folder,label)
-        hamusims[sim] = sim
+        hamusims[simname] = sim
 _MakeSims()
 
 # Set up single star module
