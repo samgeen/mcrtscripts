@@ -84,7 +84,7 @@ def runforsim(simname,xvalue,yvalue="sfe"):
         c = findclustercompactness(snap)
         xout = c
     if toplot == "tracklength":
-        tracks = trackstars.runforsim(simname)
+        tracks, tracktimes,trackvs = trackstars.runforsim(simname)
         tracklength = 0.0
         for track in tracks.itervalues():
             tracklength += np.sqrt(np.sum((track[0,:]-track[track.shape[0]-1,:])**2))
@@ -125,6 +125,20 @@ def runforsim(simname,xvalue,yvalue="sfe"):
             xout += np.sum(nphotons[3:5])
     if yvalue == "sfe":
         yout = plotproperties.tsfeinsnap(sim.Snapshots()[-1]) * 100 # as a percentage
+    if yvalue == "vstar":
+        vs = np.array(trackvs.values())
+        yout = np.sum(vs) / vs.shape[0]
+    if yvalue == "ldrift":
+        sinklifes = []
+        for ts in tracktimes.itervalues():
+            if len(ts > 1):
+                life = ts[-1] - ts[0]
+            else:
+                life = 0.0
+            sinklifes.append(life)
+        sinklifes = np.array(sinklifes)
+        vs = np.array(trackvs.values())
+        yout = np.sum(vs*sinklifes) / vs.shape[0] # 1 km/s * 1e6 years ~ 1 pc
     if yvalue == "momentum":
         func = Hamu.Algorithm(findproperties.totalmomentuminsnap)
         yout = func(sim.FindAtTime(tffcloud_code))
@@ -199,6 +213,10 @@ def makeplot(ax,simnames,plotname,xvalue,yvalue="sfe",yon=True):
         ytxt = momtxt
     if yvalue == "sfe":
         ytxt = "SFE (final)"
+    if yvalue == "vstar":
+        ytxt = "Mean initial sink velocity / km/s"
+    if yvalue == "ldrift":
+        ytxt = "Mean initial sink velocity drift distance / pc"
     rtxt = "Mean radius of HII region / pc"
     if yvalue == "radius":
         ytxt = rtxt
@@ -211,12 +229,13 @@ def makeplot(ax,simnames,plotname,xvalue,yvalue="sfe",yon=True):
     ax.set_xlim([xlim[0],xlim[1]*1.2])
     #ax.set_ylim([5.0,22.0])    
     ax.set_xlabel(xtxt)
-    ticks = range(5,23)
-    ticklabels = {tick:" " for tick in ticks}
-    ticklabelsempty = {tick:" " for tick in ticks}
-    ticklabels[5] = "5\%"
-    ticklabels[10] = "10\%"
-    ticklabels[20] = "20\%"
+    if yvalue == "sfe":
+        ticks = range(5,23)
+        ticklabels = {tick:" " for tick in ticks}
+        ticklabelsempty = {tick:" " for tick in ticks}
+        ticklabels[5] = "5\%"
+        ticklabels[10] = "10\%"
+        ticklabels[20] = "20\%"
     if xlim[1] < 1000:
         if plotnox:
             ax.xaxis.set_major_locator(plt.NullLocator())
@@ -229,20 +248,29 @@ def makeplot(ax,simnames,plotname,xvalue,yvalue="sfe",yon=True):
             ax.get_xaxis().set_major_formatter(plt.ScalarFormatter())
         #else:
         #    ax.xaxis.set_minor_locator(plt.NullLocator())
-    ax.yaxis.set_major_locator(plt.NullLocator())
-    ax.yaxis.set_minor_locator(plt.NullLocator())
-    if yon:
-        ax.set_ylabel(ytxt)
-        ax.set_yticks(ticks)
-        ax.set_yticklabels(ticklabels.values())
+    if yvalue == "sfe":
+        ax.yaxis.set_major_locator(plt.NullLocator())
+        ax.yaxis.set_minor_locator(plt.NullLocator())
+        if yon:
+            ax.set_ylabel(ytxt)
+            ax.set_yticks(ticks)
+            ax.set_yticklabels(ticklabels.values())
+        else:
+            ax.set_yticks(ticks)
+            ax.set_yticklabels(ticklabelsempty.values())
     else:
-        ax.set_yticks(ticks)
-        ax.set_yticklabels(ticklabelsempty.values())
+        ax.set_ylabel(ytxt)
+        if yvalue == "vstar":
+            ax.yaxis.set_major_locator(plt.LinearLocator())
+        #ax.yaxis.set_minor_locator(plt.LinearLocator())
+        ax.yaxis.set_major_formatter(plt.ScalarFormatter())
+        ax.yaxis.set_minor_formatter(plt.ScalarFormatter())
     plotname = "../plots/starrelations"+allstartxt+plotname+".pdf"
     regression.writecoeff(np.log10(xvals),np.log10(yvals),plotname.replace(".pdf","_rxy.txt"))
     #plt.gcf().set_size_inches(18.5, 10.5)
     
 def run(simnames,plotname,xvalues,yvalue="sfe",suffix="all"):
+    plt.clf()
     nplots = len(xvalues)
     ncols  = 3
     nrows  = nplots/ncols
@@ -260,7 +288,7 @@ def run(simnames,plotname,xvalues,yvalue="sfe",suffix="all"):
     icol = 0
     yon = True
     for ax, xvalue in zip(axes.flatten(), xvalues):
-        makeplot(ax,simnames,plotname,xvalue,yvalue="sfe",yon=yon)
+        makeplot(ax,simnames,plotname,xvalue,yvalue=yvalue,yon=yon)
         yon = False
         icol += 1
         #if not yon:
@@ -275,7 +303,9 @@ def run(simnames,plotname,xvalues,yvalue="sfe",suffix="all"):
     fig.savefig(plotname,bbox_inches='tight',dpi=150)
 
 if __name__=="__main__":
+    run(imfsims,"imf",["tracklength"],"ldrift","ldrift")
+    run(icsims,"ic",["tracklength"],"ldrift","ldriftic")
+    run(imfsims,"imf",["tracklength"],"vstar","vstartest")
     run(imfsims,"imf",["tracklength"],"sfe","tracklength")
     xvalues = ["compactness","firstmass","alltimemax","nphotons","nphotonstot","nphotonstff"]
     run(imfsims,"imf",xvalues,"sfe","all")
-

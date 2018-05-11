@@ -97,7 +97,7 @@ def MakeImage(snap,los,ax,dolengthscale,cmap,label=None,dpi=200.0,simname=None,z
 
         # Draw star tracks
         if simname is not None:
-            tracks = trackstars.runforsim(simname)
+            tracks, tracktimes, dummy = trackstars.runforsim(simname)
             for track in tracks.itervalues():
                 track -= 0.5*(1.0-zoom)*boxlen
                 ax.plot(track[:,1],track[:,0],alpha=0.5,color="w")

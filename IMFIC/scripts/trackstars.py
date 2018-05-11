@@ -7,6 +7,8 @@ from startup import *
 
 import glob
 
+from pymses.utils import constants as C  
+
 def _sinksinsnap(snap):
     stellar = stellars.FindStellar(snap)
     return stellar.sinkid
@@ -58,22 +60,40 @@ def _maketrack_snapsonly(snap,sinkid):
     return pos
 maketrack_snapsonly = Hamu.Algorithm(_maketrack_snapsonly)
 
+def _findsinkspeed(snap):
+    sink = sinks.FindSinks(snap)
+    if len(sink.id) > 0:
+        vs = np.sqrt(np.array(sink.vx**2+sink.vy**2+sink.vz**2))
+        return vs * snap.info["unit_velocity"].express(C.km/C.s),sink.id
+    else:
+        return [0.0], [0]
+findsinkspeed = Hamu.Algorithm(_findsinkspeed)
+
 def runforsim(simname):
     sim = hamusims[simname]
     # Find sink IDS to track
     sinkids = allsinks(sim)
     # Track them
     track = {}
+    times = {}
+    firstvs = {}
     for sinkid in sinkids:
         track[sinkid] = []
+        times[sinkid] = []
     for snap in sim.Snapshots():
+        time = snap.Time()
+        vs, vids = findsinkspeed(snap)
         for sinkid in sinkids:
             sinkpos = maketrack_snapsonly(snap,sinkid)
             if sinkpos is not None:
                 track[sinkid].append(sinkpos)
+                times[sinkid].append(time)
+                if not sinkid in firstvs:
+                    firstvs[sinkid] = vs[vids == sinkid]
     for sinkid in sinkids:
         track[sinkid] = np.array(track[sinkid])
-    return track
+        times[sinkid] = np.array(times[sinkid])
+    return track, times, firstvs
     
 if __name__=="__main__":
     runforsim("IMF01")
