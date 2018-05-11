@@ -124,7 +124,12 @@ def runforsim(simname,xvalue,yvalue="sfe"):
             nphotons = singlestar.star_radiation(mass,0.0,ageins)
             xout += np.sum(nphotons[3:5])
     if yvalue == "sfe":
-        yout = plotproperties.tsfeinsnap(sim.Snapshots()[-1]) * 100 # as a percentage
+        snaps = sim.Snapshots()
+        if len(snaps) <= 0:
+            print "No snapshots!"
+            import pdb; pdb.set_trace()
+        snap = snaps[-1]
+        yout = plotproperties.tsfeinsnap(snap) * 100 # as a percentage
     if yvalue == "momentum":
         func = Hamu.Algorithm(findproperties.totalmomentuminsnap)
         yout = func(sim.FindAtTime(tffcloud_code))

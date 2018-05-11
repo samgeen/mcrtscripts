@@ -8,11 +8,12 @@ import sys, os, glob
 import numpy as np
 # Import from the main scripts folder
 sys.path.append("../../scripts")
+import customplot
+
 sys.path.append("/home/stgeen0/Programming/")
 
 import HamuLite as Hamu
 
-import customplot
 import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
 import hydrofuncs
@@ -57,8 +58,8 @@ Msolar = "M$_{\odot}$"
 plotfolder = "../plots/"
 
 # Simulation names
-imf1sims = ["IMF1_"+str(i).zfill(2) for i in range(1,4)]
-imf2sims = ["IMF2_"+str(i).zfill(2) for i in range(1,4)]
+imf1sims = ["IMF1_"+str(i).zfill(2) for i in [1,2,3,4]]
+imf2sims = ["IMF2_"+str(i).zfill(2) for i in [1,2,3,4]]
 allsims = imf1sims + imf2sims
 
 # Simulation locations
@@ -76,9 +77,10 @@ simfolders["IMF1_03"] = imf1simfolder+"03_justWind/"
 simfolders["IMF1_04"] = imf1simfolder+"04_UVphoto+Wind/"
 
 # IMF2 folders
-simfolders["IMF2_01"] = imf2simfolder+"01_nofbk/"
+# NOTE: no IMF2_01 because it's the same as IMF1_01
+simfolders["IMF2_01"] = imf1simfolder+"01_nofbk/"
 simfolders["IMF2_02"] = imf2simfolder+"02_justUVphoto/"
-simfolders["IMF2_03"] = imf2simfolder+"03_justWind/"
+simfolders["IMF2_03"] = imf2simfolder+"03_justwind/"
 simfolders["IMF2_04"] = imf2simfolder+"04_UVphoto+Wind/"
 
 # Populate list of Hamu simulations
