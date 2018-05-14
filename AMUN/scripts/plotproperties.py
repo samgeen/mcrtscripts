@@ -170,7 +170,9 @@ def run(simfunc,simnamesets,plotlabels):
     fig.savefig(plotfolder+funcname+"_both.pdf", dpi=80)
         
 if __name__=="__main__":
-    labels1 = [linestyles.Label(simname) for simname in imf1sims]
-    labels2 = [linestyles.Label(simname) for simname in imf2sims]
+    #labels1 = [linestyles.Label(simname) for simname in imf1sims]
+    #labels2 = [linestyles.Label(simname) for simname in imf2sims]
+    label1 = "IMF 1"
+    label2 = "IMF 2"
     for func in [momentum,nphotonsHII,tsfe,radius,radius2]:
-        run(func,(imf1sims,imf2sims),(labels1,labels2))
+        run(func,(imf1sims,imf2sims),(label1,label2))
