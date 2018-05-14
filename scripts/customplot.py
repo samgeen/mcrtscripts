@@ -5,6 +5,8 @@ Sam Geen, October 2014
 
 import matplotlib as mpl
 mpl.use("Agg")
+import matplotlib.pyplot as plt
+plt.ioff()
 
 font = {'family' : 'serif',
         'weight' : 'normal',

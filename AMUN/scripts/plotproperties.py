@@ -3,10 +3,10 @@ Find the total star formation efficiency
 Sam Geen, December 2017
 '''
 
+from startup import *
+
 from pymses.filters import CellsToPoints
 from pymses.utils import constants as C
-
-from startup import *
 
 import matplotlib.patheffects as pe
 
