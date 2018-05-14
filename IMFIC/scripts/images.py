@@ -100,7 +100,18 @@ def MakeImage(snap,los,ax,dolengthscale,cmap,label=None,dpi=200.0,simname=None,z
             tracks, tracktimes, dummy = trackstars.runforsim(simname)
             for track in tracks.itervalues():
                 track -= 0.5*(1.0-zoom)*boxlen
+                # Plot track
                 ax.plot(track[:,1],track[:,0],alpha=0.5,color="w")
+                x0 = track[-1,1]
+                y0 = track[-1,0]
+                x1 = x0-track[-2,1]
+                y1 = y0-track[-2,0]
+                x1 *= 0.01
+                y1 *= 0.01
+                # Plot arrow at end of track
+                plt.arrow(x0, y0, x1, y1, shape='full', 
+                          lw=0, length_includes_head=True, head_width=.05,
+                          alpha=0.5,color="w")
 
         # Add scale axis
         scalecol = "w"

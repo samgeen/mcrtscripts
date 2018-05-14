@@ -18,12 +18,15 @@ Msuning = 1.9891e33
 
 class SinkSnap(object):
     # A container for sink properties
-    def __init__(self,i=[],x=[],y=[],z=[],mass=[],time=[]):
+    def __init__(self,i=[],x=[],y=[],z=[],vx=[],vy=[],vz=[],mass=[],time=[]):
         self.id = np.atleast_1d(i)
         self.id = self.id.astype(np.int64)
         self.x = np.atleast_1d(x)
         self.y = np.atleast_1d(y)
         self.z = np.atleast_1d(z)
+        self.vx = np.atleast_1d(vx)
+        self.vy = np.atleast_1d(vy)
+        self.vz = np.atleast_1d(vz)
         self.mass = np.atleast_1d(mass)
         self.time = np.atleast_1d(time)
         self._dict = None
@@ -34,6 +37,9 @@ class SinkSnap(object):
                       "x": self.x,
                       "y": self.y,
                       "z": self.z,
+                      "vx": self.vx,
+                      "vy": self.vy,
+                      "vz": self.vz,
                       "mass": self.mass,
                       "time": self.time}
 
@@ -74,13 +80,19 @@ def FindSinks(snap):
             px = np.array([praw[3]])
             py = np.array([praw[4]])
             pz = np.array([praw[5]])
+            vx = np.array([praw[6]])
+            vy = np.array([praw[7]])
+            vz = np.array([praw[8]])
         else:
             pid = praw[:,0]
             pmass = praw[:,1]
             px = praw[:,3]
             py = praw[:,4]
             pz = praw[:,5]
-        sinks = SinkSnap(pid,px,py,pz,pmass,time)
+            vx = praw[:,6]
+            vy = praw[:,7]
+            vz = praw[:,8]
+        sinks = SinkSnap(pid,px,py,pz,vx,vy,vz,pmass,time)
     else:
         sinks = SinkSnap() # Make an empty object
     return sinks
