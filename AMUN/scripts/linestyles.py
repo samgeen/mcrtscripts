@@ -47,5 +47,5 @@ def Label(simname):
     labels = ["No Feedback",
               "UV Only",
               "Winds Only",
-              "Winds \& UV"]
+              "Winds and UV"]
     return labels[num-1]
