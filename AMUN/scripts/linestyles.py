@@ -35,7 +35,11 @@ def Colour(simname):
     colours = ["#a6cee3",
                "#1f78b4",
                "#b2df8a",
-               "#33a02c"]
+               "#33a02c",
+               "#fb9a99",
+               "#e31a1c",
+               "#fdbf6f",
+               "#ff7f00"]
     run, num = RunNum(simname)
     return colours[num-1]
 
@@ -47,5 +51,7 @@ def Label(simname):
     labels = ["No Feedback",
               "UV Only",
               "Winds Only",
-              "Winds and UV"]
+              "Winds and UV",
+              "Winds and UV + press",
+              "Winds and UV + IR + press"]
     return labels[num-1]
