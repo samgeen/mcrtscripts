@@ -24,6 +24,14 @@ def massinsnap(snap,nHthresh=0.0):
         mass = mass[dens > nHthresh]
     return np.sum(mass)
 
+def Pnontherminsnap(snap,nHthresh=0.0):
+    print "Finding Pnontherm in snap", snap.iout
+    amr = snap.amr_source(["Pnontherm"])
+    cell_source = CellsToPoints(amr)
+    cells = cell_source.flatten()
+    vols = (cells.get_sizes())**3.0
+    return np.max(cells["Pnontherm"])
+
 def meandensinsnap(snap,nHthresh=0.0):
     print "Finding mass in snap", snap.iout
     amr = snap.amr_source(["rho","P"])
@@ -183,10 +191,10 @@ def radiusinsnap3(snap):
     '''
     print "Finding radius of HII region in snap", snap.iout
     boxlen = snap.info["boxlen"]
-    amr = snap.amr_source(["rho","P","xHII"])
+    amr = snap.amr_source(["rho","xHII"])
     cell_source = CellsToPoints(amr)
     cells = cell_source.flatten()
-    temp = cells["P"]/cells["rho"]*snap.info["unit_temperature"].express(C.K)
+    #temp = cells["P"]/cells["rho"]*snap.info["unit_temperature"].express(C.K)
     ion = cells["xHII"]
     vols = (cells.get_sizes())**3.0
     pos = cells.points+0.0

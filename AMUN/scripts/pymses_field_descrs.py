@@ -4,7 +4,12 @@ from pymses.sources.ramses.output import *
 
 myrtvars = []
 ip = 0
-for p in ["IR","Opt","HII","HeII","HeIII"]:
+ir = False
+
+radbins = ["HII","HeII","HeIII"]
+if ir:
+    radbins = ["IR","Opt","HII","HeII","HeIII"]
+for p in radbins:
     myrtvars.append(Scalar("Np"+p,ip))
     myrtvars.append(Vector("Fp"+p,[ip+1,ip+2,ip+3]))
     ip += 4
@@ -15,8 +20,8 @@ self.amr_field_descrs_by_file = \
                        Vector("B-left", [4, 5, 6]), 
                        Vector("B-right", [7, 8, 9]), 
                        Scalar("Pnontherm",10),
-                       Scalar("P", 11),
-                       Scalar("xHII",12), Scalar("xHeII",13), Scalar("xHeIII",14)],
+                       Scalar("P", 11), Scalar("Z",12),
+                       Scalar("xHII",13), Scalar("xHeII",14), Scalar("xHeIII",15)],
            "rt"    : myrtvars
            }
     }

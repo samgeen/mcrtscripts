@@ -19,11 +19,13 @@ def _tsfeinsnap(snap):
 
 tsfeinsnap = Hamu.Algorithm(_tsfeinsnap)
 
+nprocs = 10
+
 def tsfe(simname):
     print "Running for simulation", simname
     sim = hamusims[simname]
     tcreated, sfe = starrelations.runforsim(simname,"firsttime")  
-    t, sfe = timefuncs.timefunc(sim,tsfeinsnap)
+    t, sfe = timefuncs.timefunc(sim,tsfeinsnap,processes=nprocs)
     #t -= tcreated
     return t, sfe
 
@@ -32,28 +34,28 @@ def momentum(simname):
     print "Running for simulation", simname
     sim = hamusims[simname]
     tcreated, sfe = starrelations.runforsim(simname,"firsttime")  
-    t, p = timefuncs.timefunc(sim,momentuminsnap)
+    t, p = timefuncs.timefunc(sim,momentuminsnap,processes=nprocs)
     t -= tcreated
     return t, p
 
-radiusinsnap2 = Hamu.Algorithm(findproperties.radiusinsnap3)
-def radius2(simname):
+radiusinsnap = Hamu.Algorithm(findproperties.radiusinsnap3)
+def radius(simname):
     print "Running for simulation", simname
     sim = hamusims[simname]
     tcreated, sfe = starrelations.runforsim(simname,"firsttime")  
-    t,r = timefuncs.timefunc(sim,radiusinsnap2)
+    t,r = timefuncs.timefunc(sim,radiusinsnap,processes=nprocs)
     # HACK - fix boxlen error
     #boxlen = 0.121622418993404E+03
     #r *= boxlen
     t -= tcreated
     return t, r
 
-radiusinsnap = Hamu.Algorithm(findproperties.radiusinsnap)
-def radius(simname):
+radiusinsnapDEPRECATED = Hamu.Algorithm(findproperties.radiusinsnap)
+def radiusDEPRECATED(simname):
     print "Running for simulation", simname
     sim = hamusims[simname]
     tcreated, sfe = starrelations.runforsim(simname,"firsttime")  
-    t,r = timefuncs.timefunc(sim,radiusinsnap)
+    t,r = timefuncs.timefunc(sim,radiusinsnapDEPRECATED)
     t -= tcreated
     return t, r
 
@@ -68,7 +70,14 @@ def nphotonsHII(simname):
     t, nphot = timefuncs.timefunc(sim,NphotonsHII)
     #t -= tcreated
     return t, nphot
-    
+
+Pnontherminsnap = Hamu.Algorithm(findproperties.Pnontherminsnap)
+def Pnontherm(simname):
+    print "Running for simulation", simname
+    sim = hamusims[simname]
+    t,r = timefuncs.timefunc(sim,Pnontherminsnap,verbose=True,processes=nprocs)
+    return t, r
+
 
 def plotpowerlaw(ax,w,y0,linestyle,t0=0.3):
     '''
@@ -174,5 +183,5 @@ if __name__=="__main__":
     #labels2 = [linestyles.Label(simname) for simname in imf2sims]
     label1 = "IMF 1"
     label2 = "IMF 2"
-    for func in [momentum,nphotonsHII,tsfe,radius,radius2]:
+    for func in [momentum,nphotonsHII,tsfe,radius]:
         run(func,(imf1sims,imf2sims),(label1,label2))

@@ -58,8 +58,9 @@ Msolar = "M$_{\odot}$"
 plotfolder = "../plots/"
 
 # Simulation names
-imf1sims = ["IMF1_"+str(i).zfill(2) for i in [1,2,3,4]]
-imf2sims = ["IMF2_"+str(i).zfill(2) for i in [1,2,3,4]]
+numsims = 4
+imf1sims = ["IMF1_"+str(i).zfill(2) for i in range(1,numsims+1)]
+imf2sims = ["IMF2_"+str(i).zfill(2) for i in range(1,numsims+1)]
 allsims = imf1sims + imf2sims
 
 # Simulation locations
@@ -67,6 +68,9 @@ allsims = imf1sims + imf2sims
 mainsimfolder = "/home/stgeen0/MCRT/runs/"
 imf1simfolder = mainsimfolder+"/58_AMUN/"
 imf2simfolder = mainsimfolder+"/60_AMUN_IMF2/"
+mainsimfolder2 = "/home/stgeen0/sds/sd16j009/REBEKKA_BIERI/MCRT/runs/"
+imf1simfolder2 = mainsimfolder2+"/58_AMUN_IMF1/"
+imf2simfolder2 = mainsimfolder2+"/60_AMUN_IMF2/"
 
 simfolders = {}
 # IMF1 folders
@@ -75,6 +79,9 @@ simfolders["IMF1_01"] = imf1simfolder+"01_nofbk/"
 simfolders["IMF1_02"] = imf1simfolder+"02_justUVphoto/"
 simfolders["IMF1_03"] = imf1simfolder+"03_justWind/"
 simfolders["IMF1_04"] = imf1simfolder+"04_UVphoto+Wind/"
+if numsims > 4:
+    simfolders["IMF1_05"] = imf1simfolder2+"05_UVphoto+press+Wind"
+    simfolders["IMF1_06"] = imf1simfolder2+"06_UVphoto+press+IRpress+Wind"
 
 # IMF2 folders
 # NOTE: no IMF2_01 because it's the same as IMF1_01
@@ -82,6 +89,9 @@ simfolders["IMF2_01"] = imf1simfolder+"01_nofbk/"
 simfolders["IMF2_02"] = imf2simfolder+"02_justUVphoto/"
 simfolders["IMF2_03"] = imf2simfolder+"03_justwind/"
 simfolders["IMF2_04"] = imf2simfolder+"04_UVphoto+Wind/"
+if numsims > 4:
+    simfolders["IMF2_05"] = imf2simfolder2+"05_UVphoto+press+Wind"
+    simfolders["IMF2_06"] = imf2simfolder2+"06_UVphoto+press+IRpress+Wind"
 
 # Populate list of Hamu simulations
 # TODO - make these on demand rather than on loadup?

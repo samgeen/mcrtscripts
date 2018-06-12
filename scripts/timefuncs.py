@@ -6,12 +6,23 @@ Sam Geen, December 2017
 import numpy as np
 import snaptime
 
-def timefunc(sim,func,noarray=False,*args,**kwargs):
+import multiprocessing as mp
+
+def timefunc(sim,func,noarray=False,verbose=False,processes=1,*args,**kwargs):
     times = []
     vals = []
-    for snap in sim.Snapshots():
-        times.append(snaptime.Myr(snap))
-        vals.append(func(snap,*args,**kwargs))
+    if processes == 1:
+        for snap in sim.Snapshots():
+            t = snaptime.Myr(snap)
+            v = func(snap,*args,**kwargs)
+            if verbose:
+                print "t,v:", t, v
+            times.append(t)
+            vals.append(v)
+    else:
+        pool = mp.Pool(processes=processes)
+        ts   = pool.map(snaptime.Myr, sim.Snapshots())
+        vals = pool.map(func,         sim.Snapshots())
     times = np.array(times)
     if not noarray:
         vals = np.array(vals)

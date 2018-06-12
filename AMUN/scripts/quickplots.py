@@ -1,0 +1,226 @@
+#import yt
+#yt.frontends.ramses.RAMSESDataset._skip_cache=True
+import matplotlib as mpl
+mpl.use('Agg')
+
+from multiprocessing import Process
+import numpy as np
+import os, getopt,sys,gc, time
+import matplotlib.pyplot as plt
+
+zoom = False
+
+def runprocs(outs, hydros,simname):
+    parallel = True
+    last = False
+    if last:
+        parallel = False
+    if parallel:
+        maxrun = 10
+        running = list()
+        procs = list()
+        done = 0
+        for out in outs:
+            proc = Process(target=plotforsnap, args=(out,hydros,simname))
+            procs.append(proc)
+        nprocs = len(procs)
+        while done < nprocs:
+            for proc in procs:
+                # Start process if we have space in the queue
+                if not proc.is_alive():
+                    if not proc in running:
+                        if len(running) < maxrun:
+                            print "STARTING", len(running)
+                            proc.start()
+                            running.append(proc)
+                    # Process done
+                    else:
+                        print "TERMINATING"
+                        done += 1
+                        running.remove(proc)
+                        procs.remove(proc)
+            time.sleep(1.0)
+    else:
+        if last:
+            outs = [outs[-1]]
+        for out in outs:
+            plotforsnap(out,hydros,simname)
+
+def pymses_func(ro, hydro):
+    from pymses.utils import constants as C
+    import pymses.analysis.visualization as v
+    scop = v.ScalarOperator
+    if hydro == "rho":
+        unit = ro.info["unit_density"].express(C.H_cc)
+        return scop(lambda dset: dset["rho"]*unit)
+    if hydro == "P" or hydro == "Pnontherm":
+        unit = ro.info["unit_pressure"].express(C.barye)
+        return scop(lambda dset: dset[hydro]*unit)
+    if hydro == "T":
+        mufunc = lambda dset: 1./(0.76*(1.+dset["xHII"]) + \
+                     0.25*0.24*(1.+dset["xHeII"]+2.*dset["xHeIII"]))
+        unit = ro.info["unit_temperature"].express(C.K)
+        return scop(lambda dset: dset["P"]/dset["rho"]*unit*mufunc(dset))
+    if "xH" in hydro:
+        unit = 1.0
+        return scop(lambda dset: dset[hydro]*unit)
+    if hydro == "Bmag":
+        def bmagfunc(dset):
+            b = 0.5*(dset["B-left"]+dset["B-right"])
+            # Magnitude of the 3-vector for each cell
+            return np.sqrt((b**2).sum(axis=1))
+        return scop(bmagfunc)
+    # None of those? Return unitless
+    sco = scop(lambda dset: dset[hydro])
+    return sco
+
+def hydro_range(hydro):
+    if hydro == "rho":
+        return (-1,4)
+    if hydro == "P" or hydro == "Pnontherm":
+        return (None, None) # No idea
+    if hydro == "T":
+        return (0,5)
+    if "xH" in hydro:
+        return (-6,0)
+    if hydro == "gpe":
+        return (None, None)
+    if hydro == "Bmag":
+        return (None, None)
+    return (None, None)
+    
+def hydro_label(hydro):
+    if hydro == "rho":
+        return "Density / atoms/cm$^{3}$"
+    if hydro == "P":
+        return "Pressure / dyne"
+    if hydro == "Pnontherm":
+        return "Non-thermal Pressure / dyne"
+    if hydro == "T":
+        return "Temperature / K"
+    if "xH" in hydro:
+        return "Ionisation Fraction "+hydro
+    if hydro == "gpe":
+        return "Gravitational Potential Energy"
+    if hydro == "Bmag":
+        return "|B| (code units)"
+    return hydro
+    
+def plotforsnap(out, hydros,simname):
+    import pymses
+    from pymses.sources.ramses.output import *
+    from pymses.analysis.visualization import *
+    mag = True
+    if not mag:
+        pymses.sources.ramses.output.RamsesOutput.amr_field_descrs_by_file = \
+            {
+            "3D": {"hydro" : [ Scalar("rho", 0), Vector("vel", [1, 2, 3]), Scalar("P", 4),
+                               Scalar("xHII",5), Scalar("xHeII",6), Scalar("xHeIII",7)]
+                   }
+            }
+    else:
+        pymses.sources.ramses.output.RamsesOutput.amr_field_descrs_by_file = \
+            {
+            "3D": {"hydro" : [ Scalar("rho", 0), Vector("vel", [1, 2, 3]), 
+                               Vector("B-left", [4, 5, 6]), 
+                               Vector("B-right", [7, 8, 9]), 
+                               Scalar("P", 10),
+                               Scalar("xHII",11), Scalar("xHeII",12), Scalar("xHeIII",13)]
+                   }
+            }
+        
+    out = out.replace("\n","")
+    print "Reading file", out
+    oloc = out.find("output_")
+    num = int(out[oloc+7:oloc+12])
+    numtxt = out[oloc+7:oloc+12]
+    folder = out[0:oloc]
+    ro = RamsesOutput(folder, num)
+    amr = ro.amr_source(["rho","P","xHII","B-left","B-right","xHeII","xHeIII","Pnontherm","NpIR"])
+    boxlen = ro.info["boxlen"]
+    if not zoom:
+        size = np.zeros(2)+1.0
+        centre = np.zeros(3)+0.5
+        cam  = Camera(center=centre, line_of_sight_axis='z', region_size=size, up_vector='y', 
+                      map_max_size=1024, log_sensitive=True)
+        zoomtxt = ""
+    else:
+        size = np.zeros(2)+0.005
+        centre = np.zeros(3)+0.5
+        centre[1] = 0.5 + 0.010
+        cam  = Camera(center=centre, line_of_sight_axis='z', region_size=size, up_vector='y', 
+                      map_max_size=1024, log_sensitive=True)
+        zoomtxt = "zoom_"
+        
+    
+    # Plot hydro variables
+    for hydro in hydros:
+        print hydro
+        hydro_op = pymses_func(ro,hydro)
+        slc = pymses.analysis.visualization.SliceMap(amr,cam, hydro_op, z=0.0)
+        print "Made slice (min/max:", slc.min(), slc.max(), ")"
+        plotlog = True
+        if hydro == "Pnontherm":
+            plotlog = False
+        if plotlog:
+            slc = np.log10(slc)
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        br = 0.5 * boxlen
+        extent=(-br,br,-br,br)
+        imrange = hydro_range(hydro)
+        d,u = imrange
+        #cax = ax.imshow(slc, interpolation='nearest',\
+        #                    extent=extent,vmin=d,vmax=u)
+        cax = ax.pcolormesh(slc,vmin=d,vmax=u)
+        # Add colour bar
+        cbar = fig.colorbar(cax)
+        label = hydro_label((hydro))
+        if plotlog:
+            label = "log("+label+")"
+        cbar.set_label(label)
+        # Save figure
+        figname = "plots/"+simname+"/slices/"+hydro+"/slice_"+hydro+"_"+zoomtxt+\
+            numtxt+".png"
+        fig.savefig(figname,\
+               bbox_inches='tight', \
+               transparent=True,\
+               pad_inches=0,
+                    dpi=300)
+
+def Run(folder=".",simname="",lastonly=False,num="",hydros=[]):
+    os.system("mkdir plots")
+    os.system("mkdir plots/"+simname)
+    os.system("mkdir plots/"+simname+"/slices")
+    #os.system("mkdir plots/projs")
+    if len(hydros) == 0:
+        hydros = ["rho","T","xHII","Bmag"]
+    #hydros = ["gpe"]
+    if zoom:
+        hydros = ["rho"]
+    for hydro in hydros:
+        os.system("mkdir plots/"+simname+"/slices/"+hydro)
+        #os.system("mkdir plots/projs/"+hydro)
+    p = os.popen("ls "+folder+"/output_?????/info_?????.txt")
+    outs = p.readlines()
+    if lastonly:
+        outs = [outs[-1]]
+    if num != "":
+        print outs, num
+        outs = [x for x in outs if num in x]
+    runprocs(outs, hydros,simname)
+    #for out in outs:
+    #    plotforsnap(out, hydros)
+    #for hydro in hydros:
+    #    os.system("mv *Slice*"+hydro+"*.png plots/slices/"+hydro+"/")
+    #    os.system("mv *Projection*"+hydro+"*.png plots/projs/"+hydro+"/")
+
+if __name__=="__main__":
+    argv = sys.argv[1:]
+    opts, args = getopt.getopt(argv,"l")
+    lastonly = False
+    for opt, arg in opts:
+        if opt == "-l":
+            print "READING LAST OUTPUT ONLY"
+            lastonly = True
+    Run(folder="/home/stgeen0/sds/sd16j009/REBEKKA_BIERI/MCRT/runs/60_AMUN_IMF2/06_UVphoto+press+IRpress+Wind/",simname="",lastonly=lastonly,hydros=["NpIR"])
