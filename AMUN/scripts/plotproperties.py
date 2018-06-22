@@ -19,7 +19,7 @@ def _tsfeinsnap(snap):
 
 tsfeinsnap = Hamu.Algorithm(_tsfeinsnap)
 
-nprocs = 10
+nprocs = 20
 
 def tsfe(simname):
     print "Running for simulation", simname

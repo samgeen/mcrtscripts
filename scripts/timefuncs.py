@@ -21,8 +21,8 @@ def timefunc(sim,func,noarray=False,verbose=False,processes=1,*args,**kwargs):
             vals.append(v)
     else:
         pool = mp.Pool(processes=processes)
-        ts   = pool.map(snaptime.Myr, sim.Snapshots())
-        vals = pool.map(func,         sim.Snapshots())
+        times = pool.map(snaptime.Myr, sim.Snapshots())
+        vals  = pool.map(func,         sim.Snapshots())
     times = np.array(times)
     if not noarray:
         vals = np.array(vals)
