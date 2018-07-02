@@ -45,7 +45,7 @@ def meandensinsnap(snap,nHthresh=0.0):
         vols = vols[dens > nHthresh]
     return np.sum(mass)/np.sum(vols)
 
-def etherminsnap(snap):
+def etherminsnap(snap,wind=False):
     print "Finding max T in snap", snap.iout
     amr = snap.amr_source(["rho","P"])
     cell_source = CellsToPoints(amr)
@@ -56,9 +56,12 @@ def etherminsnap(snap):
     temp = cells["P"]/cells["rho"]*snap.info["unit_temperature"].express(C.K)
     time = snap.info["time"]*snap.info["unit_time"].express(C.Myr)
     etherm = 1.0/(gamma - 1.0) * (mass / mH) * kB * temp
+    if wind:
+        mask = np.where(temp > 1e5)
+        etherm = etherm[mask]
     return np.sum(etherm)
 
-def ekininsnap(snap):
+def ekininsnap(snap,wind=False):
     print "Finding kinetic energy in snap", snap.iout
     amr = snap.amr_source(["rho","vel"])
     cell_source = CellsToPoints(amr)
@@ -71,14 +74,21 @@ def ekininsnap(snap):
     vols = (cells.get_sizes())**3.0
     spds = np.sqrt(np.sum(vels**2.0,1))
     ekin = 0.5*rhos*vols*spds**2
+    if wind:
+        # Over 100 km/s
+        mask = np.where(vels*uvel/1e5 > 100.0)
+        ekin = ekin[mask]
     ekin =  np.sum(ekin)*ue
     time = snap.info["time"]*snap.info["unit_time"].express(C.Myr)
     print "KINETIC ENERGY FOUND @ ",time,"Myr:", ekin
     return ekin
 
-def energyinsnap(snap):
-    time, etherm = etherminsnap(snap)
-    time, ekin = ekininsnap(snap)
+def windenergyinsnap(snap):
+    return energyinsnap(snap,wind=True)
+
+def energyinsnap(snap,wind=False):
+    time, etherm = etherminsnap(snap,wind)
+    time, ekin = ekininsnap(snap,wind)
     etot = ekin+etherm
     return time, (etherm,ekin,etot)
 
@@ -148,9 +158,12 @@ def totalmomentuminsnap(snap,nHlow=0.0,nHhigh=0.0):
     mom *= umass*uvel
     time = snap.info["time"]*snap.info["unit_time"].express(C.Myr)
     print "MOMENTUM FOUND @ ",time,"Myr:", mom
-    return mom 
+    return mom
 
-def radiusinsnap(snap):
+def windradiusinsnap(snap):
+    radiusinsnap(snap,wind=True)
+
+def radiusinsnap(snap,wind=False):
     print "Finding radius of HII region in snap", snap.iout
     boxlen = snap.info["boxlen"]
     amr = snap.amr_source(["rho","P","xHII"])
@@ -164,8 +177,12 @@ def radiusinsnap(snap):
     mcode = vols*rhos
     msum = np.sum(mcode)
     thresh = 0.1 # HACK!
-    mask = np.where(ion > thresh)
-    weight = mcode[mask]*ion[mask]
+    if not wind:
+        mask = np.where(ion > thresh)
+        weight = mcode[mask]*ion[mask]
+    else:
+        mask = np.where(temp > 1e5)
+        weight = mcode[mask]
     x = pos[mask,0]*boxlen
     y = pos[mask,1]*boxlen
     z = pos[mask,2]*boxlen
