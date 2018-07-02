@@ -12,6 +12,8 @@ import matplotlib.patheffects as pe
 
 import findproperties, starrelations
 
+from scipy.interpolate import interp1d
+
 def _tsfeinsnap(snap):
     sink = sinks.FindSinks(snap)
     mgas = 1e4
@@ -50,6 +52,24 @@ def radius(simname):
     t -= tcreated
     return t, r
 
+windenergyinsnap = Hamu.Algorithm(findproperties.windenergyinsnap)
+def windenergy(simname):
+    print "Running for simulation", simname
+    sim = hamusims[simname]
+    tcreated, sfe = starrelations.runforsim(simname,"firsttime")  
+    t,e = timefuncs.timefunc(sim,windenergyinsnap,processes=nprocs)
+    t -= tcreated
+    return t, e
+
+windradiusinsnap = Hamu.Algorithm(findproperties.windradiusinsnap)
+def windradius(simname):
+    print "Running for simulation", simname
+    sim = hamusims[simname]
+    tcreated, sfe = starrelations.runforsim(simname,"firsttime")  
+    t,r = timefuncs.timefunc(sim,windradiusinsnap,processes=nprocs)
+    t -= tcreated
+    return t, r
+    
 radiusinsnapDEPRECATED = Hamu.Algorithm(findproperties.radiusinsnap)
 def radiusDEPRECATED(simname):
     print "Running for simulation", simname
@@ -97,7 +117,7 @@ def plotpowerlaw(ax,w,y0,linestyle,t0=0.3):
     y = y[mask]
     ax.plot(x,y,linestyle,zorder=0,alpha=0.7)
 
-def run(simfunc,simnamesets,plotlabels):
+def run(simfunc,simnamesets,plotlabels,compare=False):
     plt.clf()
     wcloud = 1.71 # cloud density profile power law index
     funcname = simfunc.__name__
@@ -117,9 +137,13 @@ def run(simfunc,simnamesets,plotlabels):
             xticks = [2,3,4,5,6,7,8,9,10]
         if funcname == "radius" or funcname == "radius2":
             tlim = 1e-6
-            ax.set_ylim([0.1,70])
+            if not compare:
+                ax.set_ylim([0.1,70])
             ax.set_xlabel("Time after 1st star formed / Myr")
             textloc = 0.1
+        if funcname == "windradius":
+            tlim = 1e-6
+            ax.set_xlabel("Time after 1st star formed / Myr")
         if funcname == "momentum":
             tlim = 1e-6
             ax.set_xlabel("Time after 1st star formed / Myr")
@@ -133,25 +157,46 @@ def run(simfunc,simnamesets,plotlabels):
             ax.set_xticks(xticks)
             ax.set_xticklabels(xticklabels)
         # Do main plot
-        for simname in simnames:
-            t, y = simfunc(simname)
-            scale = ax.get_yscale()
+        scale = ax.get_yscale()
+        if scale == "log":
+            if funcname != "radius" and funcname != "momentum" and funcname != "radius2" and funcname != "windradius":
+                ax.get_xaxis().set_minor_formatter(plt.ScalarFormatter()) 
+                ax.get_xaxis().set_major_formatter(plt.ScalarFormatter()) 
+        if not compare:
+            for simname in simnames:
+                t, y = simfunc(simname)
+                if scale == "log":
+                    mask = t > tlim
+                    t = t[mask]
+                    y = y[mask]
+                if len(y.shape) == 1:
+                    ax.plot(t,y,color=linestyles.Colour(simname),label=linestyles.Label(simname),
+                            path_effects=[pe.Stroke(linewidth=5, foreground='k'), pe.Normal()])
+                else:
+                    ntimes, nvals = y.shape
+                    lines = ["-",":","--",":-"]
+                    for i in range(0,nvals):
+                        ax.plot(t,y[:,i],color=linestyles.Colour(simname),label=lines[i],
+                                path_effects=[pe.Stroke(linewidth=5, foreground='k'), pe.Normal()])
+        else:
+            t1,y1 = simfunc(simnames[0])
+            t2,y2 = simfunc(simnames[1])
+            f = interp1d(t1,y1)
+            tc = t2+0.0
+            yc = y2 - f(tc)
             if scale == "log":
-                if funcname != "radius" and funcname != "momentum" and funcname != "radius2":
-                    ax.get_xaxis().set_minor_formatter(plt.ScalarFormatter()) 
-                    ax.get_xaxis().set_major_formatter(plt.ScalarFormatter()) 
-                mask = t > tlim
-                t = t[mask]
-                y = y[mask]
-            ax.plot(t,y,color=linestyles.Colour(simname),label=linestyles.Label(simname),
-                    path_effects=[pe.Stroke(linewidth=5, foreground='k'), pe.Normal()])
+                mask = tc > tlim
+                tc = tc[mask]
+                yc = yc[mask]
+            ax.plot(tc,yc,color=linestyles.Colour(simnames[1]),label=linestyles.Label(simnames[1]),
+                        path_effects=[pe.Stroke(linewidth=5, foreground='k'), pe.Normal()])
         # Overplot theoretical fits
-        if funcname == "momentum":
+        if funcname == "momentum" and not compare:
             # Flat density profile
             plotpowerlaw(ax,9.0/7.0,2e43,"k:",t0=0.5)
             # Power law density profile
             plotpowerlaw(ax,(9.0-2.0*wcloud)/(7.0-2.0*wcloud),2e43,"k--",t0=0.5)
-        if funcname == "radius" or funcname == "radius2":
+        if (funcname == "radius" or funcname == "radius2") and not compare:
             # Flat density profile
             plotpowerlaw(ax,4.0/7.0,10.0,"k:")
             # Power law density profile
@@ -169,19 +214,31 @@ def run(simfunc,simnamesets,plotlabels):
                 ax.set_ylabel("Sphericised HII Region radius / pc")
             if funcname == "nphotonsHII":
                 ax.set_ylabel("Ionising Photon Emission Rate / s$^{-1}$")
+            if funcname == "windradius":
+                ax.set_ylabel("Sphericised radius of wind bubble / pc")
         leg = ax.legend(fontsize="x-small",loc="upper left")
         leg.get_frame().set_linewidth(0.0)
         #ax.set_ylim([-0.01,0.25])
         ax.text(0.95, textloc,plotlabel, ha='right', va="top", transform=ax.transAxes)
         first = False
+    comparetxt = ""
+    if compare:
+        comparetxt = "_compare"
     fig.subplots_adjust(wspace=0)
     fig.set_size_inches(14,6)
-    fig.savefig(plotfolder+funcname+"_both.pdf", dpi=80)
+    fig.savefig(plotfolder+funcname+"_both"+comparetxt+".pdf", dpi=80)
         
 if __name__=="__main__":
     #labels1 = [linestyles.Label(simname) for simname in imf1sims]
     #labels2 = [linestyles.Label(simname) for simname in imf2sims]
     label1 = "IMF 1"
     label2 = "IMF 2"
+    for func in [windenergy,windradius][::-1]:
+        run(func,(["IMF1_03","IMF1_04"],["IMF2_03","IMF2_04"]),
+            (label1,label2))
+    for func in [momentum,radius]:
+        run(func,(["IMF1_02","IMF1_04"],["IMF2_02","IMF2_04"]),
+            (label1,label2),compare=True)
     for func in [momentum,nphotonsHII,tsfe,radius]:
         run(func,(imf1sims,imf2sims),(label1,label2))
+
