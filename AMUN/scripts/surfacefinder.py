@@ -29,6 +29,7 @@ def findsurface(snap,criterion="wind"):
         return None
     # Find surface
     points = cells.points
+    return cells
     hull = ConvexHull(points[mask,:])
     # This is a list of indices of points on the surface
     surface = points[hull.vertices,:]

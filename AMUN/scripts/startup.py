@@ -61,7 +61,8 @@ plotfolder = "../plots/"
 numsims = 4
 imf1sims = ["IMF1_"+str(i).zfill(2) for i in range(1,numsims+1)]
 imf2sims = ["IMF2_"+str(i).zfill(2) for i in range(1,numsims+1)]
-allsims = imf1sims + imf2sims
+massivesims = ["MASS_"+str(i).zfill(2) for i in range(1,numsims+1)]
+allsims = imf1sims + imf2sims + massivesims
 
 # Simulation locations
 #mainsimfolder = "/home/hd/hd_hd/hd_mp149/MCRT/runs/"
@@ -71,6 +72,7 @@ imf2simfolder = mainsimfolder+"/60_AMUN_IMF2/"
 mainsimfolder2 = "/home/stgeen0/sds/sd16j009/REBEKKA_BIERI/MCRT/runs/"
 imf1simfolder2 = mainsimfolder2+"/58_AMUN_IMF1/"
 imf2simfolder2 = mainsimfolder2+"/60_AMUN_IMF2/"
+masssimfolder = mainsimfolder+"64_AMUN_IMF2_M1e5/"
 
 simfolders = {}
 # IMF1 folders
@@ -93,6 +95,12 @@ if numsims > 4:
     simfolders["IMF2_05"] = imf2simfolder2+"05_UVphoto+press+Wind"
     simfolders["IMF2_06"] = imf2simfolder2+"06_UVphoto+press+IRpress+Wind"
 
+# Massive folders
+simfolders["MASS_01"] = masssimfolder+"01_nofbk"
+simfolders["MASS_02"] = masssimfolder+"02_justUVphoto"
+simfolders["MASS_03"] = masssimfolder+"03_justwind"
+simfolders["MASS_04"] = masssimfolder+"04_UVphoto+Wind"
+    
 # Populate list of Hamu simulations
 # TODO - make these on demand rather than on loadup?
 #        (Might save time if we use 
