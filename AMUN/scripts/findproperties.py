@@ -76,7 +76,7 @@ def ekininsnap(snap,wind=False):
     ekin = 0.5*rhos*vols*spds**2
     if wind:
         # Over 100 km/s
-        mask = np.where(vels*uvel/1e5 > 100.0)
+        mask = np.where(spds*uvel/1e5 > 100.0)
         ekin = ekin[mask]
     ekin =  np.sum(ekin)*ue
     time = snap.info["time"]*snap.info["unit_time"].express(C.Myr)
@@ -87,10 +87,10 @@ def windenergyinsnap(snap):
     return energyinsnap(snap,wind=True)
 
 def energyinsnap(snap,wind=False):
-    time, etherm = etherminsnap(snap,wind)
-    time, ekin = ekininsnap(snap,wind)
+    etherm = etherminsnap(snap,wind)
+    ekin = ekininsnap(snap,wind)
     etot = ekin+etherm
-    return time, (etherm,ekin,etot)
+    return (etherm,ekin,etot)
 
 def maxTinsnap(snap):
     print "Finding max T in snap", snap.iout
@@ -161,7 +161,7 @@ def totalmomentuminsnap(snap,nHlow=0.0,nHhigh=0.0):
     return mom
 
 def windradiusinsnap(snap):
-    radiusinsnap(snap,wind=True)
+    return radiusinsnap(snap,wind=True)
 
 def radiusinsnap(snap,wind=False):
     print "Finding radius of HII region in snap", snap.iout
@@ -227,6 +227,18 @@ def radiusinsnap3(snap):
     ionrad = ionvol**(1.0/3.0) * (3.0 / 4.0 / np.pi)
     return ionrad*boxlen
 
+def maxBfieldinsnap(snap):
+    amr = snap.amr_source(["B-left","B-right"])
+    cell_source = CellsToPoints(amr)
+    cells = cell_source.flatten()
+    b = 0.5*(cells["B-left"]+cells["B-right"])  
+    ud = snap.info["unit_density"].express(C.g_cc)
+    ul = snap.info["unit_length"].express(C.cm)
+    ut = snap.info["unit_time"].express(C.s)
+    unit = np.sqrt(4.0*np.pi*ud*(ul/ut)**2)*1e6 # microGauss
+    Bmag = np.sqrt((b**2).sum(axis=1))*unit
+    return np.max(Bmag)
+    
 def run(func,simnames,plotname):
     name = func.__name__
     plt.clf()

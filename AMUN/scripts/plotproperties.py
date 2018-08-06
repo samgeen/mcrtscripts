@@ -15,8 +15,8 @@ import findproperties, starrelations
 from scipy.interpolate import interp1d
 
 def _tsfeinsnap(snap):
-    sink = sinks.FindSinks(snap)
     mgas = 1e4
+    sink = sinks.FindSinks(snap)
     return np.sum(sink.mass) / mgas
 
 tsfeinsnap = Hamu.Algorithm(_tsfeinsnap)
@@ -24,11 +24,13 @@ tsfeinsnap = Hamu.Algorithm(_tsfeinsnap)
 nprocs = 20
 
 def tsfe(simname):
+    global mgas
     print "Running for simulation", simname
     sim = hamusims[simname]
-    tcreated, sfe = starrelations.runforsim(simname,"firsttime")  
+    tcreated, dum = starrelations.runforsim(simname,"firsttime")
     t, sfe = timefuncs.timefunc(sim,tsfeinsnap,processes=nprocs)
-    #t -= tcreated
+    if "MASS" in simname:
+        sfe /= 10.0 # mgas is 10x larger here
     return t, sfe
 
 momentuminsnap = Hamu.Algorithm(findproperties.totalmomentuminsnap)
@@ -57,7 +59,7 @@ def windenergy(simname):
     print "Running for simulation", simname
     sim = hamusims[simname]
     tcreated, sfe = starrelations.runforsim(simname,"firsttime")  
-    t,e = timefuncs.timefunc(sim,windenergyinsnap,processes=nprocs)
+    t,e = timefuncs.timefunc(sim,windenergyinsnap,processes=1) # doesn't like tuples in the pool map
     t -= tcreated
     return t, e
 
@@ -98,6 +100,12 @@ def Pnontherm(simname):
     t,r = timefuncs.timefunc(sim,Pnontherminsnap,verbose=True,processes=nprocs)
     return t, r
 
+maxBfieldinsnap = Hamu.Algorithm(findproperties.maxBfieldinsnap)
+def maxBfield(simname):
+    print "Running for simulation", simname
+    sim = hamusims[simname]
+    t,B = timefuncs.timefunc(sim,maxBfieldinsnap,verbose=True,processes=nprocs)
+    return t, B
 
 def plotpowerlaw(ax,w,y0,linestyle,t0=0.3):
     '''
@@ -119,15 +127,19 @@ def plotpowerlaw(ax,w,y0,linestyle,t0=0.3):
 
 def run(simfunc,simnamesets,plotlabels,compare=False):
     plt.clf()
+    numcols = len(simnamesets)
     wcloud = 1.71 # cloud density profile power law index
     funcname = simfunc.__name__
-    fig, axes = plt.subplots(1,2,sharex=True,sharey=True)
+    fig, axes = plt.subplots(1,numcols,sharex=True,sharey=True)
     first = True
     for ax, simnames, plotlabel in zip(axes,simnamesets,plotlabels):
+        linenames = []
         # Do func-related stuff for all plots
         ax.set_xscale("log")
         ax.set_yscale("log")
-        tlim = 2.0
+        tlim = 0.1
+        if not "MASS" in simnames[0]:
+            tlim = 2.0
         ax.set_xlabel("Time / Myr")
         textloc = 0.95
         xticks = None
@@ -144,12 +156,15 @@ def run(simfunc,simnamesets,plotlabels,compare=False):
         if funcname == "windradius":
             tlim = 1e-6
             ax.set_xlabel("Time after 1st star formed / Myr")
+        if funcname == "windenergy":
+            linenames = ["Thermal","Kinetic","Total"]
         if funcname == "momentum":
             tlim = 1e-6
             ax.set_xlabel("Time after 1st star formed / Myr")
         if funcname == "tsfe":
-            xticks = [2,3,4,5,6,7,8,9,10]
-            ax.set_xlim([1.5,12.0])
+            ax.set_ylim([0.001,1.5])
+            xticks = [1,2,3,4,5,6,7,8,9,10]
+            ax.set_xlim([1,12.0])
         if xticks is not None:
             xticklabels = [str(x) for x in xticks]
             ax.xaxis.set_major_locator(plt.NullLocator()) 
@@ -170,13 +185,16 @@ def run(simfunc,simnamesets,plotlabels,compare=False):
                     t = t[mask]
                     y = y[mask]
                 if len(y.shape) == 1:
-                    ax.plot(t,y,color=linestyles.Colour(simname),label=linestyles.Label(simname),
+                    ax.plot(t,y,color=linestyles.Colour(simname),label=linestyles.Label(simname),alpha=0.7,
                             path_effects=[pe.Stroke(linewidth=5, foreground='k'), pe.Normal()])
                 else:
                     ntimes, nvals = y.shape
                     lines = ["-",":","--",":-"]
+                    #import pdb; pdb.set_trace()
                     for i in range(0,nvals):
-                        ax.plot(t,y[:,i],color=linestyles.Colour(simname),label=lines[i],
+                        ax.plot(t,y[:,i],color=linestyles.Colour(simname),
+                                label=linestyles.Label(simname)+linenames[i],
+                                linestyle=lines[i],
                                 path_effects=[pe.Stroke(linewidth=5, foreground='k'), pe.Normal()])
         else:
             t1,y1 = simfunc(simnames[0])
@@ -216,6 +234,8 @@ def run(simfunc,simnamesets,plotlabels,compare=False):
                 ax.set_ylabel("Ionising Photon Emission Rate / s$^{-1}$")
             if funcname == "windradius":
                 ax.set_ylabel("Sphericised radius of wind bubble / pc")
+            if funcname == "windenergy":
+                ax.set_ylabel("Total energy in wind-shocked gas / ergs")
         leg = ax.legend(fontsize="x-small",loc="upper left")
         leg.get_frame().set_linewidth(0.0)
         #ax.set_ylim([-0.01,0.25])
@@ -225,7 +245,7 @@ def run(simfunc,simnamesets,plotlabels,compare=False):
     if compare:
         comparetxt = "_compare"
     fig.subplots_adjust(wspace=0)
-    fig.set_size_inches(14,6)
+    fig.set_size_inches(7*numcols,6)
     fig.savefig(plotfolder+funcname+"_both"+comparetxt+".pdf", dpi=80)
         
 if __name__=="__main__":
@@ -233,12 +253,14 @@ if __name__=="__main__":
     #labels2 = [linestyles.Label(simname) for simname in imf2sims]
     label1 = "IMF 1"
     label2 = "IMF 2"
-    for func in [windenergy,windradius][::-1]:
+    label3 = "Massive Cloud"
+    for func in [maxBfield,tsfe,nphotonsHII,momentum,radius]:
+        run(func,(imf1sims,imf2sims,massivesims),(label1,label2,label3))
+    for func in [windenergy,windradius]:
         run(func,(["IMF1_03","IMF1_04"],["IMF2_03","IMF2_04"]),
             (label1,label2))
     for func in [momentum,radius]:
         run(func,(["IMF1_02","IMF1_04"],["IMF2_02","IMF2_04"]),
             (label1,label2),compare=True)
-    for func in [momentum,nphotonsHII,tsfe,radius]:
-        run(func,(imf1sims,imf2sims),(label1,label2))
+
 
