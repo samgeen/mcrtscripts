@@ -157,6 +157,8 @@ def run(simfunc,simnamesets,plotlabels,compare=False):
             tlim = 1e-6
             ax.set_xlabel("Time after 1st star formed / Myr")
         if funcname == "windenergy":
+            tlim = 1e-6
+            ax.set_ylim([0.99e45,1.1e49])
             linenames = ["Thermal","Kinetic","Total"]
         if funcname == "momentum":
             tlim = 1e-6
@@ -254,13 +256,13 @@ if __name__=="__main__":
     label1 = "IMF 1"
     label2 = "IMF 2"
     label3 = "Massive Cloud"
-    for func in [maxBfield,tsfe,nphotonsHII,momentum,radius]:
-        run(func,(imf1sims,imf2sims,massivesims),(label1,label2,label3))
     for func in [windenergy,windradius]:
-        run(func,(["IMF1_03","IMF1_04"],["IMF2_03","IMF2_04"]),
-            (label1,label2))
+        run(func,(["IMF1_03","IMF1_04"],["MASS_03","MASS_04"]),
+            (label1,label3))
+    for func in [maxBfield,tsfe,nphotonsHII,momentum,radius]:
+        run(func,(imf1sims,massivesims),(label1,label3))
     for func in [momentum,radius]:
-        run(func,(["IMF1_02","IMF1_04"],["IMF2_02","IMF2_04"]),
-            (label1,label2),compare=True)
+        run(func,(["IMF1_02","IMF1_04"],["MASS_02","MASS_04"]),
+            (label1,label3),compare=True)
 
 
