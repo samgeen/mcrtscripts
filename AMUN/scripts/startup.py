@@ -78,9 +78,9 @@ simfolders = {}
 # IMF1 folders
 # Do this by hand since we're split between different user folders
 simfolders["IMF1_01"] = imf1simfolder+"01_nofbk/"
-simfolders["IMF1_02"] = imf1simfolder+"02_justUVphoto/"
-simfolders["IMF1_03"] = imf1simfolder+"X3_justWind_fbfix/"
-simfolders["IMF1_04"] = imf1simfolder+"X4_UVphoto+Wind_fbfix/"
+simfolders["IMF1_02"] = imf1simfolder+"Y2_justUVphoto_fastlight"
+simfolders["IMF1_03"] = imf1simfolder+"Y3_justWind_fastlight"
+simfolders["IMF1_04"] = imf1simfolder+"Y4_UVphoto+Wind_fastlight"
 if numsims > 4:
     simfolders["IMF1_05"] = imf1simfolder2+"05_UVphoto+press+Wind"
     simfolders["IMF1_06"] = imf1simfolder2+"06_UVphoto+press+IRpress+Wind"
@@ -88,18 +88,18 @@ if numsims > 4:
 # IMF2 folders
 # NOTE: no IMF2_01 because it's the same as IMF1_01
 simfolders["IMF2_01"] = imf1simfolder+"01_nofbk/"
-simfolders["IMF2_02"] = imf2simfolder+"02_justUVphoto/"
-simfolders["IMF2_03"] = imf2simfolder+"X3_justwind_fbfix/"
-simfolders["IMF2_04"] = imf2simfolder+"X4_UVphoto+wind_fbfix/"
+simfolders["IMF2_02"] = imf2simfolder+"Y2_justUVphoto_fastlight"
+simfolders["IMF2_03"] = imf2simfolder+"Y3_justwind_fastlight"
+simfolders["IMF2_04"] = imf2simfolder+"Y4_UVphoto+Wind_fastlight"
 if numsims > 4:
     simfolders["IMF2_05"] = imf2simfolder2+"05_UVphoto+press+Wind"
     simfolders["IMF2_06"] = imf2simfolder2+"06_UVphoto+press+IRpress+Wind"
 
 # Massive folders
 simfolders["MASS_01"] = masssimfolder+"01_nofbk"
-simfolders["MASS_02"] = masssimfolder+"02_justUVphoto"
-simfolders["MASS_03"] = masssimfolder+"03_justwind"
-simfolders["MASS_04"] = masssimfolder+"04_UVphoto+Wind"
+simfolders["MASS_02"] = masssimfolder+"Y2_justUVphoto_fastlight"
+simfolders["MASS_03"] = masssimfolder+"Y3_justwind_fastlight"
+simfolders["MASS_04"] = masssimfolder+"Y4_UVphoto+Wind"
     
 # Populate list of Hamu simulations
 # TODO - make these on demand rather than on loadup?
