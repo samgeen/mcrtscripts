@@ -6,12 +6,17 @@ Sam Geen, November 2014
 import numpy as np
 from pymses.utils import constants as C
 
+mH = 1.6735326381e-24
+logmH = np.log10(mH)
+
 def hydro_label(hydro):
     '''
     Returns a label for the given hydro variable in some default units
     '''
     if hydro == "rho":
-        return "Density / atoms/cm$^{3}$"
+        return "$\rho$ / g/cm$^{3}$"
+    if hydro == "nH":
+        return "$n_{\mathrm{H}}$ / cm$^{-3}$"
     if hydro == "NH":
         return "$N_{\mathrm{H}}$ / cm$^{-2}$"
     if hydro == "P":
@@ -24,6 +29,12 @@ def hydro_label(hydro):
         return "Gravitational Potential Energy"
     if hydro == "Bmag":
         return "|B| / $\mu G$"
+    if hydro == "Bx":
+        return "B.$x$ / $\mu G$"
+    if hydro == "By":
+        return "B.$y$ / $\mu G$"
+    if hydro == "Bz":
+        return "B.$z$ / $\mu G$"
     if hydro == "vrad":
         return "V$_{radial}$ / km/s"
     if hydro == "spd":
@@ -41,8 +52,20 @@ def scale_by_units(ro, hydro):
     '''
     Returns a lambda function that scales a dataset by some default units
     '''
-    if hydro == "rho":
+    def bunit(dset):
+        ud = ro.info["unit_density"].express(C.g_cc)
+        ul = ro.info["unit_length"].express(C.cm)
+        ut = ro.info["unit_time"].express(C.s)
+        unit = np.sqrt(4.0*np.pi*ud*(ul/ut)**2)*1e6 # microGauss
+        return unit
+    def bfunc(dset,axis):
+        b = 0.5*(dset["B-left"]+dset["B-right"])
+        return b[:,axis]*bunit(dset)
+    if hydro == "nH":
         unit = ro.info["unit_density"].express(C.H_cc)
+        return lambda dset: dset["rho"]*unit
+    if hydro == "rho":
+        unit = ro.info["unit_density"].express(C.g_cc)
         return lambda dset: dset["rho"]*unit
     if hydro == "NH":
         unit = ro.info["unit_density"].express(C.g_cc) * \
@@ -61,12 +84,19 @@ def scale_by_units(ro, hydro):
         return lambda dset: dset[hydro]*unit
     if hydro == "Bmag":
         def bmagfunc(dset):
-            b = 0.5*(dset["B-left"]+dset["B-right"])
-            up = ro.info["unit_pressure"].express(C.barye)
-            unit = np.sqrt(up/(4.0*np.pi))*1e-6 # microGauss
+            #b = 0.5*(dset["B-left"]+dset["B-right"])
+            #up = ro.info["unit_pressure"].express(C.barye)
+            #unit = np.sqrt(up/(4.0*np.pi))*1e-6 # microGauss
             # Magnitude of the 3-vector for each cell
-            return np.sqrt((b**2).sum(axis=1))*unit
+            b = 0.5*(dset["B-left"]+dset["B-right"])
+            return np.sqrt((b**2).sum(axis=1))*bunit(dset)
         return bmagfunc
+    if hydro == "Bx":
+        return lambda dset: bfunc(dset,0)
+    if hydro == "By":
+        return lambda dset: bfunc(dset,1)
+    if hydro == "Bz":
+        return lambda dset: bfunc(dset,2)
     if hydro == "vrad":
         unit = ro.info["unit_velocity"].express(C.km/C.s)
         def findvrad(dset):
@@ -99,30 +129,67 @@ def amr_source(ro, hydro,extra=[]):
     '''
     Load the necessary data from the hydro files
     '''
-    hydros = [hydro] # default is just the variable we need
-    if hydro == "NH":
-        hydros == ["rho"]
-    if hydro == "T":
-        hydros = ["rho","P","xHII","xHeII","xHeIII"]
-    if hydro == "Bmag":
-        hydros = ["B-left","B-right"]
-    if hydro[0] == "v": # Any velocity
-        hydros = ["vel"]
-    if hydro == "spd":
-        hydros = ["vel"]
-    if hydro == "Pram":
-        hydros = ["rho","vel"]
+    # Allow users to use single variables or lists of hydro variables
+    hydros = np.atleast_1d(np.array(hydro))
+    pymsesvars = []
+    # Run through hydro variables
+    for hydro in hydros:
+        if hydro == "nH":
+            pymsesvars += ["rho"]
+        if hydro == "NH":
+            pymsesvars += ["rho"]
+        if hydro == "T":
+            pymsesvars += ["rho","P","xHII","xHeII","xHeIII"]
+        if hydro == "Bmag":
+            pymsesvars += ["B-left","B-right"]
+        if hydro[0] == "v": # Any velocity
+            pymsesvars += ["vel"]
+        if hydro == "spd":
+            pymsesvars += ["vel"]
+        if hydro == "Pram":
+            pymsesvars += ["rho","vel"]
     # Add extras
     for e in extra:
-        if not e in hydros:
-            hydros.append(e)
-    return ro.amr_source(hydros)
-    
+        if not e in pymsesvars:
+            pymsesvars.append(e)
+    # Make unique list
+    pymsesvars = list(set(pymsesvars))
+    # Output pymses AMR source
+    return ro.amr_source(pymsesvars)
+
+def cmap(hydro):
+    '''
+    Returns cmap for this hydro variable 
+    '''
+    if hydro == "rho":
+        return "RdPu_r"
+    if hydro == "nH":
+        return "RdPu_r"
+    if hydro == "NH":
+        return "RdPu_r"
+    if hydro == "P":
+        return "jet"
+    if hydro == "T":
+        return "jet"
+    if "xH" in hydro:
+        return "RdPu_r"
+    if hydro == "Bmag":
+        return "RdPu_r"
+    if hydro[0] == "v": # any velocity
+        return "RdPu_r"
+    if hydro == "spd":
+        return "RdPu_r"
+    if hydro == "Pram":
+        return "RdPu_r"
+    # None of those? Return false
+    return "linear"
 
 def yscale(hydro):
     '''
     Returns whether this function takes a log scale or not
     '''
+    if hydro == "nH":
+        return "log"
     if hydro == "rho":
         return "log"
     if hydro == "NH":
@@ -145,14 +212,16 @@ def yscale(hydro):
     return "linear"
 
 def hydro_range(hydro):
-    if hydro == "rho":
+    if hydro == "nH":
         return (0, 8)
+    if hydro == "rho":
+        return (logmH,logmH+8)
     if hydro == "NH":
         return (20.5,23.0)
     if hydro == "P":
         return (None, None) # No idea
     if hydro == "T":
-        return (0,5)
+        return (0,8)
     if "xH" in hydro:
         return (-6,0)
     if hydro == "gpe":
