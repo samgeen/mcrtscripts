@@ -13,6 +13,8 @@ import pymses
 
 import numpy as np
 
+from collections import OrderedDict
+
 CACHEPATH = None
 
 class CacheFile(object):
@@ -69,6 +71,10 @@ class Algorithm(object):
         self._function = function
         self._args = args
         self._kwargs = kwargs
+        self._force_replace_cache = False
+
+    def ForceReplaceCache(self,on):
+        self._force_replace_cache = on
 
     def FunctionName(self):
         '''
@@ -85,7 +91,7 @@ class Algorithm(object):
         # First, get the cache filename and compare against existing files
         cache = CacheFile(snap, self)
         # Check to see if a cached dataset exists
-        if cache.Exists():
+        if cache.Exists() and not self._force_replace_cache:
             try:
                 output = cache.Load()
             except EOFError:
@@ -200,11 +206,11 @@ class PymsesSnapshot(object):
 
 # Singleton pattern to store 
 folders = {}
-labels = {}
+labels  = {}
 
 class Simulation(object):
     def __init__(self,name,silent=False):
-        global folders, labels
+        global folders, labels 
         self._name = name
         if not name in folders:
             if not silent:
@@ -212,16 +218,16 @@ class Simulation(object):
                 print "Currently available simulations:", folders.keys()
             raise KeyError
         self._folder = folders[name]
-        self._label = labels[name]
-        self._outs = glob.glob(self._folder+"/output_?????")
+        self._label  = labels[name]
+        self._outs   = glob.glob(self._folder+"/output_?????")
         self._outs.sort()
-        self._snaps = []
+        self._snaps = OrderedDict()
         for out in self._outs:
-            print out
-            self._snaps.append(PymsesSnapshot(self._folder,int(out[-5:])))
+            outnum = int(out[-5:])
+            self._snaps[outnum] = PymsesSnapshot(self._folder,outnum)
 
     def Snapshots(self):
-        return self._snaps
+        return self._snaps.values()
                     
     def Name(self):
         return self._name
@@ -237,6 +243,9 @@ class Simulation(object):
 
     def Times(self):
         return np.array([snap.Time() for snap in self.Snapshots()])
+    
+    def Outputs(self,outnum=None):
+        return self._snaps.keys()
 
     def FindAtTime(self,time,forceBefore=False):
         times = self.Times()
@@ -250,6 +259,14 @@ class Simulation(object):
         snap = self.Snapshots()[best]
         print "Found match with output",snap.OutputNumber(),", %diff: ",pdiff, "at time ",snap.Time(),"in",self.Name()
         return snap
+    
+    def FindOutput(self,output):
+        if output is in self._snaps:
+            print "Found output number", output
+            return self._snaps[output]
+        else:
+            print "Found no output number", output
+            return None
 
     def Folder(self):
         return self._folder
