@@ -6,8 +6,9 @@ Sam Geen, November 2014
 import numpy as np
 from pymses.utils import constants as C
 
+X = 0.76
 mH = 1.6735326381e-24
-logmH = np.log10(mH)
+logmHbyX = np.log10(mH/X)
 
 def hydro_label(hydro):
     '''
@@ -215,7 +216,7 @@ def hydro_range(hydro):
     if hydro == "nH":
         return (0, 8)
     if hydro == "rho":
-        return (logmH,logmH+8)
+        return (logmHbyX,logmHbyX+8)
     if hydro == "NH":
         return (20.5,23.0)
     if hydro == "P":
