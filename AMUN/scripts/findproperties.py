@@ -47,23 +47,28 @@ def meandensinsnap(snap,nHthresh=0.0):
 
 def etherminsnap(snap,wind=False):
     print "Finding max T in snap", snap.iout
-    amr = snap.amr_source(["rho","P"])
+    amr = snap.amr_source(["rho","P","vel","xHII","xHeII","xHeIII"])
     cell_source = CellsToPoints(amr)
     cells = cell_source.flatten()
     vols = (cells.get_sizes())**3.0
     mass = cells["rho"]*vols*\
         snap.info["unit_mass"].express(C.g)
-    temp = cells["P"]/cells["rho"]*snap.info["unit_temperature"].express(C.K)
+    mufunc = lambda dset: 1./(0.76*(1.+dset["xHII"]) + \
+                              0.25*0.24*(1.+dset["xHeII"]+2.*dset["xHeIII"]))  
+    temp = cells["P"]/cells["rho"]*snap.info["unit_temperature"].express(C.K)*mufunc(cells)
     time = snap.info["time"]*snap.info["unit_time"].express(C.Myr)
     etherm = 1.0/(gamma - 1.0) * (mass / mH) * kB * temp
     if wind:
-        mask = np.where(temp > 1e5)
+        vels = cells["vel"]
+        uvel = snap.info["unit_velocity"].express(C.cm/C.s)
+        spds = np.sqrt(np.sum(vels**2.0,1))
+        mask = np.logical_or(spds*uvel/1e5 > 100.0,temp > 1e5)
         etherm = etherm[mask]
     return np.sum(etherm)
 
 def ekininsnap(snap,wind=False):
     print "Finding kinetic energy in snap", snap.iout
-    amr = snap.amr_source(["rho","vel"])
+    amr = snap.amr_source(["rho","P","vel","xHII","xHeII","xHeIII"])
     cell_source = CellsToPoints(amr)
     cells = cell_source.flatten()
     umass = snap.info["unit_mass"].express(C.g) 
@@ -75,15 +80,20 @@ def ekininsnap(snap,wind=False):
     spds = np.sqrt(np.sum(vels**2.0,1))
     ekin = 0.5*rhos*vols*spds**2
     if wind:
-        # Over 100 km/s
-        mask = np.where(spds*uvel/1e5 > 100.0)
+        mufunc = lambda dset: 1./(0.76*(1.+dset["xHII"]) + \
+                                  0.25*0.24*(1.+dset["xHeII"]+2.*dset["xHeIII"]))  
+        temp = cells["P"]/cells["rho"]*snap.info["unit_temperature"].express(C.K)*mufunc(cells)
+        # Over 100 km/s or T > 1e5 K
+        mask = np.logical_or(spds*uvel/1e5 > 100.0,temp > 1e5)
         ekin = ekin[mask]
     ekin =  np.sum(ekin)*ue
     time = snap.info["time"]*snap.info["unit_time"].express(C.Myr)
     print "KINETIC ENERGY FOUND @ ",time,"Myr:", ekin
     return ekin
 
-def windenergyinsnap(snap):
+# Version 1: ekin only measures fast winds, etherm only hot winds
+# Version 2: Modified functions above to count both fast and hot winds for both ekin and etherm
+def windenergyinsnap2(snap):
     return energyinsnap(snap,wind=True)
 
 def energyinsnap(snap,wind=False):
