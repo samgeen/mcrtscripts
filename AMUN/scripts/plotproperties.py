@@ -42,6 +42,13 @@ def momentum(simname):
     t -= tcreated
     return t, p
 
+massinsnap = Hamu.Algorithm(findproperties.massinsnap)
+def mass(simname):
+    print "Running for simulation", simname
+    sim = hamusims[simname]
+    t, p = timefuncs.timefunc(sim,massinsnap,processes=nprocs)
+    return t, p
+    
 radiusinsnap = Hamu.Algorithm(findproperties.radiusinsnap3)
 def radius(simname):
     print "Running for simulation", simname
@@ -54,7 +61,7 @@ def radius(simname):
     t -= tcreated
     return t, r
 
-windenergyinsnap = Hamu.Algorithm(findproperties.windenergyinsnap)
+windenergyinsnap = Hamu.Algorithm(findproperties.windenergyinsnap2)
 def windenergy(simname):
     print "Running for simulation", simname
     sim = hamusims[simname]
@@ -145,7 +152,7 @@ def run(simfunc,simnamesets,plotlabels,compare=False):
         xticks = None
         if funcname == "nphotonsHII":
             ax.set_xlim([1.5,12.0])
-            ax.set_ylim([7e45,7e49])
+            ax.set_ylim([7e46,7e50])
             xticks = [2,3,4,5,6,7,8,9,10]
         if funcname == "radius" or funcname == "radius2":
             tlim = 1e-6
@@ -261,12 +268,11 @@ if __name__=="__main__":
     label1 = "IMF 1"
     label2 = "IMF 2"
     label3 = "Massive Cloud"
-    
-    for func in [maxBfield,tsfe,nphotonsHII,momentum,radius]:
+    for func in [windenergy,windradius]:
+        run(func,(["IMF1_03","IMF1_04"],["IMF2_03","IMF2_04"],["MASS_03","MASS_04"]),
+            (label1,label2,label3))
+    for func in [tsfe,mass,maxBfield,nphotonsHII,momentum,radius]:
         run(func,(imf1sims,imf2sims,massivesims),(label1,label2,label3))
     for func in [tsfe,momentum,radius,nphotonsHII]:
         run(func,(["IMF1_02","IMF1_04"],["IMF2_02","IMF2_04"],["MASS_02","MASS_04"]),
             (label1,label2,label3),compare=True)
-    for func in [windenergy,windradius]:
-        run(func,(["IMF1_03","IMF1_04"],["IMF2_03","IMF2_04"],["MASS_03","MASS_04"]),
-            (label1,label2,label3))
