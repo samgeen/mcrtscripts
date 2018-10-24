@@ -3,23 +3,14 @@ Find HII regions in the simulation
 Sam Geen, March 2015
 '''
 
-import customplot
-import matplotlib.pyplot as plt
-
-import HamuLite as Hamu
-
-import numpy as np
+from startup import *
 
 import os, errno
-
-import pymses
 from pymses.filters import CellsToPoints
 from pymses.utils import constants as C
 
-import outflowmodel, linestyles
-
 class HIIRegionFinder(object):
-    def __init__(self, snap, xthresh=1e5):
+    def __init__(self, snap, xthresh=0.1):
         self._snap = snap
         self._xthresh = xthresh
 
@@ -27,7 +18,7 @@ class HIIRegionFinder(object):
         amr = self._snap.amr_source(["rho","xHII"])
         cell_source = CellsToPoints(amr)
         cells = cell_source.flatten()
-        regioncells = self._FilterByxII(cells)
+        regioncells = self._FilterByxHII(cells)
         regions = self._FindHIIRegions(regioncells)
         return regions
         
@@ -204,11 +195,10 @@ def Plot2Props(prop1,prop2,label1,unit1,label2,unit2,simname):
     plt.yscale("log")
     plt.savefig("../plots/clumps/"+simname+"/"+label1+"vs"+label2+".pdf")     
 
-def FindClumps(snap, nthresh=1e6):
-    clumps = ClumpFinder(snap,nthresh)
-    return clumps.Run()
+def FindHIIRegions(snap, xthresh=0.1):
+    regions = HIIRegionFinder(snap,xthresh)
+    return regions.Run()
 
-FindClumpsHamu = Hamu.Algorithm(FindClumps)
 
 def CompareMassDistance(simnames,time=1.25,folder="photons",suffix=""):
     myr = None
@@ -757,24 +747,6 @@ def ClumpDistanceOverTime(simnames,cols,lines,name="",com=False,mindist=False):
     plt.savefig("../plots/clumps/distanceovertime"+name+".pdf")
 
 if __name__=="__main__":
-    #RunForSim("N49_M4_B02")
-    simnames = ["N"+num+"_M4_B02" for num in ["00","47","48","49"]]
-    #CompareMassDistance(simnames)
-    #CompareMassDistance(["N00_M4_B02"],time=1.45)
-    #CompareForTimes("N48_M4_B02_C")
-    #PlotEvaporation(simnames)
-    simnames = ["N"+num+"_M4_B02" for num in ["47","48","49"]]
-    simnames.append("N48_M4_B02_C")
-    #PlotTEvap(simnames,tfact=2.0)
-    simnames = ["N00_M4_B02","N47_M4_B02","N48_M4_B02","N49_M4_B02",
-                "N00_M4_B02_C", "N48_M4_B02_C",
-                "N00_M4_B02_C2","N48_M4_B02_C2"]
-    cols = [linestyles.col(simname) for simname in simnames]
-    lines = [linestyles.line(simname) for simname in simnames]
-    #lines = ["k--","r","k","m",
-    #         "c--","c",
-    #         "b--","b"]
-    #ClumpDistanceOverTime(simnames,cols,lines,"all",com=False)
-    #ClumpDistanceOverTime(simnames,cols,lines,"all",com=True)
-    ClumpDistanceOverTime(simnames,cols,lines,"all",mindist=True)
-
+    sim = hamusims["IMF1_04"]
+    snap = sim.Snapshots()[20].RawData()
+    regions = FindHIIRegions(snap)
