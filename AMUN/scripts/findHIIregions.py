@@ -10,7 +10,8 @@ from pymses.filters import CellsToPoints
 from pymses.utils import constants as C
 
 #from sklearn.cluster import DBSCAN
-import fastcluster
+import sklearn.measure
+#import fastcluster
 
 class HIIRegionFinder(object):
     def __init__(self, snap, xthresh=0.1):
@@ -18,29 +19,45 @@ class HIIRegionFinder(object):
         self._xthresh = xthresh
 
     def Run(self):
-        amr = self._snap.amr_source(["rho","xHII"])
-        cell_source = CellsToPoints(amr)
-        cells = cell_source.flatten()
-        regioncells = self._FilterByxHII(cells)
-        regions = self._FindHIIRegions(regioncells)
-        return regions
-        
-    def _FilterByxHII(self, cells):
-        xHII = cells["xHII"]
-        return cells.filtered_by_mask(xHII > self._xthresh)
+        # Make cube of xHII
+        cube = self._MakeCube()
+        # Run through cube
+        labelcube = self._FindHIIRegions(cube)
+        nregions = labelcube.max()
 
-    def _FindHIIRegions(self, cells):
+    def _MakeCube(self):
+        # Make regular grid to find regions inside
+        amr = self._snap.amr_source(["rho","xHII"])
+        lmin = self._snap.info["levelmin"]
+        lsize = 256
+        boxlen = self._snap.info["boxlen"]
+        pos = [0.5,0.5,0.5]
+        radius = 0.5
+        coords = np.linspace(-0.5,0.5,lsize)*2.0*radius
+        grid = np.meshgrid(coords+pos[0],coords+pos[1],coords+pos[2])
+        points = np.array([grid[0].flatten(),grid[1].flatten(),grid[2].flatten()])
+        points = points.T
+        samples = pymses.analysis.sample_points(amr,points)
+        # Sample xHII
+        scale = hydrofuncs.scale_by_units(ro,"xHII")
+        hydrocube = scale(samples)
+        hydrocube = hydrocube.reshape([lsize,lsize,lsize])
+        # Return The Hydrocube
+        return hydrocube
+
+    def _FindHIIRegions(self, xcube):
         '''
-        Finds the nearest neighbours of the clumps
+        Finds volumes of contiguous HII in the cube
+        xcube - cube of xHII values
         '''
-        # sklearn clustering algorithm
-        # "single uses the minimum of the distances between all observations of the two sets."
-        #algo = DBSCAN()
-        #clustering = algo.fit(cells.points)
-        #clumps = np.unique(clustering.labels_)
-        clustering = fastcluster.linkage_vector(cells.points)
-        import pdb; pdb.set_trace()
-        return clumps
+        # Numpy way of making an empty cube, don't @ me
+        nx, ny, nz = xcube.shape
+        intcube = np.zeros((nx,ny,nz),dtype=np.int)
+        intcube[xcube > 0.1] = 1
+        labelcube = sklearn.measure.label(intcube)
+        return labelcube
+
+
 
 def FindHIIRegions(snap):
     finder = HIIRegionFinder(snap)
