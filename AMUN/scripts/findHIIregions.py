@@ -9,7 +9,8 @@ import os, errno
 from pymses.filters import CellsToPoints
 from pymses.utils import constants as C
 
-from sklearn.cluster import AgglomerativeClustering
+#from sklearn.cluster import DBSCAN
+import fastcluster
 
 class HIIRegionFinder(object):
     def __init__(self, snap, xthresh=0.1):
@@ -34,11 +35,16 @@ class HIIRegionFinder(object):
         '''
         # sklearn clustering algorithm
         # "single uses the minimum of the distances between all observations of the two sets."
-        algo = AgglomerativeClustering(linkage="single")
-        clustering = algo.fit(cells.points)
-        clumps = np.unique(clustering.labels_)
+        #algo = DBSCAN()
+        #clustering = algo.fit(cells.points)
+        #clumps = np.unique(clustering.labels_)
+        clustering = fastcluster.linkage_vector(cells.points)
         import pdb; pdb.set_trace()
         return clumps
+
+def FindHIIRegions(snap):
+    finder = HIIRegionFinder(snap)
+    return finder.Run()
 
 class ClumpMaker(object):
     '''
