@@ -90,6 +90,8 @@ def plot(sims,labels):
     first = True
     for ax, sim, label in zip(axes, sims, labels):
         lsize = 512
+    else:
+            lsize = 256
         t, x = timefuncs.timefunc(sim,FindHIIRegions,False,False,1,"xHII",lsize)
         t, w = timefuncs.timefunc(sim,FindHIIRegions,False,False,1,"wind",lsize)
         ax.set_xlabel("Time / Myr")
