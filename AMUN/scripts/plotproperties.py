@@ -10,7 +10,7 @@ from pymses.utils import constants as C
 
 import matplotlib.patheffects as pe
 
-import findproperties, starrelations
+import findproperties, starrelations, findHIIregions
 
 from scipy.interpolate import interp1d
 
@@ -113,6 +113,13 @@ def maxBfield(simname):
     sim = hamusims[simname]
     t,B = timefuncs.timefunc(sim,maxBfieldinsnap,verbose=True,processes=nprocs)
     return t, B
+
+FindHIIRegions = findHIIregions.FindHIIRegions
+def numHIIregions(simname):
+    print "Running for simulation", simname
+    sim = hamusims[simname]
+    t,n = timefuncs.timefunc(sim,FindHIIRegions,verbose=True,processes=nprocs)
+    return t, n
 
 def plotpowerlaw(ax,w,y0,linestyle,t0=0.3):
     '''
@@ -268,6 +275,8 @@ if __name__=="__main__":
     label1 = "IMF 1"
     label2 = "IMF 2"
     label3 = "Massive Cloud"
+    for func in [numHIIregions]:
+        run(func,(["IMF1_04"],["IMF2_04"],["MASS_04"]),(label1,label2,label3))
     for func in [windenergy,windradius]:
         run(func,(["IMF1_03","IMF1_04"],["IMF2_03","IMF2_04"],["MASS_03","MASS_04"]),
             (label1,label2,label3))
