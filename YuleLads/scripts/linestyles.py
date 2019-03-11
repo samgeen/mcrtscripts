@@ -1,92 +1,57 @@
 '''
-Uniform line styles and colours for the project
-Sam Geen, January 2016
+Set up the line styles for the simulations
+Sam Geen, December 2017
 '''
 
-#from startup import *
-
-import numpy as np
-#import customplot
-import simlabels
-
+import customplot
 import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
 from collections import OrderedDict
 
-'''
-Sims:
-1-13
-'''
 
-allsims = simlabels.allsims
+import prettyplotlib as ppl
+from prettyplotlib import plt
+from prettyplotlib import brewer2mpl
 
-def finditem(tosearch,simname):
-    for key in tosearch.iterkeys():
-        if key == simname:
-            return tosearch[key]
-    # Oops! Not found the result?
-    print "Error: No result for", simname, "in keys",tosearch.keys()
-    raise KeyError
+#cmap = brewer2mpl.get_map('RdPu', 'Sequential', 9,reverse=True).mpl_colormap
+cmap = brewer2mpl.get_map('OrRd', 'Sequential', 9,reverse=True).mpl_colormap
 
-colours = {}
-# Varied colours with different lightness scheme
+# SIMULATIONS
+# 01 - NOUV/NOWINDS
+# 02 -   UV/NOWINDS
+# 03 - NOUV/  WINDS
+# 04 -   UV/  WINDS
 
-reds = np.arange(0,1.01,1.0/float(len(allsims)-1))
-cols = [(r,0.0,0.0) for r in reds]
-colours = OrderedDict()
-for key, value in zip(allsims,cols):
-    colours[key] = value
+def ColourMap(simname=None):
+    return cmap
 
-def colour(simname):
-    return finditem(colours,simname)
+def RunNum(simname):
+    run, num = simname.split("_")
+    num = int(num)
+    return run, num
 
-# Linestyles not really used yet !!!
+def Colour(simname):
+    # Colour palette is 4-class Paired from ColorBrewer2.org
+    colours = ["#a6cee3",
+               "#1f78b4",
+               "#b2df8a",
+               "#33a02c",
+               "#fb9a99",
+               "#e31a1c",
+               "#fdbf6f",
+               "#ff7f00"]
+    run, num = RunNum(simname)
+    return colours[num-1]
 
-lines = {}
-lines["UVP"] = "-"
-lines["UVNP"] = "--"
-lines["NUV"] = ":"
+def Linestyle(simname):
+    run, num = RunNum(simname)
 
-def line(simname):
-    return "-"
-#    return finditem(lines,simname.split("-")[1])
-
-#irlabels = {}
-#irlabels["IRP"] = r"IR Pressure"
-#irlabels["IRNP"]  = r"IR, No Pressure"
-#irlabels["NIR"]  = r"No IR"
-
-#def irlabel(simname):
-#    return finditem(irlabels,simname.split("-")[0])
-
-# EDIT BELOW HERE
-
-uvlabels = {}
-uvlabels["UVP"]  = r"UV Photoionisation + Pressure"
-uvlabels["UVNP"] = r"UV Photoionisation only"
-uvlabels["NUV"] = r"No UV"
-
-def uvlabel(simname):
-    return finditem(uvlabels,simname.split("-")[0])
-
-def simlegend():
-    plotlines = []
-    for sim, col in colours.iteritems():
-        plotlines.append(mlines.Line2D([], [], 
-                                       color=col,
-                                       linestyle="-",
-                                       label=sim))
-    labels = [line.get_label() for line in plotlines]
-    return plotlines, labels
-
-def uvlegend():
-    plotlines = []
-    for rt, line in lines.iteritems():
-        plotlines.append(mlines.Line2D([], [], 
-                                       color="k",
-                                       linestyle=line,
-                                       label=uvlabel(rt)))
-    labels = [line.get_label() for line in plotlines]
-    return plotlines, labels
-
-
+def Label(simname):
+    run, num = RunNum(simname)
+    labels = ["No Feedback",
+              "UV Only",
+              "Winds Only",
+              "Winds and UV",
+              "Winds and UV + press",
+              "Winds and UV + IR + press"]
+    return labels[num-1]
