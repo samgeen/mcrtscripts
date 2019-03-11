@@ -52,13 +52,15 @@ def makedir(folder):
     except:
         pass
 
-def runforsim(sim,nouts=None,times=None,pos=None,radius=None):
+def runforsim(sim,allsims=False,nouts=None,times=None,pos=None,radius=None):
     hydros = ["vx","vy","vz","rho","T","xHII","Bx","By","Bz","Bmag"]
     simname = sim.Name()
     simfolder = "../cubes/"+simname
     makedir(simfolder)
     snap = sim.Snapshots()[0]
     myr = snap.RawData().info["unit_time"].express(C.Myr)
+    if allsims:
+        nouts = [snap.OutputNumber() for snap in sim.Snapshots()]
     if nouts is not None:
         times = []
         timedict = {snap.OutputNumber():snap.Time() for snap in sim.Snapshots()}
