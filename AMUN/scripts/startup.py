@@ -58,48 +58,67 @@ Msolar = "M$_{\odot}$"
 plotfolder = "../plots/"
 
 # Simulation names
-numsims = 4
-imf1sims = ["IMF1_"+str(i).zfill(2) for i in range(1,numsims+1)]
-imf2sims = ["IMF2_"+str(i).zfill(2) for i in range(1,numsims+1)]
-massivesims = ["MASS_"+str(i).zfill(2) for i in range(1,numsims+1)]
-allsims = imf1sims + imf2sims + massivesims
+amunold = False
+if amunold:
+    numsims = 4
+    imf1sims = ["IMF1_"+str(i).zfill(2) for i in range(1,numsims+1)]
+    imf2sims = ["IMF2_"+str(i).zfill(2) for i in range(1,numsims+1)]
+    massivesims = ["MASS_"+str(i).zfill(2) for i in range(1,numsims+1)]
+    allsims = imf1sims + imf2sims + massivesims
 
-# Simulation locations
-#mainsimfolder = "/home/hd/hd_hd/hd_mp149/MCRT/runs/"
-mainsimfolder = "/home/stgeen0/MCRT/runs/"
-imf1simfolder = mainsimfolder+"/58_AMUN/"
-imf2simfolder = mainsimfolder+"/60_AMUN_IMF2/"
-mainsimfolder2 = "/home/stgeen0/sds/sd16j009/REBEKKA_BIERI/MCRT/runs/"
-imf1simfolder2 = mainsimfolder2+"/58_AMUN_IMF1/"
-imf2simfolder2 = mainsimfolder2+"/60_AMUN_IMF2/"
-masssimfolder = mainsimfolder+"64_AMUN_IMF2_M1e5/"
+    # Simulation locations
+    #mainsimfolder = "/home/hd/hd_hd/hd_mp149/MCRT/runs/"
+    mainsimfolder = "/home/stgeen0/MCRT/runs/"
+    imf1simfolder = mainsimfolder+"/58_AMUN/"
+    imf2simfolder = mainsimfolder+"/60_AMUN_IMF2/"
+    mainsimfolder2 = "/home/stgeen0/sds/sd16j009/REBEKKA_BIERI/MCRT/runs/"
+    imf1simfolder2 = mainsimfolder2+"/58_AMUN_IMF1/"
+    imf2simfolder2 = mainsimfolder2+"/60_AMUN_IMF2/"
+    masssimfolder = mainsimfolder+"64_AMUN_IMF2_M1e5/"
 
-simfolders = {}
-# IMF1 folders
-# Do this by hand since we're split between different user folders
-simfolders["IMF1_01"] = imf1simfolder+"01_nofbk/"
-simfolders["IMF1_02"] = imf1simfolder+"Y2_justUVphoto_fastlight"
-simfolders["IMF1_03"] = imf1simfolder+"Y3_justWind_fastlight"
-simfolders["IMF1_04"] = imf1simfolder+"Y4_UVphoto+Wind_fastlight"
-if numsims > 4:
-    simfolders["IMF1_05"] = imf1simfolder2+"05_UVphoto+press+Wind"
-    simfolders["IMF1_06"] = imf1simfolder2+"06_UVphoto+press+IRpress+Wind"
+    simfolders = {}
+    # IMF1 folders
+    # Do this by hand since we're split between different user folders
+    simfolders["IMF1_01"] = imf1simfolder+"01_nofbk/"
+    simfolders["IMF1_02"] = imf1simfolder+"Y2_justUVphoto_fastlight"
+    simfolders["IMF1_03"] = imf1simfolder+"Y3_justWind_fastlight"
+    simfolders["IMF1_04"] = imf1simfolder+"Y4_UVphoto+Wind_fastlight"
+    if numsims > 4:
+        simfolders["IMF1_05"] = imf1simfolder2+"05_UVphoto+press+Wind"
+        simfolders["IMF1_06"] = imf1simfolder2+"06_UVphoto+press+IRpress+Wind"
 
-# IMF2 folders
-# NOTE: no IMF2_01 because it's the same as IMF1_01
-simfolders["IMF2_01"] = imf1simfolder+"01_nofbk/"
-simfolders["IMF2_02"] = imf2simfolder+"Y2_justUVphoto_fastlight"
-simfolders["IMF2_03"] = imf2simfolder+"Y3_justwind_fastlight"
-simfolders["IMF2_04"] = imf2simfolder+"Y4_UVphoto+Wind_fastlight"
-if numsims > 4:
-    simfolders["IMF2_05"] = imf2simfolder2+"05_UVphoto+press+Wind"
-    simfolders["IMF2_06"] = imf2simfolder2+"06_UVphoto+press+IRpress+Wind"
+    # IMF2 folders
+    # NOTE: no IMF2_01 because it's the same as IMF1_01
+    simfolders["IMF2_01"] = imf1simfolder+"01_nofbk/"
+    simfolders["IMF2_02"] = imf2simfolder+"Y2_justUVphoto_fastlight"
+    simfolders["IMF2_03"] = imf2simfolder+"Y3_justwind_fastlight"
+    simfolders["IMF2_04"] = imf2simfolder+"Y4_UVphoto+Wind_fastlight"
+    if numsims > 4:
+        simfolders["IMF2_05"] = imf2simfolder2+"05_UVphoto+press+Wind"
+        simfolders["IMF2_06"] = imf2simfolder2+"06_UVphoto+press+IRpress+Wind"
+        
+    # Massive folders
+    simfolders["MASS_01"] = masssimfolder+"01_nofbk"
+    simfolders["MASS_02"] = masssimfolder+"Y2_justUVphoto_fastlight"
+    simfolders["MASS_03"] = masssimfolder+"Y3_justwind_fastlight"
+    simfolders["MASS_04"] = masssimfolder+"Y4_UVphoto+Wind"
 
-# Massive folders
-simfolders["MASS_01"] = masssimfolder+"01_nofbk"
-simfolders["MASS_02"] = masssimfolder+"Y2_justUVphoto_fastlight"
-simfolders["MASS_03"] = masssimfolder+"Y3_justwind_fastlight"
-simfolders["MASS_04"] = masssimfolder+"Y4_UVphoto+Wind"
+if not amunold:
+    mainsimfolder = "/home/stgeen0/MCRT/runs/"
+    amunfolder = mainsimfolder+"69_AMUN_onestar/"
+    simfolders = {}
+    simfolders["NOFB"] = amunfolder+"01_nostar"
+    simfolders["UV_120"] = amunfolder+"02_uvonly_120"]
+    simfolders["UVWIND_120"] = amunfolder+"03_uv+winds_120"
+    simfolders["NOFB_DENSE"] = amunfolder+"04_nostar_dense"
+    simfolders["UV_120_DENSE"] = amunfolder+"05_uvonly_120_dense"
+    simfolders["UVWIND_120_DENSE"] = amunfolder+"06_uv+winds_120_dense"
+    simfolders["UV_60"] = amunfolder+"07_uvonly_60"
+    simfolders["UV_30"] = amunfolder+"08_uvonly_30"
+    simfolders["UV_15"] = amunfolder+"09_uvonly_15"
+    simfolders["SN_120"] = amunfolder+"10_snonly_120"
+    simfolders["UVWIND_60"] = amunfolder+"11_uv+winds_60"
+    allsims = simfolders.keys()
     
 # Populate list of Hamu simulations
 # TODO - make these on demand rather than on loadup?

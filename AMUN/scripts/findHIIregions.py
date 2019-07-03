@@ -9,9 +9,13 @@ import os, errno
 from pymses.filters import CellsToPoints
 from pymses.utils import constants as C
 
+import matplotlib.patheffects as pe 
+
 #from sklearn.cluster import DBSCAN
 import skimage.measure
 #import fastcluster
+
+import starrelations
 
 LSIZE = 512
 
@@ -86,23 +90,28 @@ FindHIIRegions = Hamu.Algorithm(_FindHIIRegions)
 def plot(sims,labels):
     plt.clf()
     numcols = len(sims)
-    fig, axes = plt.subplots(1,numcols,sharex=True,sharey=True)
+    fig, axes = plt.subplots(1,numcols,sharex=False,sharey=True)
     first = True
     for ax, sim, label in zip(axes, sims, labels):
         lsize = 512
         t, x = timefuncs.timefunc(sim,FindHIIRegions,False,False,1,"xHII",lsize)
         t, w = timefuncs.timefunc(sim,FindHIIRegions,False,False,1,"wind",lsize)
-        ax.set_xlabel("Time / Myr")
+        tcreated, sfe = starrelations.runforsim(sim.Name(),"firsttime")
+        t -= tcreated 
+        ax.set_xlabel("Time after 1st star formed / Myr")
         if first:
             ax.set_ylabel("Number of Regions")
         color = linestyles.Colour(sim.Name())
-        ax.plot(t,x,color=color,linestyle="-",label="Photoionised regions")
-        ax.plot(t,w,color=color,linestyle="--",label="Wind Bubbles")
+        ax.plot(t,x,color=color,linestyle="-",label="Photoionised regions",
+                path_effects=[pe.Stroke(linewidth=5, foreground='k'), pe.Normal()]) 
+        ax.plot(t,w,color=color,linestyle="--",label="Wind Bubbles",
+                path_effects=[pe.Stroke(linewidth=5, foreground='k'), pe.Normal()])
         textloc = 0.1
         ax.text(0.95, textloc,label, ha='right', va="top", transform=ax.transAxes)
         if first:
             ax.legend(fontsize="x-small",loc="upper left",frameon=False)
         first = False
+        ax.set_xlim([-0.5,5]) 
     fig.subplots_adjust(wspace=0)
     fig.set_size_inches(7*numcols,6)
     fig.savefig(plotfolder+"findHIIregions.pdf", dpi=80)

@@ -125,6 +125,7 @@ class DensityMap(object):
         # Apply thresholds to image
         # Do this on-the-fly to allow remapping of limits
         if self._NHlow is not None:
+            print "NHlow", self._NHlow
             im[im < NHtoColDens(self._NHlow)] = 0.0
         if self._NHhigh is not None:
             coldenshigh = NHtoColDens(self._NHhigh)
