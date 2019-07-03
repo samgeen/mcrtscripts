@@ -102,6 +102,12 @@ def energyinsnap(snap,wind=False):
     etot = ekin+etherm
     return (etherm,ekin,etot)
 
+def energytotinsnap(snap,wind=False):
+    etherm = etherminsnap(snap,wind)
+    ekin = ekininsnap(snap,wind)
+    etot = ekin+etherm
+    return tot
+
 def maxTinsnap(snap):
     print "Finding max T in snap", snap.iout
     amr = snap.amr_source(["rho","P"])
