@@ -85,7 +85,7 @@ def medianprofile(snap,hydro,centre):
     return radii, pmed
 medianprofileHamu = Hamu.Algorithm(medianprofile)
 
-def medianpowerlaw(snap,hydro,npoint=1000000,centre=[0.5,0.5,0.5],router=None,rinner=0.0,nfit=1.0):
+def medianpowerlaw(snap,hydro,npoint=1000000,centre=[0.5,0.5,0.5],router=None,rinner=0.0,rfit=1.0):
     '''
     Calculates a power law fit r = factor * prof ** power 
     '''
@@ -108,7 +108,12 @@ def medianpowerlaw(snap,hydro,npoint=1000000,centre=[0.5,0.5,0.5],router=None,ri
     #import pdb; pdb.set_trace()
     fit = np.polyfit(np.log10(r),np.log10(prof),deg=1)
     power,factor = fit
-    return power, ((10.0**factor)/nfit)**(-1/power) 
+    # n = n0 r0^w r^-w
+    # --> log n = log n0 + w log r0 - w log r
+    # --> m = -w, c = log n0 + w logr0
+    # --> n0 = 10.0**(c - w log r0)
+    #return power, ((10.0**factor)/nfit)**(-1/power)
+    return power, 10.0**(factor + power * np.log10(rfit))
 
 # Compatability hack for other scripts
 profileHamu = Hamu.Algorithm(medianprofile)
@@ -295,18 +300,25 @@ def plotgradient(simname,hydro,time,centre,label=None,xlims=None,powfile=None,su
         # Make median line
         plt.plot(radii,percs[0:nprofs,25],"k")
         # Plot the mean line 
-        nfit = 1e2
         rsph,psph = profilesphere.profileHamu(snap,hydro,10000000,centre,rcut=0.1)
         #power, factor = medianpowerlaw(snap,hydro,10000000,centre,rinner=0.1,router=10.0,nfit=nfit)
         #print "POWER LAW:", power, factor
         outnum = snap.OutputNumber()
         if powfile is not None:
-            power, factor = medianpowerlaw(snap,hydro,10000000,centre,rinner=0.1,router=1.0,nfit=nfit)
-            powfile.write(simname+" "+str(outnum)+"INNER w, r0, nfit:"+str(power)+" "+str(factor)+" "+str(nfit)+"\n ")
-            power, factor = medianpowerlaw(snap,hydro,10000000,centre,rinner=1.0,router=10.0,nfit=nfit)
-            powfile.write(simname+" "+str(outnum)+"OUTER w, r0, nfit:"+str(power)+" "+str(factor)+" "+str(nfit)+"\n ")
-            power, factor = medianpowerlaw(snap,hydro,10000000,centre,rinner=0.1,router=10.0,nfit=nfit)
-            powfile.write(simname+" "+str(outnum)+"ALL w, r0, nfit:"+str(power)+" "+str(factor)+" "+str(nfit)+"\n ")
+            rfit = 1.0
+            power, factor = medianpowerlaw(snap,hydro,10000000,centre,rinner=0.1,router=1.0,rfit=rfit)
+            powfile.write(simname+" "+str(outnum)+"INNER w, n0, rfit:"+str(power)+" "+str(factor)+" "+str(rfit)+"\n ")
+            rfit = 10.0
+            power, factor = medianpowerlaw(snap,hydro,10000000,centre,rinner=1.0,router=10.0,rfit=rfit)
+            powfile.write(simname+" "+str(outnum)+"OUTER w, n0, rfit:"+str(power)+" "+str(factor)+" "+str(rfit)+"\n ")
+            rfit = 10.0
+            power, factor = medianpowerlaw(snap,hydro,10000000,centre,rinner=0.1,router=10.0,rfit=rfit)
+            powfile.write(simname+" "+str(outnum)+"ALL w, n0, rfit:"+str(power)+" "+str(factor)+" "+str(rfit)+"\n ")
+            powfile.flush()
+
+            rfit = 10.0
+            power, factor = medianpowerlaw(snap,hydro,10000000,centre,rinner=5.0,router=20.0,rfit=rfit)
+            powfile.write(simname+" "+str(outnum)+"M5OUTER w, n0, rfit:"+str(power)+" "+str(factor)+" "+str(rfit)+"\n ")
             powfile.flush()
         # Mask out parts of the mean line with no values
         mask = psph != 0
