@@ -47,6 +47,11 @@ def Colour(simname):
     col = colmap(float(num)/13.0)
     return col
 
+def Linestyle(simname):
+    run, num = RunNum(simname)
+    lines = {0:"-",1:"--",2:":"}
+    return lines[(num-1) % 3]
+
 def Label(simname,sub=False):
     run, num = RunNum(simname)
     if run == "imf":

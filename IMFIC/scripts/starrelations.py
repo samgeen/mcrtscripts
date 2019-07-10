@@ -193,6 +193,7 @@ def makeplot(ax,simnames,plotname,xvalue,yvalue="sfe",yon=True):
         xtxt = "Total photons before 7 Myr, $N_{tot}$"
     if toplot == "nphotonstff":
         xtxt = r"Total photons in first $t_{ff}$, $N_{ff}$"
+        ax.set_xlim([1e59,1e63])
     if toplot == "compactness":
         xtxt = "Cluster Compactness $R_{RMS}$ / pc"
         xticks = [5,6,7,8,9]
