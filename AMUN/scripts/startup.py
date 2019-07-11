@@ -108,7 +108,7 @@ if not amunold:
     amunfolder = mainsimfolder+"69_AMUN_onestar/"
     simfolders = {}
     simfolders["NOFB"] = amunfolder+"01_nostar"
-    simfolders["UV_120"] = amunfolder+"02_uvonly_120"]
+    simfolders["UV_120"] = amunfolder+"02_uvonly_120"
     simfolders["UVWIND_120"] = amunfolder+"03_uv+winds_120"
     simfolders["NOFB_DENSE"] = amunfolder+"04_nostar_dense"
     simfolders["UV_120_DENSE"] = amunfolder+"05_uvonly_120_dense"

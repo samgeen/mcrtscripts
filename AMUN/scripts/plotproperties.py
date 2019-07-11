@@ -1,5 +1,5 @@
 '''
-Find the total star formation efficiency
+Plot various properties over time in the simulations
 Sam Geen, December 2017
 '''
 
@@ -299,9 +299,9 @@ if __name__=="__main__":
     #for func in [numHIIregions]:
     #    run(func,(["IMF1_04"],["IMF2_04"],["MASS_04"]),(label1,label2,label3))
     for func in [windenergy,windradius]:
-        run(func,(["IMF1_04","IMF1_03"],["IMF2_04","IMF2_03"],["MASS_04","MASS_03"]),
-            (label1,label2,label3))
-    for func in [tsfe,mass,maxBfield,nphotonsHII,momentum,radius]:
+        run(func,(["UVWIND_120","UVWIND_60"],["UVWIND_120_DENSE"])
+            ("Diffuse Cloud","Dense Cloud"))
+    for func in [tsfe,nphotonsHII,momentum,radius]:
         run(func,(imf1sims,imf2sims,massivesims),(label1,label2,label3))
     for func in [tsfe,momentum,radius,nphotonsHII]:
         run(func,(["IMF1_02","IMF1_04"],["IMF2_02","IMF2_04"],["MASS_02","MASS_04"]),

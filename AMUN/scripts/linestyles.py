@@ -21,12 +21,15 @@ cmap = option_d.test_cm
 #cmap = brewer2mpl.get_map('OrRd', 'Sequential', 9,reverse=True).mpl_colormap
 
 # SIMULATIONS
+# OLD AMUN
 # 01 - NOUV/NOWINDS
 # 02 -   UV/NOWINDS
 # 03 - NOUV/  WINDS
 # 04 -   UV/  WINDS
 # 05 -   UV+press/  WINDS
 # 06 -   UV+IR+press/  WINDS
+
+# NEW AMUN
 
 def ColourMap(simname=None, hydro='rho'):
     if hydro == 'rho':
@@ -42,7 +45,7 @@ def ColourMap(simname=None, hydro='rho'):
         cmap = brewer2mpl.get_map('OrRd', 'Sequential', 9,reverse=True).mpl_colormap
     return cmap
 
-def RunNum(simname):
+def RunNumOLD(simname):
     if ('V' in simname):
         if ('02' in simname):
             run = '02'
@@ -74,22 +77,22 @@ def Colour(simname):
 		"#fdbf6f",
 		"#ff7f00",
                 "#ff5900"
-		]	
-    run, num = RunNum(simname)
-    return colours[num-1]
+		]
+    masses = ["NOFB","15","30","60","120"]
+    for num, mass in enumerate(masses):
+        if mass in simname:
+            return colours[num]
+    print "No colour for simulation", simname,"found, returning #000000"
+    return "#000000"
 
 def Linestyle(simname):
-    run, num = RunNum(simname)
+    lines = ["--","-",":","-."]
+    physics = ["NOFB","UV+WIND","UV","SN"]
+    for num, phys in enumerate(physics):
+        if phys in simname:
+            return lines[num]
+    print "No linestype for simulation", simname,"found, returning -"
+    return "-"
 
 def Label(simname):
-    run, num = RunNum(simname)
-    labels = ["No Feedback",  # 01
-              "UV",           # 02
-              "Winds",        # 03
-              "Winds + UV",   # 04
-              "Winds + UVp",  # 05
-              "Winds + UVp + IRp", # 06
-              "UVp",          # 07
-              "UVp + IRp",    # 08
-              "UVp + Boost"]  # 09
-    return labels[num-1]
+    return simname # TODO: fix this

@@ -7,6 +7,9 @@ from startup import *
 
 from pymses.filters import CellsToPoints
 from pymses.utils import constants as C
+from pymses.analysis import sample_points, bin_cylindrical
+from pymses.utils.regions import Cylinder
+from pymses.filters import CellsToPoints,RegionFilter
 
 import matplotlib.patheffects as pe
 
@@ -46,6 +49,16 @@ def meandensinsnap(snap,nHthresh=0.0):
     return np.sum(mass)/np.sum(vols)
 
 def etherminsnap(snap,wind=False):
+    # Physical conversions
+    X = 0.76
+    mH = 1.6735326381e-24
+    kB = 1.38062e-16
+    G = 6.674e-8
+    gamma = 1.4 # RAMSES hard-coded
+    pcincm = 3.086e18
+    Msuning = 1.9891e33
+    mHing = 1.66e-24
+    Myrins = 3.1556926e13
     print "Finding max T in snap", snap.iout
     amr = snap.amr_source(["rho","P","vel","xHII","xHeII","xHeIII"])
     cell_source = CellsToPoints(amr)
@@ -118,6 +131,44 @@ def maxTinsnap(snap):
     maxT = temp.max()
     return maxT
 
+def totalmomentuminsnapS(snap,nHlow=0.0,nHhigh=0.0):
+    print "Finding *total* momentum in snap", snap.iout
+    amr = snap.amr_source(["rho","vel"])
+    cell_source = CellsToPoints(amr)
+    cells = cell_source.flatten()
+    uvel = snap.info["unit_velocity"].express(C.cm/C.s)
+    rhos = cells["rho"]
+    vels = cells["vel"]
+    vols = (cells.get_sizes())**3.0
+    spds = np.sqrt(np.sum(vels**2.0,1))
+    moms = rhos*spds*vols
+
+    # Add momentum of sinks
+    currsinks = sinks.FindSinks(snap.hamusnap)
+    sinkvx = currsinks.vx
+    sinkvy = currsinks.vy
+    sinkvz = currsinks.vz
+    sinkm  = currsinks.mass
+    spdsS = np.sqrt(sinkvx**2+sinkvy**2+sinkvz**2)
+    momsS = sinkm*spdsS
+
+    # Apply threshold?
+    if nHlow > 0.0:
+        moms = moms[rhos > nHlow]
+        rhos = rhos[rhos > nHlow]
+    if nHhigh > 0.0:
+        moms = moms[rhos < nHhigh]
+        rhos = rhos[rhos < nHhigh]
+    mom   = np.sum(moms) 
+    momS  = np.sum(momsS)
+    umass = snap.info["unit_mass"].express(C.g)
+    mom  *= umass*uvel
+    momS *= umass*uvel
+    momT  =  mom + momS
+    time  = snap.info["time"]*snap.info["unit_time"].express(C.Myr)
+    print "MOMENTUM FOUND @ ",time,"Myr:", momT
+    return momT
+
 def momentuminsnap(snap,nHlow=0.0,nHhigh=0.0):
     print "Finding momentum in snap", snap.iout
     amr = snap.amr_source(["rho","vel"])
@@ -179,6 +230,88 @@ def totalmomentuminsnap(snap,nHlow=0.0,nHhigh=0.0):
 def windradiusinsnap(snap):
     return radiusinsnap(snap,wind=True)
 
+def densityprofileinsnap(snap):
+    print "Finding density profile in snap", snap.iout
+
+    boxlen = snap.info["boxlen"] * 3.086e+16   # m
+
+    nbins = 200
+    center = [ 0.5, 0.5, 0.5 ]        # in box units
+    radius = 1.                       # in box units
+    thickn = 0.2 		      # in box units 
+    normal = [ 0, 0, 1 ]              # Norm = 1
+
+    factorL   = snap.info["unit_length"].express(C.pc)          # pc  
+    factorD   = snap.info["unit_density"].express(C.g_cc)       # g.cm^-3
+    factorD2  = snap.info["unit_density"].express(C.H_cc)       # H.cm^-3
+    factorM   = snap.info["unit_mass"].express(C.g)             # g
+    factorM   = factorM / (1.9889 * 1e33)                       # Msun
+
+    cyl       = Cylinder(center, normal, radius, thickn)
+
+    # AMR density field point sampling
+    source = snap.amr_source(["rho"])
+    filt_source = RegionFilter(cyl, source)
+    filt_cell_source = CellsToPoints(filt_source)
+    dset = filt_cell_source.flatten()
+
+    mass_weight_func  = lambda dset: dset["rho"] *dset["size"]**3 * factorM
+    rho_weight_func   = lambda dset: dset["rho"]                  * factorD	
+
+    r_bins = np.linspace(0, radius, nbins)            # in box units 
+    # Geometrical midpoint of the bins
+    bins_centers = (r_bins[1:]+r_bins[:-1])/2.    # in box units
+    bin_width    = dtR                            # in box units
+
+    # Profile computation
+    rho_profile   = bin_cylindrical(dset, center, normal, rho_weight_func, r_bins, divide_by_counts=True)  # for density profile
+
+    return rho_profile
+
+def surfacedensityprofileinsnap(snap):
+    print "Finding surface density profile in snap", snap.iout
+
+    boxlen = snap.info["boxlen"]      # pc
+
+    nbins = 200
+    center = [ 0.5, 0.5, 0.5 ]        # in box units
+    radius = 1.                       # in box units
+    thickn = 0.2 		      # in box units 
+    normal = [ 0, 0, 1 ]              # Norm = 1
+
+    factorL   = snap.info["unit_length"].express(C.pc)          # pc  
+    factorD   = snap.info["unit_density"].express(C.g_cc)       # g.cm^-3
+    factorD2  = snap.info["unit_density"].express(C.H_cc)       # H.cm^-3
+    factorM   = snap.info["unit_mass"].express(C.g)             # g
+    factorM   = factorM / (1.9889 * 1e33)                       # Msun
+
+    cyl       = Cylinder(center, normal, radius, thickn)
+
+    # AMR density field point sampling
+    source = snap.amr_source(["rho"])
+    filt_source = RegionFilter(cyl, source)
+    filt_cell_source = CellsToPoints(filt_source)
+    dset = filt_cell_source.flatten()
+
+    mass_weight_func  = lambda dset: dset["rho"] *dset["size"]**3 * factorM
+    rho_weight_func   = lambda dset: dset["rho"]                  * factorD	
+
+    r_bins = np.linspace(0, radius, nbins)            # in box units 
+    # Geometrical midpoint of the bins
+    bins_centers = (r_bins[1:]+r_bins[:-1])/2.    # in box units
+    bin_width    = dtR                            # in box units
+
+    # Profile computation
+    rho_profile   = bin_cylindrical(dset, center, normal, rho_weight_func, r_bins, divide_by_counts=False)
+    mass_profile  = bin_cylindrical(dset, center, normal, mass_weight_func, r_bins, divide_by_counts=False)
+
+    surf_dens_prof = []
+    for j, rr in enumerate(r_bins):
+        if (j > 0):
+            Apc  = np.pi * ( (rr * boxlen)**2 - (r_bins[j-1] * boxlen)**2 )  # pc^2
+            surf_dens_prof.append(mass_profile[j-1]/Apc)                     # Msun/pc^2
+ 
+    exit() 
 def radiusinsnap(snap,wind=False):
     print "Finding radius of HII region in snap", snap.iout
     boxlen = snap.info["boxlen"]
