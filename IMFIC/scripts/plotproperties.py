@@ -135,7 +135,8 @@ def run(simfunc,simnamesets,plotlabels):
                 t = t[mask]
                 y = y[mask]
             ax.plot(t,y,color=linestyles.Colour(simname),label=linestyles.Label(simname),
-                     path_effects=[pe.Stroke(linewidth=5, foreground='k'), pe.Normal()])
+                    linestyle=linestyles.Linestyle(simname),
+                    path_effects=[pe.Stroke(linewidth=5, foreground='k'), pe.Normal()])
         # Overplot theoretical fits
         if funcname == "momentum":
             # Flat density profile
