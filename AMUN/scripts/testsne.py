@@ -158,6 +158,8 @@ def run(simfunc,simnamesets,plotlabels,compare=False):
     wcloud = 1.71 # cloud density profile power law index
     funcname = simfunc.__name__
     fig, axes = plt.subplots(1,numcols,sharex=False,sharey=True)
+    if numcols == 1:
+        axes = (axes,) # force tuple for zip below
     first = True
     for ax, simnames, plotlabel in zip(axes,simnamesets,plotlabels):
         linenames = []
@@ -306,5 +308,5 @@ if __name__=="__main__":
     #for func in [numHIIregions]:
     #    run(func,(["IMF1_04"],["IMF2_04"],["MASS_04"]),(label1,label2,label3))
     for func in [energytot]:
-        run(func,(["NOFB","SN_120"]),
-            (label1))
+        run(func,(["NOFB","SN_120"],),
+            (label1,))
