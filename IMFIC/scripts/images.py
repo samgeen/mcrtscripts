@@ -53,7 +53,7 @@ def DrawPieChart(ax,X, Y, ratios, size):
         ax.scatter([X],[Y] , marker=(xyi,0), s=size, facecolor=colours[i],
                    lw=0.5)
 
-def MakeImage(snap,los,ax,dolengthscale,cmap,label=None,dpi=200.0,simname=None,zoom=1.0):
+def MakeImage(snap,los,ax,dolengthscale,cmap,label=None,dpi=200.0,simname=None,zoom=1.0,labelpos=(0.9,0.1)):
     imtype = "columndensity"
     cax = None
     if snap is not None:
@@ -98,20 +98,29 @@ def MakeImage(snap,los,ax,dolengthscale,cmap,label=None,dpi=200.0,simname=None,z
         # Draw star tracks
         if simname is not None:
             tracks, tracktimes, dummy = trackstars.runforsim(simname)
+            if los == "z":
+                xtrack = 0
+                ytrack = 1
+            if los == "x":
+                xtrack = 1
+                ytrack = 2
+            if los == "y":
+                xtrack = 2
+                ytrack = 0
             for track in tracks.itervalues():
                 track -= 0.5*(1.0-zoom)*boxlen
                 # Plot track
-                ax.plot(track[:,1],track[:,0],alpha=0.5,color="w")
-                x0 = track[-1,1]
-                y0 = track[-1,0]
-                x1 = x0-track[-2,1]
-                y1 = y0-track[-2,0]
+                ax.plot(track[:,ytrack],track[:,xtrack],alpha=0.5,color="w")
+                x0 = track[-1,ytrack]
+                y0 = track[-1,xtrack]
+                x1 = x0-track[-2,ytrack]
+                y1 = y0-track[-2,xtrack]
                 x1 *= 0.01
                 y1 *= 0.01
                 # Plot arrow at end of track
-                plt.arrow(x0, y0, x1, y1, shape='full', 
-                          lw=0, length_includes_head=True, head_width=.05,
-                          alpha=0.5,color="w")
+                ax.arrow(x0, y0, x1, y1, shape='full', 
+                         lw=0, length_includes_head=False, head_width=0.02*boxlen*zoom,
+                         alpha=0.5,color="w")
 
         # Add scale axis
         scalecol = "w"
@@ -127,8 +136,8 @@ def MakeImage(snap,los,ax,dolengthscale,cmap,label=None,dpi=200.0,simname=None,z
                     verticalalignment="center",fontsize="x-large")
         # Add label
         if label is not None:
-            xt = 0.9 * boxlen
-            yt = 0.1 * boxlen
+            xt = labelpos[0] * boxlen*zoom
+            yt = labelpos[1] * boxlen*zoom
             ax.text(xt,yt,label,
                     horizontalalignment="right",
                     verticalalignment="center",
@@ -139,10 +148,19 @@ def MakeImage(snap,los,ax,dolengthscale,cmap,label=None,dpi=200.0,simname=None,z
     #ax.axis("off")
     return cax
 
-def MakeFigure(simnames,time,name,los,nonamelabel=False,shape=None,dpi=200.0,zoom=1.0):
+def MakeFigure(simnames,times,name,los,nonamelabel=False,shape=None,dpi=200.0,zoom=1.0,timelabels=False):
     hydro = "NH"
-    nrows = 4
-    ncols = 4
+    nrows = 1
+    ncols = 1
+    # Make a square array of images
+    while len(simnames)*len(times) > nrows*ncols:
+        nrows += 1
+        ncols += 1
+    # Do we fill the whole square?
+    square = True
+    if len(simnames)*len(times) < nrows*ncols:
+        square = False
+    # Make figure
     fig, axes = plt.subplots(nrows=nrows, ncols=ncols, 
                              sharex=True, sharey=True,
                              frameon=False)
@@ -154,18 +172,28 @@ def MakeFigure(simnames,time,name,los,nonamelabel=False,shape=None,dpi=200.0,zoo
         ax.set_axis_off()
         ax.set_aspect("equal","datalim")
         ax.axis("off")
+    labelpos = (0.9,0.1)
+    if square:
+        labelpos = (0.9,0.9)
     for simname in simnames:
-        isim += 1
         cmap = linestyles.ColourMap(simname)
         sim = Hamu.Simulation(simname)
-        snap = sim.FindAtTime(time)
-        ax = axes.flatten()[isim]
-        im = MakeImage(snap,los,ax,dolengthscale,cmap,
-                       label = linestyles.Label(simname),dpi=dpi, simname=simname,zoom=zoom)
-        dolengthscale = False
+        label = linestyles.Label(simname)
+        for time in times:
+            isim += 1
+            snap = sim.FindAtTime(time)
+            ax = axes.flatten()[isim]
+            if timelabels:
+                timestr = "%.1f" % snaptime.Myr(snap)
+                label = timestr+" Myr"
+            im = MakeImage(snap,los,ax,dolengthscale,cmap,
+                           label=label,
+                           dpi=dpi, simname=simname,zoom=zoom,labelpos=labelpos)
+            dolengthscale = False
     # Make empty frames to remove axis scales, etc
-    for irest in range(isim,nrows*ncols):
-        empty = MakeImage(None,los,ax,dolengthscale,cmap,label="",dpi=dpi)
+    #for irest in range(isim,nrows*ncols):
+    #    square = False
+    #    empty = MakeImage(None,los,ax,dolengthscale,cmap,label="",dpi=dpi)
     # Add colour bar for hydro variable
     print "Making colour bar..."
     cax = fig.add_axes([0.43, 0.10, 0.54, 0.03])
@@ -173,8 +201,12 @@ def MakeFigure(simnames,time,name,los,nonamelabel=False,shape=None,dpi=200.0,zoo
     label = hydrofuncs.hydro_label((hydro))
     if not "xH" in hydro:
         label = "log("+label+")"
-    cbar.set_label(label,fontsize="x-large",color="k")
-    cbar.ax.tick_params(labelsize="x-large",labelcolor="k")
+    if square:
+        cbarcol = "w"
+    else:
+        cbarcol = "k"
+    cbar.set_label(label,fontsize="x-large",color=cbarcol)
+    cbar.ax.tick_params(labelsize="x-large",labelcolor=cbarcol)
     cbar.solids.set_edgecolor("face")
     # Save figure
     suffix = ""
@@ -188,7 +220,7 @@ def MakeFigure(simnames,time,name,los,nonamelabel=False,shape=None,dpi=200.0,zoo
     fig.subplots_adjust(hspace=0.02, wspace=0.02, 
                         left=0.20,right=1.0,
                         bottom=0.00,top=1.0)
-    fig.set_size_inches(finches*nrows/0.8,finches*ncols)
+    fig.set_size_inches(finches*ncols/0.8,finches*nrows)
     fig.savefig(figname,
                 pad_inches=0,
                 dpi=dpi)
@@ -198,6 +230,12 @@ def MakeFigure(simnames,time,name,los,nonamelabel=False,shape=None,dpi=200.0,zoo
 
 if __name__=="__main__":
     time = 1.5*tffcloud_code
+    times = np.array([1.0,1.5,2.0,2.5])*tffcloud_code
     zoom = 0.7 # 1.0
-    MakeFigure(imfsims,time,name="imf",los='z',zoom=zoom)
-    MakeFigure(icsims,time,name="ic",los='z',zoom=zoom)
+    for i in range(0,13):
+        for los in "xyz":
+            MakeFigure([icsims[i]],times,name="drifttimes_ic"+str(i)+los,los=los,zoom=zoom,timelabels=True)
+    for los in "xyz":
+        MakeFigure([imfsims[2]],times,name="drifttimes"+los,los=los,zoom=zoom,timelabels=True)
+    MakeFigure(imfsims,[time],name="imf",los='z',zoom=zoom)
+    MakeFigure(icsims,[time],name="ic",los='z',zoom=zoom)
