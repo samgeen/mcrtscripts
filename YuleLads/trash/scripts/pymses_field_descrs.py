@@ -13,7 +13,7 @@ self.amr_field_descrs_by_file = \
     {
     "3D": {"hydro" : [ Scalar("rho", 0), Vector("vel", [1, 2, 3]), 
                        Vector("B-left", [4, 5, 6]), 
-                       Vector("B-right", [7, 8, 9]),
+                       Vector("B-right", [7, 8, 9]), 
                        Scalar("Pnontherm",10),
                        Scalar("P", 11),
                        Scalar("xHII",12), Scalar("xHeII",13), Scalar("xHeIII",14)],

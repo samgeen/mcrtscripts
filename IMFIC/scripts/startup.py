@@ -61,7 +61,8 @@ allsims = imfsims + icsims
 
 # Simulation locations
 #mainsimfolder = "/home/hd/hd_hd/hd_mp149/MCRT/runs/"
-mainsimfolder = "/home/sgeen/MC_RT/runs_anais/"
+#mainsimfolder = "/home/sgeen/MC_RT/runs_anais/"
+mainsimfolder = "/home/stgeen0/MCRT/runs/"
 imfsimfolder = mainsimfolder+"/55_Lcloud_yulelads/"
 icsimfolder = mainsimfolder+"/57_Lcloud_ictest/"
 
@@ -96,7 +97,7 @@ for simname in allsims:
     hamusims[simname] = _MakeSim(simname)
 
 # Set up single star module
-startableloc = "/home/sgeen/MC_RT/StellarSources/Compressed/singlestar_z0.014"
+startableloc = "/home/stgeen0/StellarSources/Compressed/singlestar_z0.014"
 singlestar.star_setup(startableloc)
 
 # Useful functions

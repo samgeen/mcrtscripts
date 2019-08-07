@@ -214,7 +214,7 @@ class Simulation(object):
         self._name = name
         if not name in folders:
             if not silent:
-                print "No simulation with this name stored in memory"
+                print "No simulation with this name stored in memory:", name
                 print "Currently available simulations:", folders.keys()
             raise KeyError
         self._folder = folders[name]
@@ -261,7 +261,7 @@ class Simulation(object):
         return snap
     
     def FindOutput(self,output):
-        if output is in self._snaps:
+        if output in self._snaps:
             print "Found output number", output
             return self._snaps[output]
         else:
