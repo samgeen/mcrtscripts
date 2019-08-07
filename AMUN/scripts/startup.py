@@ -118,6 +118,8 @@ if not amunold:
     simfolders["UV_15"] = amunfolder+"09_uvonly_15"
     simfolders["SN_120"] = amunfolder+"10_snonly_120"
     simfolders["UVWIND_60"] = amunfolder+"11_uv+winds_60"
+    simfolders["UVPRESS_120"] = amunfolder+"12_uv+press_120_dense"
+    simfolders["UVWIND_30"] = amunfolder+"13_uv+winds_30"
     allsims = simfolders.keys()
     
 # Populate list of Hamu simulations
