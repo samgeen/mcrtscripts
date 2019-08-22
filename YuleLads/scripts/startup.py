@@ -19,6 +19,7 @@ import linestyles
 
 import HamuLite as Hamu
 import pymses
+from pymses.utils import constants as C 
 
 import sinks
 import stellars
@@ -96,7 +97,7 @@ for simname in allsims:
     hamusims[simname] = _MakeSim(simname)
 
 # Set up single star module
-startableloc = "/home/sgeen/MC_RT/StellarSources/Compressed/singlestar_z0.014"
+startableloc = "/home/stgeen0/StellarSources/Compressed/singlestar_z0.014"
 singlestar.star_setup(startableloc)
 
 # Useful functions

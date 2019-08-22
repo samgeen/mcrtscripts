@@ -6,12 +6,18 @@ Sam Geen, November 2014
 import numpy as np
 from pymses.utils import constants as C
 
+X = 0.76
+mH = 1.6735326381e-24
+logmHbyX = np.log10(mH/X)
+
 def hydro_label(hydro):
     '''
     Returns a label for the given hydro variable in some default units
     '''
     if hydro == "rho":
-        return "Density / atoms/cm$^{3}$"
+        return "$\rho$ / g/cm$^{3}$"
+    if hydro == "nH":
+        return "$n_{\mathrm{H}}$ / cm$^{-3}$"
     if hydro == "NH":
         return "$N_{\mathrm{H}}$ / cm$^{-2}$"
     if hydro == "P":
@@ -56,8 +62,11 @@ def scale_by_units(ro, hydro):
     def bfunc(dset,axis):
         b = 0.5*(dset["B-left"]+dset["B-right"])
         return b[:,axis]*bunit(dset)
-    if hydro == "rho":
+    if hydro == "nH":
         unit = ro.info["unit_density"].express(C.H_cc)
+        return lambda dset: dset["rho"]*unit
+    if hydro == "rho":
+        unit = ro.info["unit_density"].express(C.g_cc)
         return lambda dset: dset["rho"]*unit
     if hydro == "NH":
         unit = ro.info["unit_density"].express(C.g_cc) * \
@@ -121,44 +130,41 @@ def amr_source(ro, hydro,extra=[]):
     '''
     Load the necessary data from the hydro files
     '''
-    if type(hydro) == type("duck"):
-        hydros = [hydro] # default is just the variable we need
-    else:
-        hydros = hydro
+    # Allow users to use single variables or lists of hydro variables
+    hydros = np.atleast_1d(np.array(hydro))
     pymsesvars = []
     # Run through hydro variables
     for hydro in hydros:
+        if hydro == "nH":
+            pymsesvars += ["rho"]
         if hydro == "NH":
             pymsesvars += ["rho"]
-        elif hydro == "rho":
-            pymsesvars += ["rho"]
-        elif hydro == "T":
+        if hydro == "T":
             pymsesvars += ["rho","P","xHII","xHeII","xHeIII"]
-        elif hydro[0] == "B":
+        if hydro == "Bmag":
             pymsesvars += ["B-left","B-right"]
-        elif hydro[0] == "v": # Any velocity
+        if hydro[0] == "v": # Any velocity
             pymsesvars += ["vel"]
-        elif hydro == "spd":
+        if hydro == "spd":
             pymsesvars += ["vel"]
-        elif hydro == "Pram":
+        if hydro == "Pram":
             pymsesvars += ["rho","vel"]
-        else:
-            pymsesvars += [hydro]
-        # Add extras
+    # Add extras
     for e in extra:
         if not e in pymsesvars:
             pymsesvars.append(e)
     # Make unique list
     pymsesvars = list(set(pymsesvars))
-    print "Making AMR source with the variables", pymsesvars
     # Output pymses AMR source
     return ro.amr_source(pymsesvars)
-    
+
 def cmap(hydro):
     '''
     Returns cmap for this hydro variable 
     '''
     if hydro == "rho":
+        return "RdPu_r"
+    if hydro == "nH":
         return "RdPu_r"
     if hydro == "NH":
         return "RdPu_r"
@@ -183,6 +189,8 @@ def yscale(hydro):
     '''
     Returns whether this function takes a log scale or not
     '''
+    if hydro == "nH":
+        return "log"
     if hydro == "rho":
         return "log"
     if hydro == "NH":
@@ -205,14 +213,16 @@ def yscale(hydro):
     return "linear"
 
 def hydro_range(hydro):
+    if hydro == "nH":
+        return (0, 8)
     if hydro == "rho":
-        return (0, 6)
+        return (logmHbyX,logmHbyX+8)
     if hydro == "NH":
         return (20.5,23.0)
     if hydro == "P":
         return (None, None) # No idea
     if hydro == "T":
-        return (3,6)
+        return (0,8)
     if "xH" in hydro:
         return (-6,0)
     if hydro == "gpe":

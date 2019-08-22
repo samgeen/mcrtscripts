@@ -3,7 +3,7 @@ Pymses 4.0 is very inefficient at giving the time, so put it in Hamu
 Sam Geen, October 2016
 '''
 
-import Hamu
+import HamuLite as Hamu
 
 from pymses.utils import constants as C
 

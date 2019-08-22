@@ -169,7 +169,7 @@ def totalmomentuminsnapS(snap,nHlow=0.0,nHhigh=0.0):
     print "MOMENTUM FOUND @ ",time,"Myr:", momT
     return momT
 
-def momentuminsnap(snap,nHlow=0.0,nHhigh=0.0):
+def momentuminsnap(snap,centre=(0.5,0.5,0.5),nHlow=0.0,nHhigh=0.0):
     print "Finding momentum in snap", snap.iout
     amr = snap.amr_source(["rho","vel"])
     cell_source = CellsToPoints(amr)
@@ -179,7 +179,10 @@ def momentuminsnap(snap,nHlow=0.0,nHhigh=0.0):
     vels = cells["vel"]
     vols = (cells.get_sizes())**3.0
     spds = np.sqrt(np.sum(vels**2.0,1))
-    pos = cells.points-0.5
+    pos = cells.points+0.0
+    pos[:,0] -= centre[0]
+    pos[:,1] -= centre[1]
+    pos[:,2] -= centre[2]
     rads = pos+0.0
     dist = np.sqrt(np.sum(pos**2,1))
     for i in range(0,3):
@@ -200,7 +203,18 @@ def momentuminsnap(snap,nHlow=0.0,nHhigh=0.0):
     mom *= umass*uvel
     time = snap.info["time"]*snap.info["unit_time"].express(C.Myr)
     print "MOMENTUM FOUND @ ",time,"Myr:", mom
-    return mom 
+    return mom
+
+def radialmomentumatstarinsnap(snap):
+    stellar = stellars.FindStellar(snap.hamusnap)
+    if len(stellar.mass) == 0:
+        return 0.0
+    imax = np.where(stellar.mass == np.max(stellar.mass))[0][0]
+    sinkid = stellar.sinkid[imax]-1
+    sink = sinks.FindSinks(snap.hamusnap)
+    boxlen = snap.info["boxlen"]
+    starpos = np.array([sink.x[sinkid],sink.y[sinkid],sink.z[sinkid]])/boxlen
+    return momentuminsnap(snap,starpos)
 
 def totalmomentuminsnap(snap,nHlow=0.0,nHhigh=0.0):
     print "Finding *total* momentum in snap", snap.iout
@@ -228,7 +242,7 @@ def totalmomentuminsnap(snap,nHlow=0.0,nHhigh=0.0):
     return mom
 
 def windradiusinsnap(snap):
-    return radiusinsnap(snap,wind=True)
+    return radiusinsnap3(snap,wind=True)
 
 def densityprofileinsnap(snap):
     print "Finding density profile in snap", snap.iout
@@ -267,6 +281,7 @@ def densityprofileinsnap(snap):
     rho_profile   = bin_cylindrical(dset, center, normal, rho_weight_func, r_bins, divide_by_counts=True)  # for density profile
 
     return rho_profile
+    
 
 def surfacedensityprofileinsnap(snap):
     print "Finding surface density profile in snap", snap.iout
@@ -352,13 +367,13 @@ def radiusinsnap(snap,wind=False):
     #print "RADIUS FOUND", radius
     return radius
 
-def radiusinsnap3(snap):
+def radiusinsnap3(snap,wind=False):
     '''
     2nd implementation: measure volume of ionised gas and sphericise
     '''
     print "Finding radius of HII region in snap", snap.iout
     boxlen = snap.info["boxlen"]
-    amr = snap.amr_source(["rho","xHII"])
+    amr = snap.amr_source(["rho","xHII","xHeII","xHeIII","P","vel"])
     cell_source = CellsToPoints(amr)
     cells = cell_source.flatten()
     #temp = cells["P"]/cells["rho"]*snap.info["unit_temperature"].express(C.K)
@@ -368,14 +383,58 @@ def radiusinsnap3(snap):
     rhos = cells["rho"]
     mcode = vols*rhos
     msum = np.sum(mcode)
+    # Speeds for winds
+    if wind:
+        uvel = snap.info["unit_velocity"].express(C.cm/C.s)
+        vels = cells["vel"]
+        spds = np.sqrt(np.sum(vels**2.0,1))
+        mufunc = lambda dset: 1./(0.76*(1.+dset["xHII"]) + \
+                                  0.25*0.24*(1.+dset["xHeII"]+2.*dset["xHeIII"]))  
+        temp = cells["P"]/cells["rho"]*snap.info["unit_temperature"].express(C.K)*mufunc(cells)
+        # Over 100 km/s or T > 1e5 K
+        mask = np.logical_or(spds*uvel/1e5 > 100.0,temp > 1e5)
+    else:
+        thresh = 0.1 # fiducial "non-ionised" threshold
+        mask = np.where(ion > thresh)
     # Get volume of ionised gas
     # Assume gas is either fully ionised or neutral on a sub-grid scale
     # Also include a basic threshold
-    thresh = 0.1 # HACK!
-    mask = np.where(ion > thresh)
     ionvol = np.sum(vols[mask]*ion[mask])
     ionrad = ionvol**(1.0/3.0) * (3.0 / 4.0 / np.pi)
     return ionrad*boxlen
+
+def photodensinsnap(snap):
+    '''
+    Average density of photoionised gas (not including wind-shocked gas)
+    '''
+    print "Finding photoionised gas density of HII region in snap", snap.iout
+    boxlen = snap.info["boxlen"]
+    amr = snap.amr_source(["rho","xHII","xHeII","xHeIII","P","vel"])
+    cell_source = CellsToPoints(amr)
+    cells = cell_source.flatten()
+    #temp = cells["P"]/cells["rho"]*snap.info["unit_temperature"].express(C.K)
+    ion = cells["xHII"]
+    vols = (cells.get_sizes())**3.0
+    pos = cells.points+0.0
+    rhos = cells["rho"]
+    mcode = vols*rhos
+    msum = np.sum(mcode)
+    # Speeds for winds
+    uvel = snap.info["unit_velocity"].express(C.cm/C.s)
+    vels = cells["vel"]
+    spds = np.sqrt(np.sum(vels**2.0,1))
+    mufunc = lambda dset: 1./(0.76*(1.+dset["xHII"]) + \
+                              0.25*0.24*(1.+dset["xHeII"]+2.*dset["xHeIII"]))  
+    temp = cells["P"]/cells["rho"]*snap.info["unit_temperature"].express(C.K)*mufunc(cells)
+    # Over 100 km/s or T > 1e5 K
+    notwindmask = np.logical_and(spds*uvel/1e5 < 100.0,temp < 1e5)
+    thresh = 0.1 # fiducial "non-ionised" threshold
+    mask = np.logical_and(ion > thresh,notwindmask)
+    # Get volume-weighted average density of ionised gas
+    ionvols = vols[mask]*ion[mask]
+    ionmass = rhos[mask] * ionvols
+    iondens = np.sum(ionmass) / np.sum(ionvols)
+    return iondens
 
 def maxBfieldinsnap(snap):
     amr = snap.amr_source(["B-left","B-right"])

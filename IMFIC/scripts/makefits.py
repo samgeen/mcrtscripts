@@ -88,18 +88,18 @@ def runforsim(sim,nouts=None,times=None,pos=None,radius=None):
 
 if __name__=="__main__":
     # Use IMF2, winds + UV
-    sim = hamusims["UV_120_NOTURB"]
+    sim = hamusims[icsims[2]]
     # Pick the last output - TODO, CHANGE TO SPECIFIC OUTPUT!!!
     #nout = snap.OutputNumber()
     #nouts = [nout]
     snap = sim.Snapshots()[-1]
     myr = snap.RawData().info["unit_time"].express(C.Myr)
-    times = [snap.Time()*myr for snap in sim.Snapshots()] # np.linspace(0.0,1.0,11)+3.2 # Myr
+    times = np.linspace(0.0,1.0,11)+3.2 # Myr
     #snap = sim.FindAtTime(times[0]/myr)
     # Pick the first star
     #stars = stellars.FindStellar(snap)
     #pos = [stars.x[0],stars.y[0],stars.z[0]]
     #radius = 25.0
     pos = np.zeros(3)+0.5
-    radius = 0.25
+    radius = 0.4
     runforsim(sim,times=times,pos=pos,radius=radius)

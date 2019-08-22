@@ -9,8 +9,6 @@ from astropy.io import fits
 
 import stellars
 
-from pymses.utils import constants as C 
-
 def run(snap,folder,hydros,pos,radius):
     # Open snapshot
     ro = snap.RawData()
@@ -27,7 +25,7 @@ def run(snap,folder,hydros,pos,radius):
     points = points.T
     samples = pymses.analysis.sample_points(amr,points)
     # Sample for each hydro variable
-    hydros = hydros+["x","y","z"]
+    hydros += ["x","y","z"]
     for hydro in hydros:
         filename = folder+"/"+hydro+\
                    "/cube_"+hydro+"_"+str(snap.OutputNumber()).zfill(5)+".fits"
@@ -88,18 +86,18 @@ def runforsim(sim,nouts=None,times=None,pos=None,radius=None):
 
 if __name__=="__main__":
     # Use IMF2, winds + UV
-    sim = hamusims["UV_120_NOTURB"]
+    sim = hamusims["IMF2_05"]
     # Pick the last output - TODO, CHANGE TO SPECIFIC OUTPUT!!!
     #nout = snap.OutputNumber()
     #nouts = [nout]
     snap = sim.Snapshots()[-1]
     myr = snap.RawData().info["unit_time"].express(C.Myr)
-    times = [snap.Time()*myr for snap in sim.Snapshots()] # np.linspace(0.0,1.0,11)+3.2 # Myr
+    times = np.linspace(0.0,1.0,11)+3.38 # Myr
     #snap = sim.FindAtTime(times[0]/myr)
     # Pick the first star
     #stars = stellars.FindStellar(snap)
     #pos = [stars.x[0],stars.y[0],stars.z[0]]
     #radius = 25.0
     pos = np.zeros(3)+0.5
-    radius = 0.25
+    radius = 0.4
     runforsim(sim,times=times,pos=pos,radius=radius)
