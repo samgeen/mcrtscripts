@@ -261,12 +261,14 @@ def MakeFigure(simnames,times,name,los=None,hydro="rho",Slice=False,wsink=False,
     print "Done!"
 
 if __name__=="__main__":
-    
-    # MASS IMF2
-    #times = np.array([0.4, 0.5, 1.0, 1.5]) *tffcloud_code
-    times = np.array([0.4, 0.5, 0.6, 0.7, 1.]) *tffcloud_code
-    timeL = [r'0.4 t$_{ff}$', r'0.5 t$_{ff}$', r'0.6 t$_{ff}$', r'0.7 t$_{ff}$', r'1.0 t$_{ff}$']
-    MakeFigure(["MASS_02","MASS_03","MASS_04"],times,name="mass",los='z',hydro='Z',Slice=True,wsink=True,timeL=timeL)
 
-    #MakeFigure(["IMF1_04","IMF1_05","IMF1_06","IMF1_08"],time,name="imf1_1tff",los='z',hydro='rho',Slice=True,wsink=False,starC=False)
-    #MakeFigure(["IMF2_04","IMF2_05","IMF2_06","IMF2_08"],time,name="imf2_1tff",los='z',hydro='rho',Slice=True,wsink=False,starC=False)
+    for mass in [30,60,120]:
+        smass = str(mass)
+        simset = ["NOFB","UV_"+smass,"UVWIND_"+smass]
+        setname = "windset_"+smass+"Msun"
+        times = np.array([0.5, 0.75, 1.])
+        timeL = [str(x)+r' t$_{ff}$' for x in times]
+        timescode = times * tffcloud_code
+        MakeFigure(simset,timescode,name=setname,los='z',hydro='NH',Slice=False,wsink=True,timeL=timeL)
+        MakeFigure(simset,timescode,name=setname,los='z',hydro='T',Slice=True,wsink=True,timeL=timeL)
+        
