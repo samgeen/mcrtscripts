@@ -312,6 +312,7 @@ def surfacedensityprofileinsnap(snap):
             surf_dens_prof.append(mass_profile[j-1]/Apc)                     # Msun/pc^2
  
     exit() 
+    
 def radiusinsnap(snap,wind=False):
     print "Finding radius of HII region in snap", snap.iout
     boxlen = snap.info["boxlen"]
