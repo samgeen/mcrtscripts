@@ -3,31 +3,33 @@ Make a data cube from the fields in a simulation
 Sam Geen, May 2015
 '''
 
+import copy
+
 from startup import *
 
 from astropy.io import fits
 
 import stellars
 
-from pymses.utils import constants as C 
-
 def run(snap,folder,hydros,pos,radius):
     # Open snapshot
     ro = snap.RawData()
     print "Sampling grid ...",
+    hydros = copy.copy(hydros)
     amr = hydrofuncs.amr_source(ro,hydros)
     # Make grid
     lmin = ro.info["levelmin"]
-    lsize = 256
+    lsize = 128
     boxlen = ro.info["boxlen"]
-    pos = np.array(pos)
-    coords = np.linspace(-0.5,0.5,lsize)*2.0*radius
+    pos = np.array(pos)/boxlen
+    coords = np.linspace(-0.5,0.5,lsize)*2.0*radius/boxlen
     grid = np.meshgrid(coords+pos[0],coords+pos[1],coords+pos[2])
     points = np.array([grid[0].flatten(),grid[1].flatten(),grid[2].flatten()])
     points = points.T
+    print points.min(), points.max(), points.shape
     samples = pymses.analysis.sample_points(amr,points)
     # Sample for each hydro variable
-    hydros = hydros+["x","y","z"]
+    hydros += ["x","y","z"]
     for hydro in hydros:
         filename = folder+"/"+hydro+\
                    "/cube_"+hydro+"_"+str(snap.OutputNumber()).zfill(5)+".fits"
@@ -45,6 +47,7 @@ def run(snap,folder,hydros,pos,radius):
                 if hydro == "z":
                     hydrocube = (grid[2]-pos[2])
                 hydrocube *= boxlen
+            print "Minmax=",hydrocube.min(),hydrocube.max(),"..."
             #np.save(filename, hydrocube.astype("float32"))
             hdu = fits.PrimaryHDU(hydrocube)
             hdul = fits.HDUList([hdu])
@@ -60,9 +63,9 @@ def makedir(folder):
         pass
 
 def runforsim(sim,nouts=None,times=None,pos=None,radius=None):
-    hydros = ["vx","vy","vz","rho","T","xHII","Bx","By","Bz","Bmag"]
+    hydros = ["vx","vy","vz","rho","T","xHII","NpIR","NpOpt","NpHII","NpHeII","NpHeIII","P","Pnontherm","xHeII"]
     simname = sim.Name()
-    simfolder = "../cubes/fits/"+simname
+    simfolder = "../cubes/fits2/"+simname
     makedir(simfolder)
     snap = sim.Snapshots()[0]
     myr = snap.RawData().info["unit_time"].express(C.Myr)
@@ -88,18 +91,20 @@ def runforsim(sim,nouts=None,times=None,pos=None,radius=None):
 
 if __name__=="__main__":
     # Use IMF2, winds + UV
-    sim = hamusims["UV_120_NOTURB"]
+    sim = hamusims["ERIC-WIND"]
     # Pick the last output - TODO, CHANGE TO SPECIFIC OUTPUT!!!
     #nout = snap.OutputNumber()
     #nouts = [nout]
-    snap = sim.Snapshots()[-1]
-    myr = snap.RawData().info["unit_time"].express(C.Myr)
-    times = [snap.Time()*myr for snap in sim.Snapshots()] # np.linspace(0.0,1.0,11)+3.2 # Myr
+    #snap1 = sim.Snapshots()[17]
+    snap2 = sim.Snapshots()[-1]
+    myr = snap2.RawData().info["unit_time"].express(C.Myr)
+    times = [snap.Time()*myr for snap in [snap2]]
+    #times = np.linspace(0.0,1.0,11)+3.38 # Myr
     #snap = sim.FindAtTime(times[0]/myr)
     # Pick the first star
-    #stars = stellars.FindStellar(snap)
-    #pos = [stars.x[0],stars.y[0],stars.z[0]]
-    #radius = 25.0
-    pos = np.zeros(3)+0.5
-    radius = 0.25
+    stars = stellars.FindStellar(snap)
+    pos = [stars.x[0],stars.y[0],stars.z[0]]
+    radius = 25.0
+    #pos = np.zeros(3)+0.5
+    #radius = 0.4
     runforsim(sim,times=times,pos=pos,radius=radius)

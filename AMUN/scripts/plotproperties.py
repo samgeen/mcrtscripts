@@ -21,7 +21,7 @@ def _tsfeinsnap(snap):
 
 tsfeinsnap = Hamu.Algorithm(_tsfeinsnap)
 
-nprocs = 20
+nprocs = 1
 
 def tsfe(simname):
     global mgas
@@ -33,13 +33,21 @@ def tsfe(simname):
         sfe /= 10.0 # mgas is 10x larger here
     return t, sfe
 
-momentuminsnap = Hamu.Algorithm(findproperties.totalmomentuminsnap)
+momentuminsnap = Hamu.Algorithm(findproperties.totalmomentuminsnapS) # with sink momentum
 def momentum(simname):
     print "Running for simulation", simname
     sim = hamusims[simname]
     tcreated, sfe = starrelations.runforsim(simname,"firsttime")  
     t, p = timefuncs.timefunc(sim,momentuminsnap,processes=nprocs)
     #t -= tcreated
+    return t, p
+
+momentumatstarinsnap = Hamu.Algorithm(findproperties.radialmomentumatstarinsnap)
+def momentumatstarpos(simname):
+    print "Running for simulation", simname
+    sim = hamusims[simname]
+    tcreated, sfe = starrelations.runforsim(simname,"firsttime")  
+    t, p = timefuncs.timefunc(sim,momentumatstarinsnap,processes=nprocs)
     return t, p
 
 massinsnap = Hamu.Algorithm(findproperties.massinsnap)
@@ -61,6 +69,18 @@ def radius(simname):
     #t -= tcreated
     return t, r
 
+def windradiusratio(simname):
+    print "Running for simulation", simname
+    sim = hamusims[simname]
+    tcreated, sfe = starrelations.runforsim(simname,"firsttime")  
+    t,ri = timefuncs.timefunc(sim,radiusinsnap,processes=nprocs)
+    t,rw = timefuncs.timefunc(sim,windradiusinsnap,processes=nprocs)
+    # HACK - fix boxlen error
+    #boxlen = 0.121622418993404E+03
+    #r *= boxlen
+    #t -= tcreated
+    return t, rw / ri
+    
 windenergyinsnap = Hamu.Algorithm(findproperties.windenergyinsnap2)
 def windenergy(simname):
     print "Running for simulation", simname
@@ -104,6 +124,37 @@ def nphotonsHII(simname):
     #t -= tcreated
     return t, nphot
 
+
+def _windenergyemitted(snap):
+    return starrelations.findcumulwinds(snap.hamusnap)[0]
+windenergyemittedHamu = Hamu.Algorithm(_windenergyemitted)
+
+def windenergyemitted(simname):
+    print "Running for simulation", simname
+    sim = hamusims[simname]
+    tcreated, sfe = starrelations.runforsim(simname,"firsttime")
+    t, we = timefuncs.timefunc(sim,windenergyemittedHamu)
+    return t, we
+
+def windenergyretained(simname):
+    print "Running for simulation", simname
+    sim = hamusims[simname]
+    tcreated, sfe = starrelations.runforsim(simname,"firsttime")
+    t, wemit = timefuncs.timefunc(sim,windenergyemittedHamu)
+    t, weingas = timefuncs.timefunc(sim,windenergyinsnap,processes=1) # doesn't like tuples in the pool map
+    return t, weingas[:,2] / wemit
+
+def _windmassemitted(snap):
+    return starrelations.findcumulwinds(snap.hamusnap)[1]
+windmassemittedHamu = Hamu.Algorithm(_windmassemitted)
+
+def windmassemitted(simname):
+    print "Running for simulation", simname
+    sim = hamusims[simname]
+    tcreated, sfe = starrelations.runforsim(simname,"firsttime")
+    t, wm = timefuncs.timefunc(sim,windmassemittedHamu)
+    return t, wm
+
 Pnontherminsnap = Hamu.Algorithm(findproperties.Pnontherminsnap)
 def Pnontherm(simname):
     print "Running for simulation", simname
@@ -124,6 +175,13 @@ def numHIIregions(simname):
     sim = hamusims[simname]
     t,n = timefuncs.timefunc(sim,FindHIIRegions,verbose=True,processes=nprocs)
     return t, n
+
+photodensinsnap = Hamu.Algorithm(findproperties.photodensinsnap)
+def photodens(simname):
+    print "Running for simulation", simname
+    sim = hamusims[simname]
+    t,pdens = timefuncs.timefunc(sim,photodensinsnap,verbose=True,processes=nprocs)
+    return t, pdens
 
 def plotpowerlaw(ax,w,y0,linestyle,t0=0.3):
     '''
@@ -208,7 +266,8 @@ def run(simfunc,simnamesets,plotlabels,compare=False):
                 #    t = t[mask]
                 #    y = y[mask]
                 if len(y.shape) == 1:
-                    ax.plot(t,y,color=linestyles.Colour(simname),label=linestyles.Label(simname),alpha=0.9,
+                    ax.plot(t,y,color=linestyles.Colour(simname),label=linestyles.Label(simname),
+                            linestyle=linestyles.Linestyle(simname),alpha=0.9,
                             path_effects=[pe.Stroke(linewidth=5, foreground='k'), pe.Normal()])
                 else:
                     ntimes, nvals = y.shape
@@ -232,8 +291,10 @@ def run(simfunc,simnamesets,plotlabels,compare=False):
             tcreated, sfe = starrelations.runforsim(simnames[0],"firsttime")
             tc -= tcreated
             # +ve values (2nd = larger)
-            names = [tsfe,mass,maxBfield,nphotonsHII,momentum,radius]
-            effects = ["SFE","mass","max B field","Nphotons","momentum","radius"]
+            names = [tsfe,mass,maxBfield,nphotonsHII,momentum,radius,
+                     momentumatstarpos,windenergy,windradius,photodens]
+            effects = ["SFE","mass","max B field","Nphotons","momentum","radius",
+                       "outflow momentum","wind bubble energy","wind bubble radius","average density of photoionised gas"]
             effectdict = {k:v for k,v in zip(names, effects)}
             effect = effectdict[simfunc]
             labelplus = "Winds increase "+effect
@@ -256,7 +317,7 @@ def run(simfunc,simnamesets,plotlabels,compare=False):
             # Power law density profile
             #plotpowerlaw(ax,4.0/(7.0-2.0*wcloud),10.0,"k--")
         # Set labels etc
-        ax.set_xlim([-0.5,5])
+        ax.set_xlim([-0.2,1])
         #if not "MASS" in simnames[0]:
         #    ax.set_xlim([3,7.3])
         #else:
@@ -279,8 +340,8 @@ def run(simfunc,simnamesets,plotlabels,compare=False):
                 ax.set_ylabel("Sphericised radius of wind bubble / pc")
             if funcname == "windenergy":
                 ax.set_ylabel("Total energy in wind-shocked gas / ergs")
-            leg = ax.legend(fontsize="x-small",loc=legendloc)
-            leg.get_frame().set_linewidth(0.0)
+        leg = ax.legend(fontsize="x-small",loc=legendloc)
+        leg.get_frame().set_linewidth(0.0)
         #ax.set_ylim([-0.01,0.25])
         ax.text(0.95, textloc,plotlabel, ha='right', va="top", transform=ax.transAxes)
     comparetxt = ""
@@ -291,18 +352,27 @@ def run(simfunc,simnamesets,plotlabels,compare=False):
     fig.savefig(plotfolder+funcname+"_both"+comparetxt+".pdf", dpi=80)
         
 if __name__=="__main__":
-    #labels1 = [linestyles.Label(simname) for simname in imf1sims]
-    #labels2 = [linestyles.Label(simname) for simname in imf2sims]
-    label1 = "IMF 1"
-    label2 = "IMF 2"
-    label3 = "Massive Cloud"
-    #for func in [numHIIregions]:
-    #    run(func,(["IMF1_04"],["IMF2_04"],["MASS_04"]),(label1,label2,label3))
+    #for func in [surfdens]:
+    for compare in [True]:
+        for func in [momentumatstarpos,tsfe,momentum,radius,nphotonsHII,photodens][::-1]:
+            run(func,(["UV_120","UVWIND_120"],
+                      ["UV_60","UVWIND_60"],
+                      ["UV_30","UVWIND_30"],
+                      ["UV_120_DENSE","UVWIND_120_DENSE"]),
+                ("120 "+Msolar+" Star,\n Diffuse Cloud",
+                 "60 "+Msolar+" Star,\n Diffuse Cloud",
+                 "30 "+Msolar+" Star,\n Diffuse Cloud",
+                 "120 "+Msolar+" Star,\n Dense Cloud"),compare=compare)
+    for compare in [False]:
+        for func in [momentumatstarpos,tsfe,momentum,radius,nphotonsHII,photodens]:
+            run(func,(["NOFB","UV_120","UVWIND_120"],
+                      ["NOFB","UV_60","UVWIND_60"],
+                      ["NOFB","UV_30","UVWIND_30"],
+                      ["NOFB_DENSE","UV_120_DENSE","UVWIND_120_DENSE"]),
+                ("Diffuse Cloud","Diffuse Cloud","Diffuse Cloud","Dense Cloud"),compare=compare)
     for func in [windenergy,windradius]:
-        run(func,(["UVWIND_120","UVWIND_60"],["UVWIND_120_DENSE"])
+        run(func,(["UVWIND_120","UVWIND_60","UVWIND_30"],["UVWIND_120_DENSE"]),
             ("Diffuse Cloud","Dense Cloud"))
-    for func in [tsfe,nphotonsHII,momentum,radius]:
-        run(func,(imf1sims,imf2sims,massivesims),(label1,label2,label3))
-    for func in [tsfe,momentum,radius,nphotonsHII]:
-        run(func,(["IMF1_02","IMF1_04"],["IMF2_02","IMF2_04"],["MASS_02","MASS_04"]),
-            (label1,label2,label3),compare=True)
+    for func in [windradiusratio,windenergyemitted,windmassemitted,windenergyretained]:
+        run(func,(["UVWIND_120","UVWIND_60","UVWIND_30"],["UVWIND_120_DENSE"]),
+            ("Diffuse Cloud","Dense Cloud"))

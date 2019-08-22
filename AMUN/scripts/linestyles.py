@@ -87,7 +87,7 @@ def Colour(simname):
 
 def Linestyle(simname):
     lines = ["--","-",":","-."]
-    physics = ["NOFB","UV+WIND","UV","SN"]
+    physics = ["NOFB","UVWIND","UV","SN"]
     for num, phys in enumerate(physics):
         if phys in simname:
             return lines[num]
@@ -95,4 +95,4 @@ def Linestyle(simname):
     return "-"
 
 def Label(simname):
-    return simname # TODO: fix this
+    return simname.replace("_","\_") # TODO: fix this
