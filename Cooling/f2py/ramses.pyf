@@ -1,0 +1,73 @@
+!    -*- f90 -*-
+! Note: the context of this file is case sensitive.
+
+python module ramses ! in 
+    interface  ! in :ramses
+        module data ! in :ramses:ramses.f90
+            use pm_commons
+            use hydro_commons
+            use rt_cooling_module
+            use rt_parameters
+            use amr_commons
+            integer :: iy
+            integer :: ix
+            integer :: nions
+            integer :: ngrid
+            integer dimension(8) :: dx
+            integer :: size_bn
+            integer, allocatable,dimension(:,:) :: ind_hydro
+            real(kind=8), allocatable,dimension(:,:) :: xg
+            real(kind=8), allocatable,dimension(:,:) :: vp
+            real(kind=8), allocatable,dimension(:,:) :: uold
+            integer :: ncache
+            real(kind=8) :: boxlen
+            integer dimension(8) :: dy
+            real(kind=8), allocatable,dimension(:,:) :: xp
+            integer :: nlevelmax
+            real(kind=8), allocatable,dimension(:) :: mp
+            integer :: ndim
+            real(kind=8) :: units_density
+            real(kind=8) :: units_length
+            integer, allocatable,dimension(:) :: ind_leaf
+            real(kind=8), allocatable,dimension(:,:,:) :: hydros
+            integer :: ivar
+            integer :: iskip
+            integer, allocatable,dimension(:) :: ind_cell
+            integer :: nleaf
+            integer :: i
+            integer :: j
+            real(kind=8), allocatable,dimension(:) :: tp
+            real(kind=8) :: units_time
+            real(kind=8) :: t
+            integer :: ngrid_current
+            subroutine startup ! in :ramses:ramses.f90:data
+                threadsafe 
+            end subroutine startup
+            subroutine init_sim ! in :ramses:ramses.f90:data
+                use pm_commons
+                use hydro_commons
+                use amr_commons
+                use cooling_module
+                use poisson_commons
+            end subroutine init_sim
+            subroutine rt_cooling(t2in,xionin,npin,fpin,p_gasin,nhin,zsolarin,dtin,a_expin,ncellin,t2out,dnpdtout,dfpdtout) ! in :ramses:ramses.f90:data
+                real(kind=8) dimension(500),intent(in) :: t2in
+                real(kind=8) dimension(3,500),intent(in) :: xionin
+                real(kind=8) dimension(5,500),intent(in) :: npin
+                real(kind=8) dimension(3,5,500),intent(in) :: fpin
+                real(kind=8) dimension(3,500),intent(in) :: p_gasin
+                real(kind=8) dimension(500),intent(in) :: nhin
+                real(kind=8) dimension(500),intent(in) :: zsolarin
+                real(kind=8) intent(in) :: dtin
+                real(kind=8) intent(in) :: a_expin
+                integer intent(in) :: ncellin
+                real(kind=8) dimension(500),intent(out) :: t2out
+                real(kind=8) dimension(5,500),intent(out) :: dnpdtout
+                real(kind=8) dimension(3,5,500),intent(out) :: dfpdtout
+            end subroutine rt_cooling
+        end module data
+    end interface 
+end python module ramses
+
+! This file was auto-generated with f2py (version:2).
+! See http://cens.ioc.ee/projects/f2py2e/
