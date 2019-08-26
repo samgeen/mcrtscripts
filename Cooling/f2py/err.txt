@@ -1,0 +1,41 @@
+rmbadname1: Replacing "size" with "size_bn".
+undo_rmbadname1: Replacing "size_bn" with "size".
+getctype: "real(kind=dp)" is mapped to C "float" (to override define dict(real = dict(dp="<C typespec>")) in /mnt/c/Users/samge/OneDrive/Programming/Astro/mcrtscripts/Cooling/f2py/.f2py_f2cmap file).
+getctype: "real(kind=dp)" is mapped to C "float" (to override define dict(real = dict(dp="<C typespec>")) in /mnt/c/Users/samge/OneDrive/Programming/Astro/mcrtscripts/Cooling/f2py/.f2py_f2cmap file).
+getctype: "real(kind=dp)" is mapped to C "float" (to override define dict(real = dict(dp="<C typespec>")) in /mnt/c/Users/samge/OneDrive/Programming/Astro/mcrtscripts/Cooling/f2py/.f2py_f2cmap file).
+getctype: "real(kind=dp)" is mapped to C "float" (to override define dict(real = dict(dp="<C typespec>")) in /mnt/c/Users/samge/OneDrive/Programming/Astro/mcrtscripts/Cooling/f2py/.f2py_f2cmap file).
+getctype: "real(kind=dp)" is mapped to C "float" (to override define dict(real = dict(dp="<C typespec>")) in /mnt/c/Users/samge/OneDrive/Programming/Astro/mcrtscripts/Cooling/f2py/.f2py_f2cmap file).
+getctype: "real(kind=dp)" is mapped to C "float" (to override define dict(real = dict(dp="<C typespec>")) in /mnt/c/Users/samge/OneDrive/Programming/Astro/mcrtscripts/Cooling/f2py/.f2py_f2cmap file).
+getctype: "real(kind=dp)" is mapped to C "float" (to override define dict(real = dict(dp="<C typespec>")) in /mnt/c/Users/samge/OneDrive/Programming/Astro/mcrtscripts/Cooling/f2py/.f2py_f2cmap file).
+getctype: "real(kind=dp)" is mapped to C "float" (to override define dict(real = dict(dp="<C typespec>")) in /mnt/c/Users/samge/OneDrive/Programming/Astro/mcrtscripts/Cooling/f2py/.f2py_f2cmap file).
+getctype: "real(kind=dp)" is mapped to C "float" (to override define dict(real = dict(dp="<C typespec>")) in /mnt/c/Users/samge/OneDrive/Programming/Astro/mcrtscripts/Cooling/f2py/.f2py_f2cmap file).
+getctype: "real(kind=dp)" is mapped to C "float" (to override define dict(real = dict(dp="<C typespec>")) in /mnt/c/Users/samge/OneDrive/Programming/Astro/mcrtscripts/Cooling/f2py/.f2py_f2cmap file).
+getctype: "real(kind=dp)" is mapped to C "float" (to override define dict(real = dict(dp="<C typespec>")) in /mnt/c/Users/samge/OneDrive/Programming/Astro/mcrtscripts/Cooling/f2py/.f2py_f2cmap file).
+getctype: "real(kind=dp)" is mapped to C "float" (to override define dict(real = dict(dp="<C typespec>")) in /mnt/c/Users/samge/OneDrive/Programming/Astro/mcrtscripts/Cooling/f2py/.f2py_f2cmap file).
+getctype: "real(kind=dp)" is mapped to C "float" (to override define dict(real = dict(dp="<C typespec>")) in /mnt/c/Users/samge/OneDrive/Programming/Astro/mcrtscripts/Cooling/f2py/.f2py_f2cmap file).
+getctype: "real(kind=dp)" is mapped to C "float" (to override define dict(real = dict(dp="<C typespec>")) in /mnt/c/Users/samge/OneDrive/Programming/Astro/mcrtscripts/Cooling/f2py/.f2py_f2cmap file).
+getctype: "real(kind=dp)" is mapped to C "float" (to override define dict(real = dict(dp="<C typespec>")) in /mnt/c/Users/samge/OneDrive/Programming/Astro/mcrtscripts/Cooling/f2py/.f2py_f2cmap file).
+getctype: "real(kind=dp)" is mapped to C "float" (to override define dict(real = dict(dp="<C typespec>")) in /mnt/c/Users/samge/OneDrive/Programming/Astro/mcrtscripts/Cooling/f2py/.f2py_f2cmap file).
+getctype: "real(kind=dp)" is mapped to C "float" (to override define dict(real = dict(dp="<C typespec>")) in /mnt/c/Users/samge/OneDrive/Programming/Astro/mcrtscripts/Cooling/f2py/.f2py_f2cmap file).
+getctype: "real(kind=dp)" is mapped to C "float" (to override define dict(real = dict(dp="<C typespec>")) in /mnt/c/Users/samge/OneDrive/Programming/Astro/mcrtscripts/Cooling/f2py/.f2py_f2cmap file).
+getctype: "real(kind=dp)" is mapped to C "float" (to override define dict(real = dict(dp="<C typespec>")) in /mnt/c/Users/samge/OneDrive/Programming/Astro/mcrtscripts/Cooling/f2py/.f2py_f2cmap file).
+getctype: "real(kind=dp)" is mapped to C "float" (to override define dict(real = dict(dp="<C typespec>")) in /mnt/c/Users/samge/OneDrive/Programming/Astro/mcrtscripts/Cooling/f2py/.f2py_f2cmap file).
+getctype: "real(kind=dp)" is mapped to C "float" (to override define dict(real = dict(dp="<C typespec>")) in /mnt/c/Users/samge/OneDrive/Programming/Astro/mcrtscripts/Cooling/f2py/.f2py_f2cmap file).
+getctype: "real(kind=dp)" is mapped to C "float" (to override define dict(real = dict(dp="<C typespec>")) in /mnt/c/Users/samge/OneDrive/Programming/Astro/mcrtscripts/Cooling/f2py/.f2py_f2cmap file).
+getctype: "real(kind=dp)" is mapped to C "float" (to override define dict(real = dict(dp="<C typespec>")) in /mnt/c/Users/samge/OneDrive/Programming/Astro/mcrtscripts/Cooling/f2py/.f2py_f2cmap file).
+getctype: "real(kind=dp)" is mapped to C "float" (to override define dict(real = dict(dp="<C typespec>")) in /mnt/c/Users/samge/OneDrive/Programming/Astro/mcrtscripts/Cooling/f2py/.f2py_f2cmap file).
+getctype: "real(kind=dp)" is mapped to C "float" (to override define dict(real = dict(dp="<C typespec>")) in /mnt/c/Users/samge/OneDrive/Programming/Astro/mcrtscripts/Cooling/f2py/.f2py_f2cmap file).
+getctype: "real(kind=dp)" is mapped to C "float" (to override define dict(real = dict(dp="<C typespec>")) in /mnt/c/Users/samge/OneDrive/Programming/Astro/mcrtscripts/Cooling/f2py/.f2py_f2cmap file).
+getctype: "real(kind=dp)" is mapped to C "float" (to override define dict(real = dict(dp="<C typespec>")) in /mnt/c/Users/samge/OneDrive/Programming/Astro/mcrtscripts/Cooling/f2py/.f2py_f2cmap file).
+getctype: "real(kind=dp)" is mapped to C "float" (to override define dict(real = dict(dp="<C typespec>")) in /mnt/c/Users/samge/OneDrive/Programming/Astro/mcrtscripts/Cooling/f2py/.f2py_f2cmap file).
+getctype: "real(kind=dp)" is mapped to C "float" (to override define dict(real = dict(dp="<C typespec>")) in /mnt/c/Users/samge/OneDrive/Programming/Astro/mcrtscripts/Cooling/f2py/.f2py_f2cmap file).
+getctype: "real(kind=dp)" is mapped to C "float" (to override define dict(real = dict(dp="<C typespec>")) in /mnt/c/Users/samge/OneDrive/Programming/Astro/mcrtscripts/Cooling/f2py/.f2py_f2cmap file).
+getctype: "real(kind=dp)" is mapped to C "float" (to override define dict(real = dict(dp="<C typespec>")) in /mnt/c/Users/samge/OneDrive/Programming/Astro/mcrtscripts/Cooling/f2py/.f2py_f2cmap file).
+getctype: "real(kind=dp)" is mapped to C "float" (to override define dict(real = dict(dp="<C typespec>")) in /mnt/c/Users/samge/OneDrive/Programming/Astro/mcrtscripts/Cooling/f2py/.f2py_f2cmap file).
+getctype: "real(kind=dp)" is mapped to C "float" (to override define dict(real = dict(dp="<C typespec>")) in /mnt/c/Users/samge/OneDrive/Programming/Astro/mcrtscripts/Cooling/f2py/.f2py_f2cmap file).
+undo_rmbadname1: Replacing "size_bn" with "size".
+undo_rmbadname1: Replacing "size_bn" with "size".
+undo_rmbadname1: Replacing "size_bn" with "size".
+error: Command "x86_64-linux-gnu-gcc -pthread -DNDEBUG -g -fwrapv -O2 -Wall -Wstrict-prototypes -fno-strict-aliasing -Wdate-time -D_FORTIFY_SOURCE=2 -g -fstack-protector-strong -Wformat -Werror=format-security -fPIC -I/tmp/tmpSLgSpV/src.linux-x86_64-2.7 -I/usr/local/lib/python2.7/dist-packages/numpy/core/include -I/usr/include/python2.7 -c /tmp/tmpSLgSpV/src.linux-x86_64-2.7/ramsesmodule.c -o /tmp/tmpSLgSpV/tmp/tmpSLgSpV/src.linux-x86_64-2.7/ramsesmodule.o -MMD -MF /tmp/tmpSLgSpV/tmp/tmpSLgSpV/src.linux-x86_64-2.7/ramsesmodule.o.d" failed with exit status 1
+make[1]: *** [ramses] Error 1
+make: *** [all] Error 2
