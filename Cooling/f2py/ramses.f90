@@ -63,51 +63,75 @@ contains
   end subroutine startup
 
   subroutine init_sim
-    use amr_commons
-    use hydro_commons
-    use pm_commons
-    use poisson_commons
-    use cooling_module
-    implicit none
-  ! #ifndef WITHOUTMPI
-  !   include 'mpif.h'
-  ! #endif
-    integer::ilevel,idim,ivar,info
-    real(kind=8)::tt1,tt2
-    real(kind=4)::real_mem,real_mem_tot
+  use amr_commons
+  use hydro_commons
+  use pm_commons
+  use poisson_commons
+  use cooling_module
+#ifdef RT
+  use rt_hydro_commons
+#endif
+  implicit none
+#ifndef WITHOUTMPI
+  include 'mpif.h'
+#endif
+  integer(kind=8)::n_step
+  integer::ilevel,idim,ivar,info,tot_pt
+  real(kind=8)::tt1,tt2,muspt,muspt_this_step,wallsec,dumpsec
+  real(kind=4)::real_mem,real_mem_tot
+  real(kind=8),save::tstart=0
+#ifndef WITHOUTMPI
+  tt1=MPI_WTIME()
+  ! for calculating total run time
+  if (tstart.eq.0.0) then
+     tstart = MPI_WTIME()
+  end if
+#endif
 
-  ! #ifndef WITHOUTMPI
-  !   tt1=MPI_WTIME(info)
-  ! #endif
+  call init_amr                      ! Initialize AMR variables
+  call init_time                     ! Initialize time variables
+  if(hydro)call init_hydro           ! Initialize hydro variables
+#ifdef RT
+  if(rt.or.neq_chem) &
+       & call rt_init_hydro          ! Initialize radiation variables
+#endif
+  if(poisson)call init_poisson       ! Initialize poisson variables
+#ifdef ATON
+  if(aton)call init_radiation        ! Initialize radiation variables
+#endif
+  if(nrestart==0)call init_refine    ! Build initial AMR grid
 
-    call init_amr                      ! Initialize AMR variables
-    call init_time                     ! Initialize time variables
-    if(hydro)call init_hydro           ! Initialize hydro variables
-    if(poisson)call init_poisson       ! Initialize poisson variables
-  ! #ifdef ATON
-  !   if(aton)call init_radiation        ! Initialize radiation variables
-  ! #endif
-    if(nrestart==0)call init_refine    ! Build initial AMR grid
-    if(cooling)call set_table(dble(aexp))  ! Initialize cooling look up table
-    if(pic)call init_part              ! Initialize particle variables
-    if(pic)call init_tree              ! Initialize particle tree
-    if(nrestart==0)call init_refine_2  ! Build initial AMR grid again
+#ifdef grackle
+  if(use_grackle==0)then
+     if(cooling.and..not.neq_chem) &
+        call set_table(dble(aexp))    ! Initialize cooling look up table
+  endif
+#else
+  if(cooling.and..not.neq_chem) &
+       call set_table(dble(aexp))    ! Initialize cooling look up table
+#endif
+  if(pic)call init_part              ! Initialize particle variables
+  if(pic)call init_tree              ! Initialize particle tree
+  if(nrestart==0)call init_refine_2  ! Build initial AMR grid again
+  if(extinction) call init_radiative ! Geometrical corrections in cooling_fine (VV)  
 
-  ! #ifndef WITHOUTMPI
-  !   tt2=MPI_WTIME(info)
-  !   if(myid==1)write(*,*)'Time elapsed since startup:',tt2-tt1
-  ! #endif
+#ifndef WITHOUTMPI
+  muspt=0.
+  tot_pt=-1
+  tt2=MPI_WTIME()
+  if(myid==1)write(*,*)'Time elapsed since startup:',tt2-tt1
+#endif
 
-    if(myid==1)then
-      write(*,*)'Initial mesh structure'
-      do ilevel=1,nlevelmax
-          if(numbtot(1,ilevel)>0)write(*,999)ilevel,numbtot(1:4,ilevel)
-      end do
-    end if
+  if(myid==1)then
+     write(*,*)'Initial mesh structure'
+     do ilevel=1,nlevelmax
+        if(numbtot(1,ilevel)>0)write(*,999)ilevel,numbtot(1:4,ilevel)
+     end do
+  end if
 
-    nstep_coarse_old=nstep_coarse
+  nstep_coarse_old=nstep_coarse
 
-    if(myid==1)write(*,*)'Starting time integration' 
+  if(myid==1)write(*,*)'Starting time integration'
 
   999 format(' Level ',I2,' has ',I10,' grids (',3(I8,','),')')
 
@@ -172,6 +196,7 @@ contains
   integer::ncell !--------------------------------------------------------
 
   ! Set up input
+  if(verbose) write(*,*) "Entering cooling"
   ncell = ncellin
   T2(1:ncell) = T2in(1:ncell)
   xion(1:nIons,1:ncell) = xionin(1:nIons,1:ncell)
@@ -186,8 +211,10 @@ contains
   dt = dtin
   a_exp = a_expin
 
+  if(verbose) write(*,*) "Solving cooling"
   call rt_solve_cooling(T2, xion, Np, Fp, p_gas, dNpdt, dFpdt        &
                            ,nH, c_switch, Zsolar, dt, a_exp, nCell)
+  if(verbose) write(*,*) "Cooling solved"
 
   ! Copy outputs
   ! allocate(T2out(ncell))

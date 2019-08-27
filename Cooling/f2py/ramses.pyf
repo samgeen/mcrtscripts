@@ -44,11 +44,12 @@ python module ramses ! in
                 threadsafe 
             end subroutine startup
             subroutine init_sim ! in :ramses:ramses.f90:data
-                use pm_commons
-                use hydro_commons
-                use amr_commons
                 use cooling_module
+                use amr_commons
+                use rt_hydro_commons
+                use hydro_commons
                 use poisson_commons
+                use pm_commons
             end subroutine init_sim
             subroutine rt_cooling(t2in,xionin,npin,fpin,p_gasin,nhin,zsolarin,dtin,a_expin,ncellin,t2out,dnpdtout,dfpdtout) ! in :ramses:ramses.f90:data
                 real(kind=8) dimension(500),intent(in) :: t2in

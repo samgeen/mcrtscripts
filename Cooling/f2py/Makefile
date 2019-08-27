@@ -2,7 +2,7 @@
 # If you have problems with this makefile, contact Romain.Teyssier@gmail.com
 #############################################################################
 # Compilation time parameters
-NVECTOR = 32
+NVECTOR = 500
 QUADHILBERT = 16
 NPRE = 8
 RAMFOLDER=/home/samgeen/Programming/ramses/ramses_ism_amun/trunk/ramses/
@@ -103,9 +103,9 @@ ifeq ($(COMP),"GNU")
      FFLAGS = -DWITHOUTMPI
   endif
   FFLAGS += -x f95-cpp-input -O3 -frecord-marker=4 -ffree-line-length-none $(DEFINES) -fPIC #-freal-4-real-8 
-#   FFLAGS += -fbounds-check -fbacktrace -Wuninitialized -Wall
-#   FFLAGS += -ffpe-trap=invalid,zero,overflow,underflow -finit-real=nan
-#   FFLAGS += -finit-real=nan
+   #FFLAGS += -fbounds-check -fbacktrace -Wuninitialized -Wall
+   #FFLAGS += -ffpe-trap=invalid,zero,overflow,underflow -finit-real=nan
+   #FFLAGS += -finit-real=nan
 endif
 
 # INTEL
