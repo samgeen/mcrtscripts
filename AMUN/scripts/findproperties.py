@@ -104,10 +104,40 @@ def ekininsnap(snap,wind=False):
     print "KINETIC ENERGY FOUND @ ",time,"Myr:", ekin
     return ekin
 
+def Lcoolinsnap(snap,wind=False):
+    print "Finding cooling luminosity in snap", snap.iout
+    import rtcooling
+    amr = snap.amr_source(["rho","P","vel","xHII","xHeII","xHeIII"])
+    cell_source = CellsToPoints(amr)
+    cells = cell_source.flatten()
+    umass = snap.info["unit_mass"].express(C.g) 
+    uvel = snap.info["unit_velocity"].express(C.cm/C.s)
+    ue = umass*uvel**2
+    rhos = cells["rho"]
+    vels = cells["vel"]
+    vols = (cells.get_sizes()*snap.info["unit_length"].express(C.cm))**3.0
+    spds = np.sqrt(np.sum(vels**2.0,1))
+    mufunc = lambda dset: 1./(0.76*(1.+dset["xHII"]) + \
+                                0.25*0.24*(1.+dset["xHeII"]+2.*dset["xHeIII"]))  
+    temp = cells["P"]/cells["rho"]*snap.info["unit_temperature"].express(C.K)*mufunc(cells)
+    dedt = rtcooling.Finddedt(T2,nH,xion,Zsolar,Np=None,Fp=None,p_gas=None,a_exp=np.array([1.0])):
+    Lcool = dedt * vols
+    if wind:
+        # Over 100 km/s or T > 1e5 K
+        windmask = np.logical_or(spds*uvel/1e5 > 100.0,temp > 1e5)
+        Lcool = Lcool[mask]
+    Lcool =  np.sum(Lcool)
+    time = snap.info["time"]*snap.info["unit_time"].express(C.Myr)
+    print "COOLING LUMINOSITY IN erg/s FOUND @ ",time,"Myr:", Lcool
+    return Lcool
+
 # Version 1: ekin only measures fast winds, etherm only hot winds
 # Version 2: Modified functions above to count both fast and hot winds for both ekin and etherm
 def windenergyinsnap2(snap):
     return energyinsnap(snap,wind=True)
+
+def windLcoolinsnap(snap):
+    return Lcoolinsnap(snap,wind=True)
 
 def energyinsnap(snap,wind=False):
     etherm = etherminsnap(snap,wind)
