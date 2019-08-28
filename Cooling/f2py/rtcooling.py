@@ -20,8 +20,10 @@ p_gasbuff = np.zeros((ndim,nvector))
 nHbuff = np.zeros(nvector)# + 10000.0
 Zsolarbuff = np.zeros(nvector)# + 1.0
 
-def run(T2,nH,xion,Zsolar,Np=None,Fp=None,p_gas=None,a_exp=np.array([1.0])):
+def FinddTdt(T2,nH,xion,Zsolar,Np=None,Fp=None,p_gas=None,a_exp=np.array([1.0])):
     global first, nvector, ndim, nIons, nGroups, T2buff, xionbuff,Npbuff,Fpbuff,p_gasbuff,nHbuff,Zsolarbuff
+    '''
+    Rate of change in temperature in units of K/s
     # RT Cooling Fortran cheatsheet
     #   integer,parameter::nvectorIn=500
     #   integer,parameter::ndimIn=3
@@ -33,6 +35,7 @@ def run(T2,nH,xion,Zsolar,Np=None,Fp=None,p_gas=None,a_exp=np.array([1.0])):
     #   real(kind=8),dimension(1:ndimIn,1:nGroupsIn,1:nvectorIn),intent(in):: Fpin
     #   real(kind=8),dimension(1:ndimIn,1:nvectorIn),intent(in):: p_gasin
     #   real(kind=8),dimension(1:nvectorIn),intent(in):: nHin, Zsolarin
+    '''
     # Only run startup once
     if first:
         ramses.data.startup()
@@ -77,6 +80,20 @@ def run(T2,nH,xion,Zsolar,Np=None,Fp=None,p_gas=None,a_exp=np.array([1.0])):
         # Calculate temperature change rate
         dTdt[sinput] = (T2[sinput] - T2out[sbuff]) / dt
     return dTdt
+
+def Finddedt(T2,nH,xion,Zsolar,Np=None,Fp=None,p_gas=None,a_exp=np.array([1.0])):
+    '''
+    Cooling "luminosity" density, i.e. rate of change in thermal energy per unit volume
+    '''
+    dTdt = FinddTdt(T2,nH,xion,Zsolar,Np=None,Fp=None,p_gas=None,a_exp=np.array([1.0]))
+    
+    gamma = 1.4 # RAMSES hard-coded
+    X = 0.76
+    mH = 1.6735326381e-24
+    kB = 1.38062e-16
+    # Calculate d(energy density)/dt based on change in temperature
+    dedt = 1.0/(gamma - 1.0) * nH * kB * dTdt
+    return dedt
 
 if __name__=="__main__":
     ntest = 950
