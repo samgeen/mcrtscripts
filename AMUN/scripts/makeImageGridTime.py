@@ -157,7 +157,12 @@ def MakeFigure(simnames,times,name,los=None,hydro="rho",Slice=False,wsink=False,
                              sharex=True, sharey=True,
                              frameon=False)
     finches = IMSIZE/dpi
+    
+    axes = np.atleast_1d(axes)
 
+    if len(axes) <= 1:
+        finches *= 1.5 # heuristic
+    
     if wsink:
         createColDensMap_sink = Hamu.Algorithm(_createColDensMap_sink)
         createRayMap_sink     = Hamu.Algorithm(_createRayMap_sink)
@@ -208,10 +213,13 @@ def MakeFigure(simnames,times,name,los=None,hydro="rho",Slice=False,wsink=False,
             if (simname == simnames[-1] and ii == 0):
                 print 'in HERE' 
                 dolengthscale = True 
-            if (simname == simnames[0]):
+            if (simname == simnames[0]) and len(axes) > 1:
                 plottime      = True
+            label =  linestyles.Label(simname)
+            if len(axes) == 1:
+                label = None
             im    = MakeImageHamu(data,hydro,wsink,ax,dolengthscale,cmap,
-                           plottime, timeL[ii],label = linestyles.Label(simname))
+                           plottime, timeL[ii],label = label)
             plottime      = False
             dolengthscale = False
 
@@ -269,6 +277,8 @@ if __name__=="__main__":
         times = np.array([0.5, 0.75, 1.])
         timeL = [str(x)+r' t$_{ff}$' for x in times]
         timescode = times * tffcloud_code
+        MakeFigure([simset[-1]],[timescode[-1]],name=setname+"windonly",los='z',hydro='NH',Slice=False,wsink=True,
+                   timeL=[timeL[-1]])
         MakeFigure(simset,timescode,name=setname,los='z',hydro='NH',Slice=False,wsink=True,timeL=timeL)
         MakeFigure(simset,timescode,name=setname,los='z',hydro='T',Slice=True,wsink=True,timeL=timeL)
         

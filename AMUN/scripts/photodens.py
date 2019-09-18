@@ -64,7 +64,7 @@ class DensityFinder(object):
         denscube = denscube.reshape([lsize,lsize,lsize])
         windcube = windcube.reshape([lsize,lsize,lsize])
         # Remove edge cells from mask to prevent index over/underflows
-        mask = windcube * 0.0
+        windmask = windcube * 0.0
         windmask[1:lsize-1,1:lsize-1,1:lsize-1] = windcube[1:lsize-1,1:lsize-1,1:lsize-1]
         # Indices containing winds in x, y, z
         wix, wiy, wiz = np.where(windmask == 1)
@@ -77,8 +77,8 @@ class DensityFinder(object):
         tosample[wix,wiy,wiz+1] = 1.0
         tosample[wix,wiy,wiz-1] = 1.0
         # Don't sample the wind cells
-        tosample[windcube] = 0.0
-        edgedens = denscube[tosample].flatten()
+        tosample[windcube == 1.0] = 0.0
+        edgedens = denscube[tosample == 1.0].flatten()
         # Return the densities around the wind cells
         return edgedens
 
@@ -90,41 +90,62 @@ def _FindHIIRegionDensities(snap,lsize=256):
     return finder.Run()
 FindHIIRegionDensities = Hamu.Algorithm(_FindHIIRegionDensities)
 
-def plot(sims,labels):
+def plot(sims):
     # TODO: CHANGE, THIS USES THE FIND HII REGIONS CODE
     plt.clf()
     numcols = len(sims)
     fig, axes = plt.subplots(1,numcols,sharex=False,sharey=True)
     first = True
-    for ax, sim, label in zip(axes, sims, labels):
+    for ax, sim in zip(axes, sims):
+        label = sim.Name().replace("_"," ")
         lsize = 512
-        t, x = timefuncs.timefunc(sim,FindHIIRegions,False,False,1,"xHII",lsize)
-        t, w = timefuncs.timefunc(sim,FindHIIRegions,False,False,1,"wind",lsize)
+        ts, rhos = timefuncs.timefunc(sim,FindHIIRegionDensities,True,False)
         tcreated, sfe = starrelations.runforsim(sim.Name(),"firsttime")
-        t -= tcreated 
+        ts -= tcreated 
         ax.set_xlabel("Time after 1st star formed / Myr")
         if first:
-            ax.set_ylabel("Number of Regions")
+            ax.set_ylabel("$n_{\mathrm{H}}$ around wind bubbles / cm$^{-3}$")
         color = linestyles.Colour(sim.Name())
-        ax.plot(t,x,color=color,linestyle="-",label="Photoionised regions",
+        tplot = np.array([])
+        rhoplot = np.array([])
+        rmin = []
+        rmax = []
+        rmed = []
+        r25 = []
+        r75 = []
+        trho = []
+        for t, rho in zip(ts,rhos):
+            if len(rho) > 0:
+                trho.append(t)
+                print t, rho
+                tarr = rho*0.0+t
+                rho = np.sort(rho)
+                lrho = rho.shape[0]
+                rmin.append(rho[0])
+                rmax.append(rho[-1])
+                rmed.append(rho[lrho//2])
+                r25.append(rho[lrho//4])
+                r75.append(rho[3*lrho//4])
+        for r, line in zip([rmin,rmax,rmed,r25,r75],[":",":","-","--","--"]):
+            ax.plot(trho,r,color=color,linestyle=line,
                 path_effects=[pe.Stroke(linewidth=5, foreground='k'), pe.Normal()]) 
-        ax.plot(t,w,color=color,linestyle="--",label="Wind Bubbles",
-                path_effects=[pe.Stroke(linewidth=5, foreground='k'), pe.Normal()])
-        textloc = 0.1
+        textloc = 0.95
         ax.text(0.95, textloc,label, ha='right', va="top", transform=ax.transAxes)
         if first:
             ax.legend(fontsize="x-small",loc="upper left",frameon=False)
         first = False
-        ax.set_xlim([-0.5,5]) 
+        ax.set_xlim([-0.05,1])
+        ax.set_yscale("log")
     fig.subplots_adjust(wspace=0)
     fig.set_size_inches(7*numcols,6)
-    fig.savefig(plotfolder+"findHIIregions.pdf", dpi=80)
+    fig.savefig(plotfolder+"findHIIdensities.pdf", dpi=80)
         
 if __name__=="__main__":
     #sims = hamusims # [hamusims[x] for x in ["IMF1_04","IMF2_04",""]]
     #labels = ["IMF 1","IMF 2","Massive Cloud"]
     #plot(sims, labels)
+    sims = []
     for name, sim in hamusims.iteritems():
         if "WIND" in name:
-            for snap in sim.Snapshots():
-                densities = FindHIIRegionDensities(snap)
+            sims.append(sim)
+    plot(sims)

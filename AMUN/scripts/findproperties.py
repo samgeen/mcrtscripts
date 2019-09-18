@@ -109,6 +109,12 @@ def ekininsnap(snap,wind=False):
 def windenergyinsnap2(snap):
     return energyinsnap(snap,wind=True)
 
+def windekininsnap(snap):
+    return ekininsnap(snap,wind=True)
+
+def windetherminsnap(snap):
+    return etherminsnap(snap,wind=True)
+
 def energyinsnap(snap,wind=False):
     etherm = etherminsnap(snap,wind)
     ekin = ekininsnap(snap,wind)
