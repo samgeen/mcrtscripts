@@ -1,0 +1,184 @@
+&RUN_PARAMS 
+hydro=.true.
+nrestart=0
+nremap=2
+nsubcycle=10*2
+verbose=.true.
+rt=.true.
+poisson=.true.
+pic=.true.
+sink=.true.
+clumpfind=.true.
+stellar=.true.
+/
+
+&POISSON_PARAMS
+trelax=0.02621192501  ! 1.5^3*0.0155329926 * 0.5
+/
+
+&CLUMPFIND_PARAMS
+n_clfind=62987.3256327
+output_clumps=.true.
+/
+
+&SINK_PARAMS
+nsinkmax=50000
+create_sinks=.true.
+n_sink=1259746.51265459 
+accretion_scheme='threshold'
+!merging_scheme='timescale'
+!merging_timescale=1d4
+!msink_direct=10.
+/
+
+&AMR_PARAMS 
+levelmin=2
+levelmax=3
+ngridmax=40000
+npartmax=200
+nexpand=1
+!boxlen=0.02			!  20 pc
+/
+
+&REFINE_PARAMS
+x_refine=10*0.5
+y_refine=10*0.5
+z_refine=10*0.5
+r_refine=0.6,0.5,10*0.5 ! FIRST TWO LEVELS MUST REFINE, THEN JEANS REFINEMENT
+exp_refine=10*2.0
+m_refine=2*0.0,10*1. ! Force a refined sphere inside inner 0.5 boxlen
+jeans_refine=25*10. ! Allow Jeans refinement anywhere
+interpol_var=1
+interpol_type=0
+mass_sph=8.0
+mass_cut_refine=0.
+sink_refine=.true.
+/
+
+&FEEDBACK_PARAMS
+!ssm_table_directory="/home/stgeen0/StellarSources/Compressed/singlestar_z0.014"
+use_ssm=.false.
+FB_use_winds=.false.
+FB_use_sne=.false.
+FB_use_radiation=.false.
+FB_dx=5
+/
+
+&STELLAR_PARAMS
+make_stellar_glob=.true.
+nstellarmax=100000
+imf_index=-2.35
+imf_low=8.
+imf_high=120.
+lt_a=0.23840797
+lt_b=2.20522946
+lt_m0=148.158972
+lt_t0=3.26515722
+stf_K=9.634642584812752d48 ! s**(-1)
+stf_m0=2.728098824280431d1 ! Msun
+stf_a=6.840015602892084d0
+stf_b=4.353614230584390d0
+stf_c=1.142166657042991d0
+hii_w=1.1
+hii_alpha= 3.11626026739d-13 ! cm**3/s
+hii_c=12.5 ! km/s
+hii_t=4.0 ! Myr
+hii_T2=0.0d0 ! K
+stellar_msink_th=120.
+mstellarini=119.99,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0
+/
+
+&CLOUD_PARAMS
+mass_c=10000. !in solar mass
+rap=1.        !axis ratio
+cont=10.      !density contrast
+ff_sct=0.15   !freefall time/sound crossing time
+ff_rt=0.0     !freefall time/rotation time
+ff_act=0.2    !freefall time/Alfven crossing time
+ff_vct=2.     !freefall time/Vrms crossing time
+thet_mag=0.   !angle between magnetic field and rotation axis
+bl_fac=4.     !multiply the calculated boxlen by this factor
+scale_tout=0.02621192501 ! time to scale tout by (in this case, 0.5*t_ff)
+auto_threshold=.true.
+/
+
+&INIT_PARAMS
+/
+
+&OUTPUT_PARAMS
+foutput=100000000
+noutput=100
+tout=1e-2,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0,1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9,2.0,2.1,2.2,2.3,2.4,2.5,2.6,2.7,2.8,2.9,3.0,3.1,3.2,3.3,3.4,3.5,3.6,3.7,3.8,3.9,4.0,4.1,4.2,4.3,4.4,4.5,4.6,4.7,4.8,4.9,5.0,5.1,5.2,5.3,5.4,5.5,5.6,5.7,5.8,5.9,6.0,6.1,6.2,6.3,6.4,6.5,6.6,6.7,6.8,6.9,7.0,7.1,7.2,7.3,7.4,7.5,7.6,7.7,7.8,7.9,8.0,8.1,8.2,8.3,8.4,8.5,8.6,8.7,8.8,8.9,9.0,9.1,9.2,9.3,9.4,9.5,9.6,9.7,9.8,9.9,10.0 
+/
+
+&HYDRO_PARAMS
+gamma=1.66666667
+gamma_rad=1*1.0000033333334
+courant_factor=0.8
+slope_type=1
+scheme='muscl'
+riemann='hlld'
+riemann2d='hlld'
+pressure_fix=.true.
+/
+
+
+&RT_PARAMS
+X=0.76d0
+Y=0.24d0
+rt_sink=.false.
+! RT pressure / IR terms
+rt_isIR=.true.
+rt_pressBoost=0d0
+rt_isoPress=.true.
+rt_isIRtrap=.false.
+is_kIR_T=.false.
+! General RT settings
+rt_output_coolstats=.true.
+rt_flux_scheme='glf'
+rt_smooth=.true.
+rt_courant_factor=0.8  ! courant number for RT timesteps
+rt_c_fraction=3d-10     ! Set to 100 km/s / c
+rt_otsa=.true. 
+rt_nsubcycle=500       ! Maximum number of subcycles the RT can have
+/
+
+&RT_GROUPS
+group_csn(1,:)= 0.  0.  0.
+group_cse(1,:)= 0.  0.  0.
+group_csn(2,:)= 0.  0.  0.
+group_cse(2,:)= 0.  0.  0.
+group_csn(3,:)= 3.38555346e-18   0.00000000e+00   0.00000000e+00
+group_cse(3,:)= 3.16054373e-18   0.00000000e+00   0.00000000e+00
+group_csn(4,:)= 9.06412401e-19   6.13649641e-18   0.00000000e+00
+group_cse(4,:)= 8.72455222e-19   5.97759182e-18   0.00000000e+00
+group_csn(5,:)= 1.17746063e-19   1.63707910e-18   1.52505411e-18
+group_cse(5,:)= 1.17604789e-19   1.63560538e-18   1.52338695e-18
+group_egy     = 0.63768471   5.73623567  17.95565998  28.21067726  55.27678522
+spec2group    = 3, 4, 5
+kappaAbs(:)   = 0d0,  0d0,    1d3,   1d3,   1d3
+kappaSc(:)    = 0d0,  0d0,    0d0,   0d0,   0d0 
+/
+
+&BOUNDARY_PARAMS
+nboundary=6
+ibound_min=-1,+1,-1,-1,-1,-1
+ibound_max=-1,+1,+1,+1,+1,+1
+jbound_min= 0, 0,-1,+1,-1,-1
+jbound_max= 0, 0,-1,+1,+1,+1
+kbound_min= 0, 0, 0, 0,-1,+1
+kbound_max= 0, 0, 0, 0,-1,+1
+bound_type= 2, 2, 2, 2, 2, 2	! reflective boundary
+/
+
+&PHYSICS_PARAMS
+n_star=1.d-13 !in g cm^-3
+T2_star=10.  !in K
+g_star=0.66666
+cooling=.true.
+units_density=2.3247434e-24 ! mu * 1.66e-24, where mu = 1.4
+units_time = 2.5395079d15 ! 1/sqrt(G * units_density)
+units_length = 3.08d18 ! 1 pc
+z_ave=1d0
+metal=.false.
+/
