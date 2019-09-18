@@ -82,10 +82,10 @@ def windradiusratio(simname):
     return t, rw / ri
     
 windenergyinsnap = Hamu.Algorithm(findproperties.windenergyinsnap2)
-def windenergy(simname):
+def windenergy(simname,kinonly=False,thermonly=False):
     print "Running for simulation", simname
     sim = hamusims[simname]
-    tcreated, sfe = starrelations.runforsim(simname,"firsttime")  
+    tcreated, sfe = starrelations.runforsim(simname,"firsttime")
     t,e = timefuncs.timefunc(sim,windenergyinsnap,processes=1) # doesn't like tuples in the pool map
     #t -= tcreated
     therm = e[:,0]
