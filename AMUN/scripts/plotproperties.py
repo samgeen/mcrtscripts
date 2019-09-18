@@ -102,6 +102,15 @@ def windradius(simname):
     t,r = timefuncs.timefunc(sim,windradiusinsnap,processes=nprocs)
     #t -= tcreated
     return t, r
+
+windLcoolinsnap = Hamu.Algorithm(findproperties.windLcoolinsnap)
+def windLcool(simname):
+    print "Running for simulation", simname
+    sim = hamusims[simname]
+    tcreated, sfe = starrelations.runforsim(simname,"firsttime")  
+    t,Lwc = timefuncs.timefunc(sim,windLcoolinsnap,processes=nprocs)
+    #t -= tcreated
+    return t, Lwc
     
 radiusinsnapDEPRECATED = Hamu.Algorithm(findproperties.radiusinsnap)
 def radiusDEPRECATED(simname):
@@ -292,9 +301,10 @@ def run(simfunc,simnamesets,plotlabels,compare=False):
             tc -= tcreated
             # +ve values (2nd = larger)
             names = [tsfe,mass,maxBfield,nphotonsHII,momentum,radius,
-                     momentumatstarpos,windenergy,windradius,photodens]
+                     momentumatstarpos,windenergy,windradius,photodens,windLcool]
             effects = ["SFE","mass","max B field","Nphotons","momentum","radius",
-                       "outflow momentum","wind bubble energy","wind bubble radius","average density of photoionised gas"]
+                       "outflow momentum","wind bubble energy","wind bubble radius","average density of photoionised gas",
+                       "Wind Bubble Cooling Luminosity"]
             effectdict = {k:v for k,v in zip(names, effects)}
             effect = effectdict[simfunc]
             labelplus = "Winds increase "+effect
@@ -325,6 +335,8 @@ def run(simfunc,simnamesets,plotlabels,compare=False):
         if first:
             first = False
             legendloc = "upper left"
+            # Dummy label to replace for final plots
+            ax.set_ylabel(funcname)
             if funcname == "tsfe":
                 ax.set_ylabel("SFE $\equiv M_{stars} / M_{ini}$")
             if funcname == "momentum":
@@ -353,6 +365,9 @@ def run(simfunc,simnamesets,plotlabels,compare=False):
         
 if __name__=="__main__":
     #for func in [surfdens]:
+    for func in [windLcool]:
+        run(func,(["UVWIND_120","UVWIND_60","UVWIND_30"],["UVWIND_120_DENSE"]),
+            ("Diffuse Cloud","Dense Cloud"))
     for compare in [True]:
         for func in [momentumatstarpos,tsfe,momentum,radius,nphotonsHII,photodens][::-1]:
             run(func,(["UV_120","UVWIND_120"],
@@ -370,9 +385,6 @@ if __name__=="__main__":
                       ["NOFB","UV_30","UVWIND_30"],
                       ["NOFB_DENSE","UV_120_DENSE","UVWIND_120_DENSE"]),
                 ("Diffuse Cloud","Diffuse Cloud","Diffuse Cloud","Dense Cloud"),compare=compare)
-    for func in [windenergy,windradius]:
-        run(func,(["UVWIND_120","UVWIND_60","UVWIND_30"],["UVWIND_120_DENSE"]),
-            ("Diffuse Cloud","Dense Cloud"))
-    for func in [windradiusratio,windenergyemitted,windmassemitted,windenergyretained]:
+    for func in [windradiusratio,windenergyemitted,windmassemitted,windenergyretained,windenergy,windradius]:
         run(func,(["UVWIND_120","UVWIND_60","UVWIND_30"],["UVWIND_120_DENSE"]),
             ("Diffuse Cloud","Dense Cloud"))
