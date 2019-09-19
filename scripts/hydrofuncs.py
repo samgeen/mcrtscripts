@@ -5,6 +5,7 @@ Sam Geen, November 2014
 
 import numpy as np
 from pymses.utils import constants as C
+import rtcooling
 
 def hydro_label(hydro):
     '''
@@ -42,7 +43,9 @@ def hydro_label(hydro):
         return "Velocity Y / km/s"
     if hydro == "vz":
         return "Velocity Z / km/s"
-
+    if hydro == "Lcool":
+        return "L$_{cool}$ / erg/s"
+    
 def scale_by_units(ro, hydro):
     '''
     Returns a lambda function that scales a dataset by some default units
@@ -114,6 +117,8 @@ def scale_by_units(ro, hydro):
     if hydro == "Pram":
         unit = ro.info["unit_pressure"].express(C.barye)
         return lambda dset: dset["rho"]*np.sum(dset["vel"]**2,1)*unit
+    if hydro == "Lcool":
+        return rtcooling.dedtOnCells
     # None of those? Return unitless
     return lambda dset: dset[hydro]
 
@@ -142,6 +147,8 @@ def amr_source(ro, hydro,extra=[]):
             pymsesvars += ["vel"]
         elif hydro == "Pram":
             pymsesvars += ["rho","vel"]
+        elif hydro == "Lcool":
+            pymsesvars += ["rho","P","vel","xHII","xHeII","xHeIII","NpHII","NpHeII","NpHeIII"]
         else:
             pymsesvars += [hydro]
         # Add extras
@@ -176,6 +183,8 @@ def cmap(hydro):
         return "RdPu_r"
     if hydro == "Pram":
         return "RdPu_r"
+    if hydro == "Lcool":
+        return "YlOrRd"
     # None of those? Return false
     return "linear"
 
@@ -201,6 +210,8 @@ def yscale(hydro):
         return "linear"
     if hydro == "Pram":
         return "log"
+    if hydro == "Lcool":
+        return "log"
     # None of those? Return false
     return "linear"
 
@@ -219,3 +230,5 @@ def hydro_range(hydro):
         return (None, None)
     if hydro == "Bmag":
         return (None, None)
+    print "Using default hydro_range for ", hydro
+    return (None,None)
