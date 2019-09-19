@@ -44,7 +44,7 @@ def hydro_label(hydro):
     if hydro == "vz":
         return "Velocity Z / km/s"
     if hydro == "Lcool":
-        return "L$_{cool}$ / erg/s"
+        return "L$_{cool}$ / erg/s/cm$^{-3}$"
     
 def scale_by_units(ro, hydro):
     '''
@@ -65,7 +65,7 @@ def scale_by_units(ro, hydro):
     if hydro == "NH":
         unit = ro.info["unit_density"].express(C.g_cc) * \
                ro.info["unit_length"].express(C.cm)
-        return scop(lambda dset: dset["rho"]*unit)
+        return lambda dset: dset["rho"]*unit
     if hydro == "P":
         unit = ro.info["unit_pressure"].express(C.barye)
         return lambda dset: dset["P"]*unit
