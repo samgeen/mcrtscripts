@@ -196,7 +196,6 @@ contains
   integer::ncell !--------------------------------------------------------
 
   ! Set up input
-  if(verbose) write(*,*) "Entering cooling"
   ncell = ncellin
   T2(1:ncell) = T2in(1:ncell)
   xion(1:nIons,1:ncell) = xionin(1:nIons,1:ncell)
@@ -211,10 +210,8 @@ contains
   dt = dtin
   a_exp = a_expin
 
-  if(verbose) write(*,*) "Solving cooling"
   call rt_solve_cooling(T2, xion, Np, Fp, p_gas, dNpdt, dFpdt        &
                            ,nH, c_switch, Zsolar, dt, a_exp, nCell)
-  if(verbose) write(*,*) "Cooling solved"
 
   ! Copy outputs
   ! allocate(T2out(ncell))
