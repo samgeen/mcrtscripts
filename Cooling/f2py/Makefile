@@ -5,7 +5,7 @@
 NVECTOR = 500
 QUADHILBERT = 16
 NPRE = 8
-RAMFOLDER=/home/samgeen/Programming/ramses/ramses_ism_amun/trunk/ramses/
+RAMFOLDER=/home/stgeen0/Programming/ramses/ramses_ism_amun/trunk/ramses/
 
 NDIM = 3
 SOLVER = mhd

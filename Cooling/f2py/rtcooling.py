@@ -51,7 +51,6 @@ def FinddTdt(T2,nH,xion,Zsolar,Np=None,Fp=None,p_gas=None,a_exp=np.array([1.0]))
         p_gas = np.zeros((ndim,nleft))
     # 
     dt = np.array([3.1415e7]) # 1 year
-    print "Running RT cooling"
     sys.stdout.flush()
     ndone = 0
     dTdt = T2*0.0
