@@ -118,7 +118,7 @@ def scale_by_units(ro, hydro):
         unit = ro.info["unit_pressure"].express(C.barye)
         return lambda dset: dset["rho"]*np.sum(dset["vel"]**2,1)*unit
     if hydro == "Lcool":
-        return rtcooling.dedtOnCells
+        return rtcooling.dedtOnCells(ro)
     # None of those? Return unitless
     return lambda dset: dset[hydro]
 

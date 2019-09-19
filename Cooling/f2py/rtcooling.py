@@ -94,6 +94,34 @@ def Finddedt(T2,nH,xion,Zsolar,Np=None,Fp=None,p_gas=None,a_exp=np.array([1.0]))
     dedt = 1.0/(gamma - 1.0) * nH * kB * dTdt
     return dedt
 
+def dedtOnCells(snap,cells):
+    '''
+    Returns a function that acts on a list of cells (to fit the format of visualisation in Pymses)
+    '''
+    #print "Finding cooling luminosity in snap", snap.iout
+    #import rtcooling
+    #amr = snap.amr_source(["rho","P","vel","xHII","xHeII","xHeIII","NpHII","NpHeII","NpHeIII"])
+    #cell_source = CellsToPoints(amr)
+    #cells = cell_source.flatten()
+    def coolfunc(cells):
+        umass = snap.info["unit_mass"].express(C.g) 
+        uvel = snap.info["unit_velocity"].express(C.cm/C.s)
+        ue = umass*uvel**2
+        nHs = cells["rho"]*snap.info["unit_density"].express(C.H_cc)
+        vels = cells["vel"]
+        vols = (cells.get_sizes()*snap.info["unit_length"].express(C.cm))**3.0
+        spds = np.sqrt(np.sum(vels**2.0,1))
+        mufunc = lambda dset: 1./(0.76*(1.+dset["xHII"]) + \
+                                    0.25*0.24*(1.+dset["xHeII"]+2.*dset["xHeIII"]))  
+        temp = cells["P"]/cells["rho"]*snap.info["unit_temperature"].express(C.K)*mufunc(cells)
+        xion = np.array([cells["xHII"],cells["xHeII"],cells["xHeIII"]])
+        Zsolar = temp*0.0 + 1.0
+        Nps = np.array([Zsolar*0.0,Zsolar*0.0,cells["NpHII"],cells["NpHeII"],cells["NpHeIII"]])
+        dedt = rtcooling.Finddedt(temp,nHs,xion,Zsolar,Np=Nps,Fp=None,p_gas=None,a_exp=np.array([1.0]))
+        Lcool = dedt * vols
+        return Lcool
+    return coolfunc
+
 if __name__=="__main__":
     ntest = 950
     T2 = np.zeros(ntest)+1e3
