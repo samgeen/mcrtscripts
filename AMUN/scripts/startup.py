@@ -8,6 +8,7 @@ import sys, os, glob
 import numpy as np
 # Import from the main scripts folder
 sys.path.append("../../scripts")
+sys.path.append("../../Cooling/f2py")
 import customplot
 
 sys.path.append("/home/stgeen0/Programming/")

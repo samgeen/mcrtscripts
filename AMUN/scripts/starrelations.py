@@ -72,6 +72,20 @@ def _findNphotons(snap,dtins=1.0):
     return nphotons
 findNphotons = Hamu.Algorithm(_findNphotons)
 
+def _findLwinds(snap,dtins=1.0):
+    # Note: dt set to 1 second by default
+    # Output: (energy,mass loss)
+    stellar = stellars.FindStellar(snap)
+    energy_mass = np.zeros(2)
+    time = stellar.time
+    for tcreated, mass in zip(stellar.tcreated, stellar.mass):
+        age = time - tcreated
+        ageins = age * Myrins
+        #dtins = dt * Myrins
+        energy_mass += singlestar.star_winds(mass,ageins,dtins)
+    return energy_mass
+findLwinds = Hamu.Algorithm(_findLwinds)
+
 def _findcumulwinds(snap):
     # Output: (energy,mass loss)
     # Note: we want cumulative wind energy, not luminosity as above

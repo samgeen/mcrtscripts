@@ -145,6 +145,17 @@ def windenergyemitted(simname):
     t, we = timefuncs.timefunc(sim,windenergyemittedHamu)
     return t, we
 
+def _windLemitted(snap):
+    return starrelations.findLwinds(snap.hamusnap)[0]
+windLemittedHamu = Hamu.Algorithm(_windLemitted)
+
+def windLemitted(simname):
+    print "Running for simulation", simname
+    sim = hamusims[simname]
+    tcreated, sfe = starrelations.runforsim(simname,"firsttime")
+    t, we = timefuncs.timefunc(sim,windLemittedHamu)
+    return t, we
+
 def windenergyretained(simname):
     print "Running for simulation", simname
     sim = hamusims[simname]
@@ -301,10 +312,10 @@ def run(simfunc,simnamesets,plotlabels,compare=False):
             tc -= tcreated
             # +ve values (2nd = larger)
             names = [tsfe,mass,maxBfield,nphotonsHII,momentum,radius,
-                     momentumatstarpos,windenergy,windradius,photodens,windLcool]
+                     momentumatstarpos,windenergy,windradius,photodens,windLcool,windLemitted]
             effects = ["SFE","mass","max B field","Nphotons","momentum","radius",
                        "outflow momentum","wind bubble energy","wind bubble radius","average density of photoionised gas",
-                       "Wind Bubble Cooling Luminosity"]
+                       "Wind Bubble Cooling Luminosity","Wind Luminosity"]
             effectdict = {k:v for k,v in zip(names, effects)}
             effect = effectdict[simfunc]
             labelplus = "Winds increase "+effect
@@ -351,7 +362,13 @@ def run(simfunc,simnamesets,plotlabels,compare=False):
             if funcname == "windradius":
                 ax.set_ylabel("Sphericised radius of wind bubble / pc")
             if funcname == "windenergy":
-                ax.set_ylabel("Total energy in wind-shocked gas / ergs")
+                ax.set_ylabel("Total energy in wind-shocked gas / erg")
+            if funcname == "windenergyemitted":
+                ax.set_ylabel("Cumulative energy emitted by winds / erg")
+            if funcname == "windLcool":
+                ax.set_ylabel("Total cooling rate in wind bubble / erg/s")
+            if funcname == "windLemitted":
+                ax.set_ylabel("Wind luminosity / erg/s")
         leg = ax.legend(fontsize="x-small",loc=legendloc)
         leg.get_frame().set_linewidth(0.0)
         #ax.set_ylim([-0.01,0.25])
@@ -365,7 +382,7 @@ def run(simfunc,simnamesets,plotlabels,compare=False):
         
 if __name__=="__main__":
     #for func in [surfdens]:
-    for func in [windLcool]:
+    for func in [windLemitted,windLcool]:
         run(func,(["UVWIND_120","UVWIND_60","UVWIND_30"],["UVWIND_120_DENSE"]),
             ("Diffuse Cloud","Dense Cloud"))
     for compare in [True]:
