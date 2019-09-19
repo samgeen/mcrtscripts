@@ -94,8 +94,14 @@ def MakeImageHamu(data,hydro,wsink,ax,dolengthscale,cmap,plottime=False,timeL=No
     # Plot image map
     yscale = hydrofuncs.yscale(hydro)
     if yscale == "log":
-        im = np.log10(im)
         vmin, vmax = hydrofuncs.hydro_range(hydro)
+        if np.min(im) > 0.0:
+            im = np.log10(im)
+        else:
+            # Do log scale where -ve values exist
+            yscale = "symlog"
+            im2 = np.log10(im)
+            im2[im < 0.0] = np.log10(-im[im < 0.0])
     # Make image mesh
     xl, yl = im.shape
     xarr = np.arange(0,boxlen*1.0000001,boxlen/(xl-1.0))
@@ -277,6 +283,8 @@ if __name__=="__main__":
         times = np.array([0.5, 0.75, 1.])
         timeL = [str(x)+r' t$_{ff}$' for x in times]
         timescode = times * tffcloud_code
+        MakeFigure([simset[-1]],[timescode[-1]],name=setname+"windonly",los='z',hydro='Lcool',Slice=True,wsink=True,
+                   timeL=[timeL[-1]])
         MakeFigure([simset[-1]],[timescode[-1]],name=setname+"windonly",los='z',hydro='NH',Slice=False,wsink=True,
                    timeL=[timeL[-1]])
         MakeFigure(simset,timescode,name=setname,los='z',hydro='NH',Slice=False,wsink=True,timeL=timeL)

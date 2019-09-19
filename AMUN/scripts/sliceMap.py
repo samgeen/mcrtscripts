@@ -86,7 +86,8 @@ def hydro_range(hydro):
         return (None, None)
     if hydro == "Bmag":
         return (None, None)
-
+    return (None,None)
+    
 def hydro_label(hydro):
     if hydro == "rho":
         return "Density / atoms/cm$^{3}$"
@@ -120,7 +121,7 @@ def _MapSlice(snap,hydro='rho',los='z',zoom=1.0,starC=False):
                     map_max_size=IMSIZE, log_sensitive=True)
 
     def makeslice(snap,hydro):
-        hydro_op = hydrofunc.scale_by_units(snap,hydro)
+        hydro_op = scop(hydrofuncs.scale_by_units(snap,hydro))
         slc = pymses.analysis.visualization.SliceMap(amr, cam, hydro_op, z=0.0)
         print "Made slice (min/max:", slc.min(), slc.max(), ")"
         return slc

@@ -4,6 +4,8 @@
 import numpy as np
 import sys
 
+from pymses.utils import constants as C 
+
 import ramses
 first = True
 
@@ -94,7 +96,7 @@ def Finddedt(T2,nH,xion,Zsolar,Np=None,Fp=None,p_gas=None,a_exp=np.array([1.0]))
     dedt = 1.0/(gamma - 1.0) * nH * kB * dTdt
     return dedt
 
-def dedtOnCells(snap,cells):
+def dedtOnCells(snap):
     '''
     Returns a function that acts on a list of cells (to fit the format of visualisation in Pymses)
     '''
@@ -109,7 +111,7 @@ def dedtOnCells(snap,cells):
         ue = umass*uvel**2
         nHs = cells["rho"]*snap.info["unit_density"].express(C.H_cc)
         vels = cells["vel"]
-        vols = (cells.get_sizes()*snap.info["unit_length"].express(C.cm))**3.0
+        #vols = (cells.get_sizes()*snap.info["unit_length"].express(C.cm))**3.0
         spds = np.sqrt(np.sum(vels**2.0,1))
         mufunc = lambda dset: 1./(0.76*(1.+dset["xHII"]) + \
                                     0.25*0.24*(1.+dset["xHeII"]+2.*dset["xHeIII"]))  
@@ -117,8 +119,8 @@ def dedtOnCells(snap,cells):
         xion = np.array([cells["xHII"],cells["xHeII"],cells["xHeIII"]])
         Zsolar = temp*0.0 + 1.0
         Nps = np.array([Zsolar*0.0,Zsolar*0.0,cells["NpHII"],cells["NpHeII"],cells["NpHeIII"]])
-        dedt = rtcooling.Finddedt(temp,nHs,xion,Zsolar,Np=Nps,Fp=None,p_gas=None,a_exp=np.array([1.0]))
-        Lcool = dedt * vols
+        dedtpervol = Finddedt(temp,nHs,xion,Zsolar,Np=Nps,Fp=None,p_gas=None,a_exp=np.array([1.0]))
+        Lcool = dedtpervol
         return Lcool
     return coolfunc
 
