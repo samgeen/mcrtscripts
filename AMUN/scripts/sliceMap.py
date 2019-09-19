@@ -120,7 +120,7 @@ def _MapSlice(snap,hydro='rho',los='z',zoom=1.0,starC=False):
                     map_max_size=IMSIZE, log_sensitive=True)
 
     def makeslice(snap,hydro):
-        hydro_op = pymses_func(snap,hydro)
+        hydro_op = hydrofunc.scale_by_units(snap,hydro)
         slc = pymses.analysis.visualization.SliceMap(amr, cam, hydro_op, z=0.0)
         print "Made slice (min/max:", slc.min(), slc.max(), ")"
         return slc
