@@ -97,9 +97,9 @@ def _MapRayTrace(snap,hydro='rho',los='z',zoom=1.0):
     cam  = v.Camera(center=centre, line_of_sight_axis=los, 
                     region_size=size, up_vector=up, 
                     map_max_size=IMSIZE, log_sensitive=True)
-    rt = pymses.analysis.visualization.raytracing.RayTracer(snap,amr.all_fields)
+    rt = pymses.analysis.visualization.raytracing.RayTracer(snap,amr.fields_to_read)
     def makeray(snap,hydro):
-        hydro_op = hydrofuncs.scale_by_units(snap,hydro)
+        hydro_op = scop(hydrofuncs.scale_by_units(snap,hydro))
         im = rt.process(hydro_op,cam,surf_qty = hydrofuncs.surface_quantity(hydro))
         print "Made ray trace map for "+hydro+" (with min/max:", im.min(), im.max(), ")"
         return im

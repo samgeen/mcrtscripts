@@ -196,4 +196,23 @@ def alpha_B_HII(T):
     a = 2.753e-14 * l**1.5 / (1. + (l/2.74)**0.407)**2.242
     return a   
 
+# Add bespoke derived hydro variables
+_ionemissfunc = lambda ro: lambda dset: dset["rho"]**2 * dset["xHII"]
+ionemission = hydrofuncs.Hydro("Photoionised Gas Emission Measure",_ionemissfunc,
+                               ["rho","xHII"],"GnBu","log",(None,None))
+hydrofuncs.allhydros["ionemission"] = ionemission
+def _xrayfunc(ro):
+    mufunc = lambda dset: 1./(0.76*(1.+dset["xHII"]) + \
+                          0.25*0.24*(1.+dset["xHeII"]+2.*dset["xHeIII"]))
+    def xrayfunc(dset):
+        temp = dset["P"]/dset["rho"]*ro.info["unit_temperature"].express(C.K)*mufunc(dset)
+        emiss = temp*0.0
+        emiss[(temp > 1.7e6)*(temp < 2.1e6)] = 1.0
+        emiss *= dset["rho"]**2.0
+        return emiss
+    return xrayfunc
+xrayemission = hydrofuncs.Hydro("X-Ray Emission Measure",_xrayfunc,
+                                ["rho","P","xHII","xHeII","xHeIII"],"YlOrRd","log",(None,None))
+hydrofuncs.allhydros["xrayemission"] = xrayemission
+# Done!
 print "Imported various project-global modules"
