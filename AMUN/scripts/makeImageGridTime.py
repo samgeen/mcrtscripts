@@ -179,7 +179,7 @@ def MakeFigure(simnames,times,name,los=None,hydro="rho",Slice=False,wsink=False,
         createSliceMap     = Hamu.Algorithm(_createSliceMap)
         createSliceMapStar = Hamu.Algorithm(_createSliceMapStar)
 
-    createSliceMap_sink._force_replace_cache = True
+    #createSliceMap_sink._force_replace_cache = True
 
     # Run for all sims
     dolengthscale = False
@@ -285,6 +285,9 @@ if __name__=="__main__":
         times = np.array([0.5, 0.75, 1.])
         timeL = [str(x)+r' t$_{ff}$' for x in times]
         timescode = times * tffcloud_code
+        for hydro in ["ionemission","xrayemission"]:
+            MakeFigure([simset[-1]],[timescode[-1]],name=setname+"windonly",los='z',hydro=hydro,Slice=False,wsink=True,
+                       timeL=[timeL[-1]])
         for hydro in ["Lcool","T","rho","xHII"]:
             MakeFigure([simset[-1]],[timescode[-1]],name=setname+"windonly",los='z',hydro=hydro,Slice=True,wsink=True,
                        timeL=[timeL[-1]])

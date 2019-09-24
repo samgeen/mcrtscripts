@@ -130,7 +130,7 @@ def _MapSlice(snap,hydro='rho',los='z',zoom=1.0,starC=False):
     return slc
 
 _MapSliceHamu = Hamu.Algorithm(_MapSlice)
-_MapSliceHamu._force_replace_cache = True
+#_MapSliceHamu._force_replace_cache = True
 
 class SliceMap(object):
     '''
