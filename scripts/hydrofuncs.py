@@ -4,16 +4,19 @@ Sam Geen, November 2014
 '''
 
 import numpy as np
-from abc import ABC
+from abc import ABCMeta, abstractmethod
 
 from pymses.utils import constants as C
 
+import sys
 sys.path.append("../../Cooling/f2py") 
 import rtcooling
 
 # Base hydro variable class used to define the interface
 # e.g. density, temperature, magnetic field strength, etc
-class AbstractHydro(ABC):
+class AbstractHydro(ABCMeta):
+    __metaclass__ = ABCMeta
+    
     def __init__(self):
         pass
 
@@ -69,7 +72,9 @@ class AbstractHydro(ABC):
 
 # Allows compact creation of hydro variables
 # Can also define hydro variables by inheriting from AbstractHydro
-class Hydro(AbstractHydro):
+# TODO: Relink to AbstractHydro
+class Hydro(object):
+    
     def __init__(self,label,scalebyunits,basevariables,colourmap,axisscale,axisrange=(None, None),surfacequantity=False):
         self._label = label
         self._scalebyunits = scalebyunits
@@ -83,7 +88,7 @@ class Hydro(AbstractHydro):
         return self._label
     
     def ScaleByUnits(self, snap):
-        return self._scalebyunits
+        return self._scalebyunits(snap)
     
     def BaseVariables(self):
         return self._basevariables
@@ -141,9 +146,9 @@ class AllHydros(object):
         func = lambda ro: lambda dset: dset["P"]/dset["rho"]*ro.info["unit_temperature"].express(C.K)*mufunc(dset)
         h["T"] = Hydro("Temperature / K",func,["rho","P","xHII","xHeII","xHeIII"],"YlOrRd","log",(0,8))
         # Ionisation Fraction(s)
-        h["xHII"] = Hydro("$x_{\mathrm{HII}$",lambda dset: dset["xHII"],["xHII"],"Reds","linear",(0,1))
-        h["xHeII"] = Hydro("$x_{\mathrm{HeII}$",lambda dset: dset["xHeII"],["xHeII"],"Reds","linear",(0,1))
-        h["xHeIII"] = Hydro("$x_{\mathrm{HeIII}$",lambda dset: dset["xHeIII"],["xHeIII"],"Reds","linear",(0,1))
+        h["xHII"] = Hydro("$x_{\mathrm{HII}}$",lambda ro: lambda dset: dset["xHII"],["xHII"],"Reds","linear",(0,1))
+        h["xHeII"] = Hydro("$x_{\mathrm{HeII}}$",lambda ro: lambda dset: dset["xHeII"],["xHeII"],"Reds","linear",(0,1))
+        h["xHeIII"] = Hydro("$x_{\mathrm{HeIII}}$",lambda ro: lambda dset: dset["xHeIII"],["xHeIII"],"Reds","linear",(0,1))
         # Gravitational energy - NOTE: doesn't really work in Pymses, including for completeness
         # h["gpe"] = Hydro("Gravitational Potential Energy",func???,[???],"YlOrRd","log",(None,None))
         # Magnetic field strength

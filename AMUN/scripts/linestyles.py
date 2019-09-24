@@ -17,6 +17,9 @@ import option_d
 import option_c
 
 cmap = option_d.test_cm
+import sys
+sys.path.append("../../scripts/")
+import hydrofuncs
 #cmap = brewer2mpl.get_map('RdPu', 'Sequential', 9,reverse=True).mpl_colormap
 #cmap = brewer2mpl.get_map('OrRd', 'Sequential', 9,reverse=True).mpl_colormap
 
@@ -32,6 +35,8 @@ cmap = option_d.test_cm
 # NEW AMUN
 
 def ColourMap(simname=None, hydro='rho'):
+    return hydrofuncs.cmap(hydro)
+    '''
     if hydro == 'rho':
         cmap = option_d.test_cm
     elif hydro == 'nH':
@@ -44,6 +49,7 @@ def ColourMap(simname=None, hydro='rho'):
     else:
         cmap = brewer2mpl.get_map('OrRd', 'Sequential', 9,reverse=True).mpl_colormap
     return cmap
+    '''
 
 def RunNumOLD(simname):
     if ('V' in simname):
