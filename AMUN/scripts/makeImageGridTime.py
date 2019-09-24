@@ -179,6 +179,8 @@ def MakeFigure(simnames,times,name,los=None,hydro="rho",Slice=False,wsink=False,
         createSliceMap     = Hamu.Algorithm(_createSliceMap)
         createSliceMapStar = Hamu.Algorithm(_createSliceMapStar)
 
+    createSliceMap_sink._force_replace_cache = True
+
     # Run for all sims
     dolengthscale = False
     plottime      = True

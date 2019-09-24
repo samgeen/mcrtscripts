@@ -1,6 +1,6 @@
 '''
 Calculates slice maps with pymses
-RB I guess but heavily taken from Sam Geen 2018
+Rebekka Bieri, Sam Geen 2018
 '''
 
 # Get all the startup modules for the project
@@ -130,6 +130,7 @@ def _MapSlice(snap,hydro='rho',los='z',zoom=1.0,starC=False):
     return slc
 
 _MapSliceHamu = Hamu.Algorithm(_MapSlice)
+_MapSliceHamu._force_replace_cache = True
 
 class SliceMap(object):
     '''
