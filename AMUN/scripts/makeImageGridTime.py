@@ -36,54 +36,63 @@ def ProjectSinks(snap,los):
     sinkm = np.atleast_1d(sink.mass)
     return sinkx, sinky, sinkm
 
-def _createColDensMap(snap,los=None,hydro='rho',wsink=False):
-    dmap = columndensity.DensityMap(snap,los)
+def _createColDensMap(snap,los=None,hydro='rho',wsink=False,zoom=1.0):
+    dmap = columndensity.DensityMap(snap,los,zoom=zoom)
     im = dmap.NH()
     boxlen = snap.info["boxlen"]
-    return [im, boxlen]
+    return [im, boxlen*zoom]
 
-def _createColDensMap_sink(snap,los=None,hydro='rho',wsink=True):
-    dmap = columndensity.DensityMap(snap,los)
+def _createColDensMap_sink(snap,los=None,hydro='rho',wsink=True,zoom=1.0):
+    dmap = columndensity.DensityMap(snap,los,zoom=zoom)
     im = dmap.NH()
     boxlen = snap.info["boxlen"]
     # Plot with sinks
     sinkx, sinky, sinkm = ProjectSinks(snap,los)
-    return [im, sinkx, sinky, sinkm, boxlen]
+    # Shift sink position if zooming in
+    sinkx -= 0.5*(1.0-zoom)*boxlen
+    sinky -= 0.5*(1.0-zoom)*boxlen
+    return [im, sinkx, sinky, sinkm, boxlen*zoom]
 
-def _createRayMap(snap,los=None,hydro='rho',wsink=False):
-    dmap = rayMap.RayTraceMap(snap,hydro,los)
+def _createRayMap(snap,los=None,hydro='rho',wsink=False,zoom=1.0):
+    dmap = rayMap.RayTraceMap(snap,hydro,los,zoom=zoom)
     im   = dmap.getRaytraceMap()
     boxlen = snap.info["boxlen"]
-    return [im, boxlen]
+    return [im, boxlen*zoom]
 
-def _createRayMap_sink(snap,los=None,hydro='rho',wsink=True):
+def _createRayMap_sink(snap,los=None,hydro='rho',wsink=True,zoom=1.0):
     ro = snap.RawData()
-    dmap = rayMap.RayTraceMap(snap,hydro,los)
+    dmap = rayMap.RayTraceMap(snap,hydro,los,zoom=zoom)
     im   = dmap.getRaytraceMap()
     boxlen = ro.info["boxlen"]
     # Plot with sinks
     sinkx, sinky, sinkm = ProjectSinks(ro,los)
-    return [im, sinkx, sinky, sinkm, boxlen]
+    # Shift sink position if zooming in
+    sinkx -= 0.5*(1.0-zoom)*boxlen
+    sinky -= 0.5*(1.0-zoom)*boxlen
+    return [im, sinkx, sinky, sinkm, boxlen*zoom]
 
-def _createSliceMapStar(snap,hydro='rho',los=None):
-    dmap = sliceMap.SliceMap(snap,hydro,los,starC=True)
+def _createSliceMapStar(snap,hydro='rho',los=None,zoom=1.0):
+    dmap = sliceMap.SliceMap(snap,hydro,los,starC=True,zoom=zoom)
     im   = dmap.getSliceMap()
     boxlen = snap.info["boxlen"] 
-    return [im, boxlen]
+    return [im, boxlen*zoom]
 
-def _createSliceMap(snap,hydro='rho',los=None):
-    dmap = sliceMap.SliceMap(snap,hydro,los)
+def _createSliceMap(snap,hydro='rho',los=None,zoom=1.0):
+    dmap = sliceMap.SliceMap(snap,hydro,los,zoom=zoom)
     im   = dmap.getSliceMap()
     boxlen = snap.info["boxlen"] 
-    return [im, boxlen]
+    return [im, boxlen*zoom]
 
-def _createSliceMap_sink(snap,hydro='rho',los=None):
-    dmap = sliceMap.SliceMap(snap,hydro,los)
+def _createSliceMap_sink(snap,hydro='rho',los=None,zoom=1.0):
+    dmap = sliceMap.SliceMap(snap,hydro,los,zoom=zoom)
     im   = dmap.getSliceMap()
     boxlen = snap.info["boxlen"] 
     # Plot with sinks
     sinkx, sinky, sinkm = ProjectSinks(snap,los)
-    return [im, sinkx, sinky, sinkm, boxlen]
+    # Shift sink position if zooming in
+    sinkx -= 0.5*(1.0-zoom)*boxlen
+    sinky -= 0.5*(1.0-zoom)*boxlen
+    return [im, sinkx, sinky, sinkm, boxlen*zoom]
  
 def MakeImageHamu(data,hydro,wsink,ax,dolengthscale,cmap,plottime=False,timeL=None,label=None):
 
@@ -161,7 +170,8 @@ def MakeImageHamu(data,hydro,wsink,ax,dolengthscale,cmap,plottime=False,timeL=No
                 color=scalecol,fontsize="large")
     return cax
 
-def MakeFigure(simnames,times,name,los=None,hydro="rho",Slice=False,wsink=False,starC=False,nonamelabel=False,timeL=None,shape=None,dpi=200.0):
+def MakeFigure(simnames,times,name,los=None,hydro="rho",Slice=False,wsink=False,starC=False,
+                nonamelabel=False,timeL=None,shape=None,dpi=200.0,zoom=1.0):
     ncols = len(simnames)
     nrows = len(times)
  
@@ -175,17 +185,16 @@ def MakeFigure(simnames,times,name,los=None,hydro="rho",Slice=False,wsink=False,
     if len(axes) <= 1:
         finches *= 1.5 # heuristic
     
+    # Originally this was run through Hamu, but we don't really need another level of Hamu for otherwise quick functions
     if wsink:
-        createColDensMap_sink = Hamu.Algorithm(_createColDensMap_sink)
+        createColDensMap_sink = _createColDensMap_sink
         createRayMap_sink     = _createRayMap_sink
-        createSliceMap_sink   = Hamu.Algorithm(_createSliceMap_sink)
+        createSliceMap_sink   = _createSliceMap_sink
     else:
-        createColDensMap   = Hamu.Algorithm(_createColDensMap)
-        createRayMap       = Hamu.Algorithm(_createRayMap)
-        createSliceMap     = Hamu.Algorithm(_createSliceMap)
-        createSliceMapStar = Hamu.Algorithm(_createSliceMapStar)
-
-    #createSliceMap_sink._force_replace_cache = True
+        createColDensMap   = _createColDensMap
+        createRayMap       = _createRayMap
+        createSliceMap     = _createSliceMap
+        createSliceMapStar = _createSliceMapStar
 
     # Run for all sims
     dolengthscale = False
@@ -206,26 +215,25 @@ def MakeFigure(simnames,times,name,los=None,hydro="rho",Slice=False,wsink=False,
           
             if Slice:
                 if wsink:
-                    data  = createSliceMap_sink(snap,hydro,los)      
+                    data  = createSliceMap_sink(snap,hydro,los,zoom)      
                 else:
                     if starC:
-                        data  = createSliceMapStar(snap,hydro,los)     
+                        data  = createSliceMapStar(snap,hydro,los,zoom)     
                     else:
-                        data  = createSliceMap(snap,hydro,los)     
+                        data  = createSliceMap(snap,hydro,los,zoom)     
             else: 
                 if hydro == 'NH':
                     if wsink: 
-                        data  = createColDensMap_sink(snap,los,hydro,wsink)      
+                        data  = createColDensMap_sink(snap,los,hydro,wsink,zoom)      
                     else: 
-                        data  = createColDensMap(snap,los,hydro,wsink)       
+                        data  = createColDensMap(snap,los,hydro,wsink,zoom)       
                 else:
                     if wsink: 
-                        data = createRayMap_sink(snap,los,hydro,wsink)    
+                        data = createRayMap_sink(snap,los,hydro,wsink,zoom)    
                     else: 
-                        data = createRayMap(snap,los,hydro,wsink)   
+                        data = createRayMap(snap,los,hydro,wsink,zoom)   
  
             if (simname == simnames[-1] and ii == 0):
-                print 'in HERE' 
                 dolengthscale = True 
             if (simname == simnames[0]) and len(axes) > 1:
                 plottime      = True
@@ -290,17 +298,18 @@ if __name__=="__main__":
         setname = "windset_"+smass+"Msun"
         #times = np.array([0.5, 0.75, 1.])
         times = np.array([0.9]) # 3.5 Myr = tstarformed + 0.2 Myr 
-        setname = setname+str(times[-1])+"tff_"
+        zoom = 0.5
+        setname = setname+str(times[-1])+"tff_"+"zoom"+str(zoom)+"_"
         timeL = [str(x)+r' t$_{ff}$' for x in times]
         timescode = times * tffcloud_code
         for hydro in ["ionemission","xrayemission","xrayemission2"][::-1]:
             MakeFigure([simset[-1]],[timescode[-1]],name=setname+"windonly",los='z',hydro=hydro,Slice=False,wsink=True,
-                       timeL=[timeL[-1]])
+                       timeL=[timeL[-1]],zoom=zoom)
         for hydro in ["Lcool","T","rho","xHII"]:
             MakeFigure([simset[-1]],[timescode[-1]],name=setname+"windonly",los='z',hydro=hydro,Slice=True,wsink=True,
-                       timeL=[timeL[-1]])
+                       timeL=[timeL[-1]],zoom=zoom)
         MakeFigure([simset[-1]],[timescode[-1]],name=setname+"windonly",los='z',hydro='NH',Slice=False,wsink=True,
-                   timeL=[timeL[-1]])
-        MakeFigure(simset,timescode,name=setname,los='z',hydro='NH',Slice=False,wsink=True,timeL=timeL)
-        MakeFigure(simset,timescode,name=setname,los='z',hydro='T',Slice=True,wsink=True,timeL=timeL)
+                   timeL=[timeL[-1]],zoom=zoom)
+        MakeFigure(simset,timescode,name=setname,los='z',hydro='NH',Slice=False,wsink=True,timeL=timeL,zoom=zoom)
+        MakeFigure(simset,timescode,name=setname,los='z',hydro='T',Slice=True,wsink=True,timeL=timeL,zoom=zoom)
         
