@@ -57,11 +57,12 @@ def _createRayMap(snap,los=None,hydro='rho',wsink=False):
     return [im, boxlen]
 
 def _createRayMap_sink(snap,los=None,hydro='rho',wsink=True):
+    ro = snap.RawData()
     dmap = rayMap.RayTraceMap(snap,hydro,los)
     im   = dmap.getRaytraceMap()
-    boxlen = snap.info["boxlen"]
+    boxlen = ro.info["boxlen"]
     # Plot with sinks
-    sinkx, sinky, sinkm = ProjectSinks(snap,los)
+    sinkx, sinky, sinkm = ProjectSinks(ro,los)
     return [im, sinkx, sinky, sinkm, boxlen]
 
 def _createSliceMapStar(snap,hydro='rho',los=None):
@@ -90,7 +91,12 @@ def MakeImageHamu(data,hydro,wsink,ax,dolengthscale,cmap,plottime=False,timeL=No
         im, sinkx, sinky, sinkm, boxlen = data
     else:
         im, boxlen = data
-   
+
+    # Specific hack for Lcool (ignore heating, cooling = +ve)
+    if hydro == "Lcool" or "xrayemission" in hydro or "ionemission" in hydro:
+        #im = -im
+        im[im <= 0.0] = im[im > 0.0].min()*0.1
+        
     # Plot image map
     yscale = hydrofuncs.yscale(hydro)
     vmin, vmax = hydrofuncs.hydro_range(hydro)
@@ -171,7 +177,7 @@ def MakeFigure(simnames,times,name,los=None,hydro="rho",Slice=False,wsink=False,
     
     if wsink:
         createColDensMap_sink = Hamu.Algorithm(_createColDensMap_sink)
-        createRayMap_sink     = Hamu.Algorithm(_createRayMap_sink)
+        createRayMap_sink     = _createRayMap_sink
         createSliceMap_sink   = Hamu.Algorithm(_createSliceMap_sink)
     else:
         createColDensMap   = Hamu.Algorithm(_createColDensMap)
@@ -282,10 +288,12 @@ if __name__=="__main__":
         smass = str(mass)
         simset = ["NOFB","UV_"+smass,"UVWIND_"+smass]
         setname = "windset_"+smass+"Msun"
-        times = np.array([0.5, 0.75, 1.])
+        #times = np.array([0.5, 0.75, 1.])
+        times = np.array([0.9]) # 3.5 Myr = tstarformed + 0.2 Myr 
+        setname = setname+str(times[-1])+"tff_"
         timeL = [str(x)+r' t$_{ff}$' for x in times]
         timescode = times * tffcloud_code
-        for hydro in ["ionemission","xrayemission"]:
+        for hydro in ["ionemission","xrayemission","xrayemission2"][::-1]:
             MakeFigure([simset[-1]],[timescode[-1]],name=setname+"windonly",los='z',hydro=hydro,Slice=False,wsink=True,
                        timeL=[timeL[-1]])
         for hydro in ["Lcool","T","rho","xHII"]:

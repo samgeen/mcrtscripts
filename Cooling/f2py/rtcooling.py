@@ -110,17 +110,24 @@ def dedtOnCells(snap):
         uvel = snap.info["unit_velocity"].express(C.cm/C.s)
         ue = umass*uvel**2
         nHs = cells["rho"]*snap.info["unit_density"].express(C.H_cc)
+        toshape = False
+        if len(nHs.shape) > 1:
+            toshape = True
+            newshape = nHs.shape
+            nHs = nHs.flatten()
         vels = cells["vel"]
         #vols = (cells.get_sizes()*snap.info["unit_length"].express(C.cm))**3.0
         spds = np.sqrt(np.sum(vels**2.0,1))
-        mufunc = lambda dset: 1./(0.76*(1.+dset["xHII"]) + \
-                                    0.25*0.24*(1.+dset["xHeII"]+2.*dset["xHeIII"]))  
-        temp = cells["P"]/cells["rho"]*snap.info["unit_temperature"].express(C.K)*mufunc(cells)
-        xion = np.array([cells["xHII"],cells["xHeII"],cells["xHeIII"]])
-        Zsolar = temp*0.0 + 1.0
-        Nps = np.array([Zsolar*0.0,Zsolar*0.0,cells["NpHII"],cells["NpHeII"],cells["NpHeIII"]])
+        mufunc = lambda dset: 1./(0.76*(1.+dset["xHII"].flatten()) + \
+                                    0.25*0.24*(1.+dset["xHeII"].flatten()+2.*dset["xHeIII"].flatten()))  
+        temp = (cells["P"].flatten())/(cells["rho"].flatten())*snap.info["unit_temperature"].express(C.K)*mufunc(cells)
+        xion = np.array([cells["xHII"].flatten(),cells["xHeII"].flatten(),cells["xHeIII"].flatten()])
+        Zsolar = nHs*0.0 + 1.0
+        Nps = np.array([Zsolar*0.0,Zsolar*0.0,cells["NpHII"].flatten(),cells["NpHeII"].flatten(),cells["NpHeIII"].flatten()])
         dedtpervol = Finddedt(temp,nHs,xion,Zsolar,Np=Nps,Fp=None,p_gas=None,a_exp=np.array([1.0]))
         Lcool = dedtpervol
+        if toshape:
+            Lcool = np.reshape(Lcool,newshape)
         return Lcool
     return coolfunc
 
