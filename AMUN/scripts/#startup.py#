@@ -230,7 +230,7 @@ def _xrayfunc2(ro):
         cool = coolfunc(dset)
         cool[cool < 0.0] = 0.0
         emiss = cool+0.0
-        emiss[temp < 1e6] = 0.0 # cool[cool > 0.0].min()*0.1
+q        emiss[temp < 1e6] = cool[cool > 0.0].min()*0.1
         return emiss
     return xrayfunc
 xrayemission2 = hydrofuncs.Hydro("X-Ray Emission Measure",_xrayfunc2,

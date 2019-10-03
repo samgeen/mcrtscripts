@@ -107,6 +107,7 @@ def _MapRayTrace(snap,hydro='rho',los='z',zoom=1.0):
     return im
 
 _MapRayTraceHamu = Hamu.Algorithm(_MapRayTrace)
+_MapRayTraceHamu._force_replace_cache = True
 
 class RayTraceMap(object):
     '''
@@ -118,13 +119,13 @@ class RayTraceMap(object):
         pixlength                   - Length of pixels in parsecs
         zoom                        - Factor to zoom (<1 = zoom, 1 = full box)
         '''
-        self._snap  = snap
+        self._snap  = snap.RawData()
         self._los   = los
         self._hydro = hydro
         self._zoom  = zoom
         if pixlength is None:
             # NOTE: boxlen should be in pc!!
-            pixlength = snap.info["boxlen"] * zoom / float(IMSIZE)
+            pixlength = self._snap.info["boxlen"] * zoom / float(IMSIZE)
         self._pixlength = pixlength
         self._raytrace = _MapRayTraceHamu(self._snap.hamusnap,self._hydro,self._los,self._zoom)
 
