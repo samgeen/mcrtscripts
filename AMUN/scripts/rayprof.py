@@ -376,15 +376,12 @@ def findstarpos(simname,time):
 if __name__ == "__main__":
     # Make figure
     powfile = open("../plots/powerlaws.txt","w")
-    sims = ["IMF1_01","MASS_01"]
-    labels = {"IMF1_01":"$10^4$ M$_{\odot}$ cloud",
-              "MASS_01":"$10^5$ M$_{\odot}$ cloud"}
+    labels = {"UV_30":"UV only, 30 Msun star",
+              "UVWIND_30":"UV+Winds, 30 Msun star"}
+    sims = labels.keys()
     #sims = ["MASS_04"]
     for simname in sims:
-        if "IMF1" in simname:
-            time = 3.38 # Time of first sink formation
-        else:
-            time = 1.2
+        time = 4.2
         starpos = findstarpos(simname,time)
         #import pdb; pdb.set_trace()
         plotgradient(simname,"nH",time,starpos,labels[simname],

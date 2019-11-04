@@ -201,8 +201,8 @@ def alpha_B_HII(T):
 
 # Add bespoke derived hydro variables
 _ionemissfunc = lambda ro: lambda dset: dset["rho"]**2 * dset["xHII"]
-ionemission = hydrofuncs.Hydro("Photoionised Gas Emission Measure",_ionemissfunc,
-                               ["rho","xHII"],"GnBu_r","log",(None,None))
+ionemission = hydrofuncs.Hydro("Warm Emission",_ionemissfunc,
+                               ["rho","xHII"],"PuRd_r","log",(None,None))
 hydrofuncs.allhydros["ionemission"] = ionemission
 # ---
 def _xrayfunc(ro):
@@ -233,9 +233,31 @@ def _xrayfunc2(ro):
         emiss[temp < 1e6] = 0.0 # cool[cool > 0.0].min()*0.1
         return emiss
     return xrayfunc
-xrayemission2 = hydrofuncs.Hydro("X-Ray Emission Measure",_xrayfunc2,
+xrayemission2 = hydrofuncs.Hydro("Hot Emission",_xrayfunc2,
                                 ["rho","P","vel","xHII","xHeII","xHeIII","NpHII","NpHeII","NpHeIII"] ,
                                  "YlOrRd_r","log",(None,None))
-hydrofuncs.allhydros["xrayemission2"] = xrayemission2
+hydrofuncs.allhydros["xrayemission2"] = xrayemission2# ---
+def _lowtempfunc(ro):
+    mufunc = lambda dset: 1./(0.76*(1.+dset["xHII"]) + \
+                          0.25*0.24*(1.+dset["xHeII"]+2.*dset["xHeIII"]))
+    coolfunc = rtcooling.dedtOnCells(ro)
+    def emissfunc(dset):
+        shape = dset["rho"].shape
+        temp = dset["P"].flatten()/dset["rho"].flatten()*ro.info["unit_temperature"].express(C.K)#*mufunc(dset)
+        temp = np.reshape(temp,shape)
+        cool = coolfunc(dset)
+        cool[cool < 0.0] = 0.0
+        emiss = cool+0.0
+        emiss[temp > 1e3] = 0.0 # cool[cool > 0.0].min()*0.1
+        return emiss
+    return emissfunc
+coolemission = hydrofuncs.Hydro("Cool Emission",_lowtempfunc,
+                                ["rho","P","vel","xHII","xHeII","xHeIII","NpHII","NpHeII","NpHeIII"] ,
+                                 "GnBu_r","log",(None,None))
+hydrofuncs.allhydros["coolemission"] = coolemission
+# Set new colours for fields
+hydrofuncs.allhydros["P"].ColourMap("Reds")
+hydrofuncs.allhydros["Lcool"].ColourMap("BuGn")
+# ---
 # Done!
 print "Imported various project-global modules"

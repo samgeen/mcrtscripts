@@ -19,6 +19,7 @@ import stellars
 # Axes up and across for each line of sight
 ups = {'x':'z','y':'x','z':'y'}
 acrosses = {'x':'y','y':'z','z':'x'}
+lostoi = {"x":0, "y":1, "z":2}
 
 IMSIZE = 1024
 
@@ -105,13 +106,16 @@ def hydro_label(hydro):
 def _MapSlice(snap,hydro='rho',los='z',zoom=1.0,starC=False):
     amr = hydrofuncs.amr_source(snap,hydro)
 
-    if not starC:
-        centre = np.zeros(3)+0.5
-    else:
+    try:
+        snap = snap.RawData()
+    except:
+        pass
+
+    centre = np.zeros(3)+0.5
+    if starC:
         stars = stellars.FindStellar(snap)
         boxlen = snap.info["boxlen"]
-        centre = np.array([stars.x[0], stars.y[0], stars.z[0]])
-        centre = centre / boxlen
+        centre[lostoi[los]] = np.array([stars.x[0], stars.y[0], stars.z[0]])[lostoi[los]]/boxlen
     up = ups[los]
 
     size = np.zeros(2)+zoom
@@ -142,7 +146,7 @@ class SliceMap(object):
         pixlength                   - Length of pixels in parsecs
         zoom                        - Factor to zoom (<1 = zoom, 1 = full box)
         '''
-        self._snap  = snap
+        self._snap  = snap.RawData()
         self._los   = los
         self._hydro = hydro
         self._zoom  = zoom
@@ -150,7 +154,7 @@ class SliceMap(object):
         if pixlength is None:
             # NOTE: boxlen should be in pc!!
             #pixlength = snap.info["boxlen"] * zoom / float(IMSIZE)
-            pixlength = snap.info["boxlen"] / float(IMSIZE)
+            pixlength = self._snap.info["boxlen"] / float(IMSIZE)
         self._pixlength = pixlength
         self._slice = _MapSliceHamu(self._snap.hamusnap,self._hydro,self._los,self._zoom, self._starC)
 

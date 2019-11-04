@@ -107,7 +107,7 @@ def _MapRayTrace(snap,hydro='rho',los='z',zoom=1.0):
     return im
 
 _MapRayTraceHamu = Hamu.Algorithm(_MapRayTrace)
-_MapRayTraceHamu._force_replace_cache = True
+#_MapRayTraceHamu._force_replace_cache = True
 
 class RayTraceMap(object):
     '''

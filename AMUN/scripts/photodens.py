@@ -17,6 +17,7 @@ import matplotlib.patheffects as pe
 
 import starrelations
 import stellars
+import plotproperties
 
 LSIZE = 512
 
@@ -91,20 +92,29 @@ def _FindHIIRegionDensities(snap,lsize=256):
 FindHIIRegionDensities = Hamu.Algorithm(_FindHIIRegionDensities)
 
 def plot(sims):
-    # TODO: CHANGE, THIS USES THE FIND HII REGIONS CODE
     plt.clf()
-    numcols = len(sims)
-    fig, axes = plt.subplots(1,numcols,sharex=False,sharey=True)
+    #numcols = len(sims)
+    numcols = len(sims)//2
+    numrows = len(sims)/numcols
+    fig, axes = plt.subplots(numrows,numcols,sharex=True,sharey=True)
+    axesflat = axes.flatten()
     first = True
-    for ax, sim in zip(axes, sims):
+    irow = 0
+    icol = 0
+    for ax, sim in zip(axesflat,sims):
+        if irow >= numrows:
+            icol += 1
+            irow = 0
         label = sim.Name().replace("_"," ")
         lsize = 512
         ts, rhos = timefuncs.timefunc(sim,FindHIIRegionDensities,True,False)
         tcreated, sfe = starrelations.runforsim(sim.Name(),"firsttime")
-        ts -= tcreated 
-        ax.set_xlabel("Time after 1st star formed / Myr")
-        if first:
-            ax.set_ylabel("$n_{\mathrm{H}}$ around wind bubbles / cm$^{-3}$")
+        ts -= tcreated
+        if icol == 1:
+            ax.set_xlabel("Time after 1st star formed / Myr")
+        if irow == 0:
+            ax.set_ylabel("$n_{\mathrm{H}}$ at interface / cm$^{-3}$")
+        irow += 1
         color = linestyles.Colour(sim.Name())
         tplot = np.array([])
         rhoplot = np.array([])
@@ -134,18 +144,73 @@ def plot(sims):
         if first:
             ax.legend(fontsize="x-small",loc="upper left",frameon=False)
         first = False
-        ax.set_xlim([-0.05,1])
+        ax.set_xlim([0.04,1])
         ax.set_yscale("log")
-    fig.subplots_adjust(wspace=0)
-    fig.set_size_inches(7*numcols,6)
+    fig.subplots_adjust(wspace=0,hspace=0)
+    fig.set_size_inches(11.5,8.0)
     fig.savefig(plotfolder+"findHIIdensities.pdf", dpi=80)
+
+def findtcool(rhos,Lws):
+    # Based on MacLow & McKee 1988 Eq 8
+    return 2.3e4 * np.array(rhos)**(-0.71) * (np.array(Lws)/1e38)**(0.29)
+    
+def plotcoolingtime(sims):
+    plt.clf()
+    numcols = 1
+    fig, ax = plt.subplots(1,numcols,sharex=False,sharey=True)
+    for sim in sims:
+        label = sim.Name().replace("_"," ")
+        lsize = 512
+        ts, rhos = timefuncs.timefunc(sim,FindHIIRegionDensities,True,False)
+        ts, Lws = timefuncs.timefunc(sim,plotproperties.windLemittedHamu,True,False)
+        tcreated, sfe = starrelations.runforsim(sim.Name(),"firsttime")
+        ts -= tcreated 
+        color = linestyles.Colour(sim.Name())
+        tplot = np.array([])
+        rhoplot = np.array([])
+        rmin = []
+        rmax = []
+        rmed = []
+        r25 = []
+        r75 = []
+        trho = []
+        Lw2 = []
+        for t, rho, Lw in zip(ts,rhos,Lws):
+            if len(rho) > 0:
+                trho.append(t)
+                print t, rho
+                tarr = rho*0.0+t
+                rho = np.sort(rho)
+                lrho = rho.shape[0]
+                rmin.append(rho[0])
+                rmax.append(rho[-1])
+                rmed.append(rho[lrho//2])
+                r25.append(rho[lrho//4])
+                r75.append(rho[3*lrho//4])
+                Lw2.append(Lw)
+        tcool = findtcool(rmed,Lw2)
+        #for r, line in zip([rmin,rmax,rmed,r25,r75],[":",":","-","--","--"]):
+        line = "-"
+        if "DENSE" in label:
+            line = "--"
+        ax.plot(trho,tcool,color=color,linestyle=line,label=label,
+                path_effects=[pe.Stroke(linewidth=5, foreground='k'), pe.Normal()]) 
+        #textloc = 0.95
+        #ax.text(0.95, textloc,label, ha='right', va="top", transform=ax.transAxes)
+    ax.set_xlabel("Time after 1st star formed / Myr")
+    ax.set_ylabel("$t_{cool}$ / yr")
+    ax.legend(fontsize="x-small",loc="lower right",frameon=False)
+    ax.set_xlim([-0.05,1])
+    ax.set_yscale("log")
+    fig.subplots_adjust(wspace=0)
+    fig.set_size_inches(7,6)
+    fig.savefig(plotfolder+"coolingtime.pdf", dpi=80)
         
 if __name__=="__main__":
     #sims = hamusims # [hamusims[x] for x in ["IMF1_04","IMF2_04",""]]
     #labels = ["IMF 1","IMF 2","Massive Cloud"]
     #plot(sims, labels)
-    sims = []
-    for name, sim in hamusims.iteritems():
-        if "WIND" in name:
-            sims.append(sim)
+    simnames = ["UVWIND_30","UVWIND_60","UVWIND_120","UVWIND_120_DENSE"]
+    sims = [hamusims[name] for name in simnames]
+    plotcoolingtime(sims)
     plot(sims)

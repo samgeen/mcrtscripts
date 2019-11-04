@@ -73,6 +73,7 @@ class AbstractHydro(ABCMeta):
 # Allows compact creation of hydro variables
 # Can also define hydro variables by inheriting from AbstractHydro
 # TODO: Relink to AbstractHydro
+# TODO: Add setter structures like in cmap to all fields
 class Hydro(object):
     
     def __init__(self,label,scalebyunits,basevariables,colourmap,axisscale,axisrange=(None, None),surfacequantity=False):
@@ -93,7 +94,9 @@ class Hydro(object):
     def BaseVariables(self):
         return self._basevariables
 
-    def ColourMap(self):
+    def ColourMap(self,cmap=None):
+        if cmap is not None:
+            self._colourmap = cmap
         return self._colourmap
 
     def AxisScale(self):
@@ -130,7 +133,7 @@ class AllHydros(object):
         #   I know, I know...
         # Mass density
         func = lambda ro: lambda dset: dset["rho"]*ro.info["unit_density"].express(C.g_cc)
-        h["rho"] = Hydro("Density / g/cm$^{3}$",func,["rho"],"RdPu_r","log",(-24, -19))
+        h["rho"] = Hydro("Density / g/cm$^{3}$",func,["rho"],"RdPu_r","log",(-28, -19))
         # Hydrogen number density
         func = lambda ro: lambda dset: dset["rho"]*ro.info["unit_density"].express(C.H_cc)
         h["nH"] = Hydro("Density / atoms/cm$^{3}$",func,["rho"],"RdPu_r","log",(0, 6))
