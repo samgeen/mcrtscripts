@@ -5,6 +5,8 @@ Sam Geen, December 2017
 
 from startup import *
 
+import inspect
+
 from pymses.filters import CellsToPoints
 from pymses.utils import constants as C
 
@@ -93,6 +95,16 @@ def windenergy(simname,kinonly=False,thermonly=False):
     tot = e[:,2]
     eout = np.array([tot, therm, kin]).T
     return t, eout
+
+def windLemittedvscool(simname):
+    fname = inspect.currentframe().f_code.co_name
+    print "Running",fname,"for simulation", simname
+    sim = hamusims[simname]
+    tcreated, sfe = starrelations.runforsim(simname,"firsttime")
+    t,Lwe = timefuncs.timefunc(sim,windLemittedHamu)
+    t,Lwc = timefuncs.timefunc(sim,windLcoolinsnap,processes=nprocs)
+    Lout = np.array([Lwe, Lwc]).T
+    return t, Lout
 
 windradiusinsnap = Hamu.Algorithm(findproperties.windradiusinsnap)
 def windradius(simname):
@@ -257,11 +269,13 @@ def run(simfunc,simnamesets,plotlabels,compare=False):
             #tlim = 1e-6
             #ax.set_ylim([0.99e45,1.1e49])
             linenames = ["Total","Thermal","Kinetic"]
+        if funcname == "windLemittedvscool":
+            linenames = ["Emitted","Cooling"]
         #if funcname == "momentum":
         #    tlim = 1e-6
         #    ax.set_xlabel("Time after 1st star formed / Myr")
         if funcname == "tsfe":
-            ax.set_ylim([0.001,1.5])
+            ax.set_ylim([0.01,1.5])
             #xticks = [1,2,3,4,5,6,7,8,9,10]
             #ax.set_xlim([1,12.0])
         #if xticks is not None:
@@ -338,7 +352,7 @@ def run(simfunc,simnamesets,plotlabels,compare=False):
             # Power law density profile
             #plotpowerlaw(ax,4.0/(7.0-2.0*wcloud),10.0,"k--")
         # Set labels etc
-        ax.set_xlim([-0.2,1])
+        ax.set_xlim([0.0,1])
         #if not "MASS" in simnames[0]:
         #    ax.set_xlim([3,7.3])
         #else:
@@ -352,6 +366,8 @@ def run(simfunc,simnamesets,plotlabels,compare=False):
                 ax.set_ylabel("SFE $\equiv M_{stars} / M_{ini}$")
             if funcname == "momentum":
                 ax.set_ylabel("Momentum / g cm s$^{-1}$")
+            if funcname == "momentumatstarpos":
+                ax.set_ylabel("Outflow Momentum / g cm s$^{-1}$")
             if funcname == "radius":
                 ax.set_ylabel("Mean HII Region radius / pc")
                 legendloc = "center right"
@@ -369,6 +385,11 @@ def run(simfunc,simnamesets,plotlabels,compare=False):
                 ax.set_ylabel("Total cooling rate in wind bubble / erg/s")
             if funcname == "windLemitted":
                 ax.set_ylabel("Wind luminosity / erg/s")
+            if funcname == "windLemittedvscool":
+                ax.set_ylabel("Wind luminosity (emitted vs cooling) / erg/s")
+            if funcname == "windenergyretained":
+                ax.set_ylabel("Fraction of wind energy input\nretained in the wind bubble",
+                              multialignment='center')
         leg = ax.legend(fontsize="x-small",loc=legendloc)
         leg.get_frame().set_linewidth(0.0)
         #ax.set_ylim([-0.01,0.25])
@@ -381,27 +402,27 @@ def run(simfunc,simnamesets,plotlabels,compare=False):
     fig.savefig(plotfolder+funcname+"_both"+comparetxt+".pdf", dpi=80)
         
 if __name__=="__main__":
-    #for func in [surfdens]:
-    for func in [windLemitted,windLcool]:
-        run(func,(["UVWIND_120","UVWIND_60","UVWIND_30"],["UVWIND_120_DENSE"]),
-            ("Diffuse Cloud","Dense Cloud"))
+    '''
     for compare in [True]:
-        for func in [momentumatstarpos,tsfe,momentum,radius,nphotonsHII,photodens][::-1]:
-            run(func,(["UV_120","UVWIND_120"],
-                      ["UV_60","UVWIND_60"],
-                      ["UV_30","UVWIND_30"],
-                      ["UV_120_DENSE","UVWIND_120_DENSE"]),
-                ("120 "+Msolar+" Star,\n Diffuse Cloud",
-                 "60 "+Msolar+" Star,\n Diffuse Cloud",
-                 "30 "+Msolar+" Star,\n Diffuse Cloud",
-                 "120 "+Msolar+" Star,\n Dense Cloud"),compare=compare)
-    for compare in [False]:
         for func in [momentumatstarpos,tsfe,momentum,radius,nphotonsHII,photodens]:
-            run(func,(["NOFB","UV_120","UVWIND_120"],
-                      ["NOFB","UV_60","UVWIND_60"],
-                      ["NOFB","UV_30","UVWIND_30"],
-                      ["NOFB_DENSE","UV_120_DENSE","UVWIND_120_DENSE"]),
-                ("Diffuse Cloud","Diffuse Cloud","Diffuse Cloud","Dense Cloud"),compare=compare)
-    for func in [windradiusratio,windenergyemitted,windmassemitted,windenergyretained,windenergy,windradius]:
+            run(func,(["UV_30","UVWIND_30"],
+                      ["UV_60","UVWIND_60"],
+                      ["UV_120","UVWIND_120"],
+                      ["UV_120_DENSE","UVWIND_120_DENSE"]),
+                ("30 "+Msolar+" Star,\n Diffuse Cloud",
+                 "60 "+Msolar+" Star,\n Diffuse Cloud",
+                 "120 "+Msolar+" Star,\n Diffuse Cloud",
+                 "120 "+Msolar+" Star,\n Dense Cloud"),compare=compare)
+    '''
+    # [momentumatstarpos,tsfe,momentum,radius,nphotonsHII,photodens]
+    for func in [momentumatstarpos]:
+        run(func,(["UV_30","UVWIND_30","UV_60","UVWIND_60","UV_120","UVWIND_120"],
+                  ["UV_120_DENSE","UVWIND_120_DENSE"]),
+            ("Diffuse Cloud","Dense Cloud"),compare=False)
+    for func in [tsfe]:
+        run(func,(["NOFB","UV_30","UVWIND_30","UV_60","UVWIND_60","UV_120","UVWIND_120"],
+                  ["NOFB_DENSE","UV_120_DENSE","UVWIND_120_DENSE"]),
+            ("Diffuse Cloud","Dense Cloud"),compare=False)
+    for func in [windLemittedvscool,windradiusratio,windenergyemitted,windmassemitted,windenergyretained,windenergy,windradius]:
         run(func,(["UVWIND_120","UVWIND_60","UVWIND_30"],["UVWIND_120_DENSE"]),
             ("Diffuse Cloud","Dense Cloud"))

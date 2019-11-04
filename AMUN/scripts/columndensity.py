@@ -68,6 +68,10 @@ class DensityMap(object):
         PSFsize                     - Size of the PSF in parsecs (consistent with pixlen)
         zoom                        - Factor to zoom (<1 = zoom, 1 = full box)
         '''
+        try:
+            snap = snap.RawData()
+        except:
+            pass
         self._snap = snap
         self._los = los
         self._zoom = zoom
