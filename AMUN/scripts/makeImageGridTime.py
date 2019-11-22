@@ -7,7 +7,7 @@ from startup import *
 
 from pymses.utils import constants as C
 
-import columndensity, rayMap, sliceMap, sinks, ysos, starrelations
+import columndensity, rayMap, sliceMap, sinks, ysos, starrelations, listfigures
 
 from matplotlib import rc
 
@@ -164,8 +164,11 @@ def MakeImageHamu(datas,hydros,wsink,ax,dolengthscale,cmap,plottime=False,timeL=
             area = np.pi * sinkm / 50.0
             if flipsinks:
                 sinkx = boxlen - sinkx
+            # Draw all sinks
             ax.scatter(sinky,sinkx,s=area,c="w",alpha=0.5,edgecolors='w')
-
+            # Draw star over main source
+            ax.scatter([sinky[0]],[sinkx[0]],marker="*",s=5*area,c="y",alpha=0.5,edgecolors="w")
+            
     # Add scale axis
     scalecol = "w"
     if dolengthscale:
@@ -200,7 +203,40 @@ def MakeFigure(simnames,times,name,los=None,hydro="rho",Slice=False,wsink=False,
                 nonamelabel=False,timeL=None,shape=None,dpi=200.0,zoom=1.0):
     ncols = len(simnames)
     nrows = len(times)
- 
+
+    if type(hydro) == type("thisisastring"):
+        hydros = [hydro]
+    else:
+        hydros = hydro
+        
+    # Make figure name
+    suffix = ""
+    if len(name) > 0:
+        suffix = "_"+name
+    #wsname = Hamu.SimData.Settings.Settings()["CurrentWorkspace"]
+    if len(hydros) > 1:
+        hname = ""
+        for h in hydros:
+            hname += h+"_"
+    else:
+        hname = hydros[0]    
+            
+    if Slice:
+        folder = "../plots/vis/slice/"
+        MakeDirs(folder)
+        figname = "sliceTime_"+hname+suffix+".pdf"
+    else:
+        folder = "../plots/vis/multiray/"
+        MakeDirs(folder)
+        figname = "multirayTime_"+hname+suffix+".pdf"
+    # Check if figure needs to be made from figure list?
+    figurelist = listfigures.makelist()
+    if len(figurelist) > 0:
+        if figname not in figurelist:
+            print "Figure",figname,"not used by paper; returning without making figure"
+            return
+    figname = folder+figname
+    # Set up figure
     fig, axes = plt.subplots(nrows=nrows, ncols=ncols, 
                              sharex=True, sharey=True,
                              frameon=False)
@@ -257,11 +293,9 @@ def MakeFigure(simnames,times,name,los=None,hydro="rho",Slice=False,wsink=False,
             if type(hydro) == type("rho"):
                 dohydrolist = False
                 cmap  = linestyles.ColourMap(simname, hydro)
-                hydros = [hydro]
             # A list of them?
             else:
                 dohydrolist = True
-                hydros = hydro
                 cmap = None
                 
             def MakeData(hydro):
@@ -320,22 +354,6 @@ def MakeFigure(simnames,times,name,los=None,hydro="rho",Slice=False,wsink=False,
         plt.setp(plt.getp(cbar.ax.axes, 'yticklabels'), color='w')
 
     # Save figure
-    suffix = ""
-    if len(name) > 0:
-        suffix = "_"+name
-    #wsname = Hamu.SimData.Settings.Settings()["CurrentWorkspace"]
-    if len(hydros) > 1:
-        hydro = ""
-        for h in hydros:
-            hydro += h+"_"
-    if Slice:
-        folder = "../plots/vis/slice/"
-        MakeDirs(folder)
-        figname = folder+"sliceTime_"+hydro+suffix+".pdf"
-    else:
-        folder = "../plots/vis/multiray/"
-        MakeDirs(folder)
-        figname = folder+"multirayTime_"+hydro+suffix+".pdf"
     print "Saving figure "+figname+"..."
     fig.subplots_adjust(hspace=0.0, wspace=0.0, 
                         left=0.20,right=1.0,
