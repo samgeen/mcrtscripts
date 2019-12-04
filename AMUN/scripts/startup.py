@@ -255,6 +255,18 @@ coolemission = hydrofuncs.Hydro("Cool Emission",_lowtempfunc,
                                 ["rho","P","vel","xHII","xHeII","xHeIII","NpHII","NpHeII","NpHeIII"] ,
                                  "GnBu_r","log",(None,None))
 hydrofuncs.allhydros["coolemission"] = coolemission
+def _dustforming(ro):
+    def maskfunc(dset):
+        rho = dset["rho"]
+        temp = dset["P"].flatten()/dset["rho"].flatten()*ro.info["unit_temperature"].express(C.K)
+        mask = np.where(temp<1200.0)*np.where(rho<4.5e10)
+        rho[not mask] = 0.0
+        return rho
+    return maskfunc
+dustforming = hydrofuncs.Hydro("Dust Forming Gas",_dustforming,
+                                ["rho","P","xHII","xHeII","xHeIII"] ,
+                                 "GnBu_r","log",(None,None))
+hydrofuncs.allhydros["dustforming"] = dustforming
 # Set new colours for fields
 hydrofuncs.allhydros["P"].ColourMap("Reds")
 hydrofuncs.allhydros["Lcool"].ColourMap("BuGn")

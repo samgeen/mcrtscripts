@@ -94,7 +94,8 @@ def _createSliceMap_sink(snap,hydro='rho',los=None,zoom=1.0,starC=False):
 def rgb(r,g,b):
     return (float(r) / 255.0, float(g) / 255.0, float(b)/255.0)
 
-def MakeImageHamu(datas,hydros,wsink,ax,dolengthscale,cmap,plottime=False,timeL=None,label=None):
+def MakeImageHamu(datas,hydros,wsink,ax,dolengthscale,cmap,plottime=False,timeL=None,label=None,
+                  starsink=None):
 
     ims = []
     for data, hydro in zip(datas, hydros):
@@ -145,6 +146,7 @@ def MakeImageHamu(datas,hydros,wsink,ax,dolengthscale,cmap,plottime=False,timeL=
         cax = ax.pcolormesh(xarr,yarr,np.flipud(finalim),vmin=vmin,vmax=vmax,cmap=cmap)
     else:
         # Use the RGB map above
+        flipsinks = True
         cax = ax.imshow(finalim,vmin=vmin,vmax=vmax,extent=(xarr.min(),xarr.max(),yarr.min(),yarr.max()))
         
     # Plot the mesh
@@ -167,16 +169,18 @@ def MakeImageHamu(datas,hydros,wsink,ax,dolengthscale,cmap,plottime=False,timeL=
             # Draw all sinks
             ax.scatter(sinky,sinkx,s=area,c="w",alpha=0.5,edgecolors='w')
             # Draw star over main source
-            ax.scatter([sinky[0]],[sinkx[0]],marker="*",s=5*area,c="y",alpha=0.5,edgecolors="w")
+            if starsink is not None:
+                ax.scatter([sinky[starsink]],[sinkx[starsink]],
+                           marker="*",s=7*area,c="r",alpha=0.5,edgecolors="w")
             
     # Add scale axis
     scalecol = "w"
     if dolengthscale:
         # length scale in pc (hopefully this is what units boxlen is in)
         lscale = FindLscale(boxlen)
-        x1 = 0.7 * boxlen 
+        x1 = 0.1 * boxlen 
         x2 = x1 + lscale
-        y1 = 0.9 * boxlen
+        y1 = 0.1 * boxlen
         y2 = y1
         ax.plot([x1,x2],[y1,y2],scalecol)
         ax.text(x2,y2, "  "+str(lscale)+" pc",color=scalecol,
@@ -260,7 +264,7 @@ def MakeFigure(simnames,times,name,los=None,hydro="rho",Slice=False,wsink=False,
 
     # Run for all sims
     dolengthscale = False
-    plottime      = True
+    doplottime      = False
     isim = -1
     for ax in axes.flatten():
         ax.set_axis_off()
@@ -321,14 +325,20 @@ def MakeFigure(simnames,times,name,los=None,hydro="rho",Slice=False,wsink=False,
             if (simname == simnames[-1] and ii == 0):
                 dolengthscale = True 
             if (simname == simnames[0]) and len(axes) > 1:
-                plottime      = True
+                plottime = True
+            if not doplottime:
+                plottime = False
             label =  linestyles.Label(simname)
-            if len(axes) == 1:
-                label = None
+            #if len(axes) == 1:
+            #    label = None
             # Make the pyplot image axis object
+            stellar = stellars.FindStellar(snap)
+            smass = stellar.mass
+            starsinkid = stellar.sinkid[np.where(smass == smass.max())]
+            sink = sinks.FindSinks(snap)
+            starsink = np.where(sink.id == starsinkid)[0]
             im    = MakeImageHamu(datas,hydros,wsink,ax,dolengthscale,cmap,
-                                  plottime, timeL[ii],label = label)
-
+                                  plottime, timeL[ii],label = label,starsink=starsink)
             plottime      = False
             dolengthscale = False
 
