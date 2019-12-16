@@ -7,7 +7,7 @@ from startup import *
 
 from pymses.utils import constants as C
 
-import columndensity, rayMap, sliceMap, sinks, ysos, starrelations
+import columndensity, rayMap, sliceMap, sinks, ysos, starrelations, listfigures
 
 from matplotlib import rc
 
@@ -94,7 +94,8 @@ def _createSliceMap_sink(snap,hydro='rho',los=None,zoom=1.0,starC=False):
 def rgb(r,g,b):
     return (float(r) / 255.0, float(g) / 255.0, float(b)/255.0)
 
-def MakeImageHamu(datas,hydros,wsink,ax,dolengthscale,cmap,plottime=False,timeL=None,label=None):
+def MakeImageHamu(datas,hydros,wsink,ax,dolengthscale,cmap,plottime=False,timeL=None,label=None,
+                  starsink=None):
 
     ims = []
     for data, hydro in zip(datas, hydros):
@@ -145,6 +146,7 @@ def MakeImageHamu(datas,hydros,wsink,ax,dolengthscale,cmap,plottime=False,timeL=
         cax = ax.pcolormesh(xarr,yarr,np.flipud(finalim),vmin=vmin,vmax=vmax,cmap=cmap)
     else:
         # Use the RGB map above
+        flipsinks = True
         cax = ax.imshow(finalim,vmin=vmin,vmax=vmax,extent=(xarr.min(),xarr.max(),yarr.min(),yarr.max()))
         
     # Plot the mesh
@@ -164,16 +166,21 @@ def MakeImageHamu(datas,hydros,wsink,ax,dolengthscale,cmap,plottime=False,timeL=
             area = np.pi * sinkm / 50.0
             if flipsinks:
                 sinkx = boxlen - sinkx
+            # Draw all sinks
             ax.scatter(sinky,sinkx,s=area,c="w",alpha=0.5,edgecolors='w')
-
+            # Draw star over main source
+            if starsink is not None:
+                ax.scatter([sinky[starsink]],[sinkx[starsink]],
+                           marker="*",s=7*area,c="r",alpha=0.5,edgecolors="w")
+            
     # Add scale axis
     scalecol = "w"
     if dolengthscale:
         # length scale in pc (hopefully this is what units boxlen is in)
         lscale = FindLscale(boxlen)
-        x1 = 0.7 * boxlen 
+        x1 = 0.1 * boxlen 
         x2 = x1 + lscale
-        y1 = 0.9 * boxlen
+        y1 = 0.1 * boxlen
         y2 = y1
         ax.plot([x1,x2],[y1,y2],scalecol)
         ax.text(x2,y2, "  "+str(lscale)+" pc",color=scalecol,
@@ -200,7 +207,40 @@ def MakeFigure(simnames,times,name,los=None,hydro="rho",Slice=False,wsink=False,
                 nonamelabel=False,timeL=None,shape=None,dpi=200.0,zoom=1.0):
     ncols = len(simnames)
     nrows = len(times)
- 
+
+    if type(hydro) == type("thisisastring"):
+        hydros = [hydro]
+    else:
+        hydros = hydro
+        
+    # Make figure name
+    suffix = ""
+    if len(name) > 0:
+        suffix = "_"+name
+    #wsname = Hamu.SimData.Settings.Settings()["CurrentWorkspace"]
+    if len(hydros) > 1:
+        hname = ""
+        for h in hydros:
+            hname += h+"_"
+    else:
+        hname = hydros[0]    
+            
+    if Slice:
+        folder = "../plots/vis/slice/"
+        MakeDirs(folder)
+        figname = "sliceTime_"+hname+suffix+".pdf"
+    else:
+        folder = "../plots/vis/multiray/"
+        MakeDirs(folder)
+        figname = "multirayTime_"+hname+suffix+".pdf"
+    # Check if figure needs to be made from figure list?
+    figurelist = listfigures.makelist()
+    if len(figurelist) > 0:
+        if figname not in figurelist:
+            print "Figure",figname,"not used by paper; returning without making figure"
+            return
+    figname = folder+figname
+    # Set up figure
     fig, axes = plt.subplots(nrows=nrows, ncols=ncols, 
                              sharex=True, sharey=True,
                              frameon=False)
@@ -224,7 +264,7 @@ def MakeFigure(simnames,times,name,los=None,hydro="rho",Slice=False,wsink=False,
 
     # Run for all sims
     dolengthscale = False
-    plottime      = True
+    doplottime      = False
     isim = -1
     for ax in axes.flatten():
         ax.set_axis_off()
@@ -257,11 +297,9 @@ def MakeFigure(simnames,times,name,los=None,hydro="rho",Slice=False,wsink=False,
             if type(hydro) == type("rho"):
                 dohydrolist = False
                 cmap  = linestyles.ColourMap(simname, hydro)
-                hydros = [hydro]
             # A list of them?
             else:
                 dohydrolist = True
-                hydros = hydro
                 cmap = None
                 
             def MakeData(hydro):
@@ -287,14 +325,20 @@ def MakeFigure(simnames,times,name,los=None,hydro="rho",Slice=False,wsink=False,
             if (simname == simnames[-1] and ii == 0):
                 dolengthscale = True 
             if (simname == simnames[0]) and len(axes) > 1:
-                plottime      = True
+                plottime = True
+            if not doplottime:
+                plottime = False
             label =  linestyles.Label(simname)
-            if len(axes) == 1:
-                label = None
+            #if len(axes) == 1:
+            #    label = None
             # Make the pyplot image axis object
+            stellar = stellars.FindStellar(snap)
+            smass = stellar.mass
+            starsinkid = stellar.sinkid[np.where(smass == smass.max())]
+            sink = sinks.FindSinks(snap)
+            starsink = np.where(sink.id == starsinkid)[0]
             im    = MakeImageHamu(datas,hydros,wsink,ax,dolengthscale,cmap,
-                                  plottime, timeL[ii],label = label)
-
+                                  plottime, timeL[ii],label = label,starsink=starsink)
             plottime      = False
             dolengthscale = False
 
@@ -320,22 +364,6 @@ def MakeFigure(simnames,times,name,los=None,hydro="rho",Slice=False,wsink=False,
         plt.setp(plt.getp(cbar.ax.axes, 'yticklabels'), color='w')
 
     # Save figure
-    suffix = ""
-    if len(name) > 0:
-        suffix = "_"+name
-    #wsname = Hamu.SimData.Settings.Settings()["CurrentWorkspace"]
-    if len(hydros) > 1:
-        hydro = ""
-        for h in hydros:
-            hydro += h+"_"
-    if Slice:
-        folder = "../plots/vis/slice/"
-        MakeDirs(folder)
-        figname = folder+"sliceTime_"+hydro+suffix+".pdf"
-    else:
-        folder = "../plots/vis/multiray/"
-        MakeDirs(folder)
-        figname = folder+"multirayTime_"+hydro+suffix+".pdf"
     print "Saving figure "+figname+"..."
     fig.subplots_adjust(hspace=0.0, wspace=0.0, 
                         left=0.20,right=1.0,

@@ -48,6 +48,14 @@ def meandensinsnap(snap,nHthresh=0.0):
         vols = vols[dens > nHthresh]
     return np.sum(mass)/np.sum(vols)
 
+def maxdensityinsnap(snap,nHthresh=0.0):
+    print "Finding max density in snap", snap.iout
+    amr = snap.amr_source(["rho"])
+    cell_source = CellsToPoints(amr)
+    cells = cell_source.flatten()
+    dens = cells["rho"]*snap.info["unit_density"].express(C.H_cc)
+    return np.max(dens)
+
 def etherminsnap(snap,wind=False):
     # Physical conversions
     X = 0.76
