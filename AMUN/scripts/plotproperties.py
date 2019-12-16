@@ -16,6 +16,8 @@ import findproperties, starrelations, findHIIregions
 
 from scipy.interpolate import interp1d
 
+from matplotlib.lines import Line2D
+
 def _tsfeinsnap(snap):
     mgas = 1e4
     sink = sinks.FindSinks(snap)
@@ -201,6 +203,14 @@ def maxBfield(simname):
     t,B = timefuncs.timefunc(sim,maxBfieldinsnap,verbose=True,processes=nprocs)
     return t, B
 
+maxdensityinsnap = Hamu.Algorithm(findproperties.maxdensityinsnap)
+def maxdensity(simname):
+    print "Running for simulation", simname
+    sim = hamusims[simname]
+    t,d = timefuncs.timefunc(sim,maxdensityinsnap,verbose=True,processes=nprocs)
+    return t, d
+#maxdensityinsnap.ForceReplaceCache(True) # Fucked up the last run
+
 FindHIIRegions = findHIIregions.FindHIIRegions
 def numHIIregions(simname):
     print "Running for simulation", simname
@@ -252,6 +262,8 @@ def run(simfunc,simnamesets,plotlabels,compare=False):
         ax.set_xlabel("Time after 1st star formed / Myr")
         textloc = 0.95
         xticks = None
+        if funcname == "maxdensity":
+            ax.set_ylim([0.1,1e11])
         if funcname == "nphotonsHII":
             #ax.set_xlim([1.5,12.0])
             ax.set_ylim([7e46,7e50])
@@ -267,10 +279,11 @@ def run(simfunc,simnamesets,plotlabels,compare=False):
             #ax.set_xlabel("Time after 1st star formed / Myr")
         if funcname == "windenergy":
             #tlim = 1e-6
-            #ax.set_ylim([0.99e45,1.1e49])
+            ax.set_ylim([1e44,1e50])
             linenames = ["Total","Thermal","Kinetic"]
         if funcname == "windLemittedvscool":
             linenames = ["Emitted","Cooling"]
+            ax.set_ylim([1e33,3e38])
         #if funcname == "momentum":
         #    tlim = 1e-6
         #    ax.set_xlabel("Time after 1st star formed / Myr")
@@ -299,6 +312,7 @@ def run(simfunc,simnamesets,plotlabels,compare=False):
                 #    mask = t > tlim
                 #    t = t[mask]
                 #    y = y[mask]
+                legend2 = None
                 if len(y.shape) == 1:
                     ax.plot(t,y,color=linestyles.Colour(simname),label=linestyles.Label(simname),
                             linestyle=linestyles.Linestyle(simname),alpha=0.9,
@@ -307,9 +321,22 @@ def run(simfunc,simnamesets,plotlabels,compare=False):
                     ntimes, nvals = y.shape
                     lines = ["-","--",":",":-"]
                     #import pdb; pdb.set_trace()
+                    firstline = True
+                    lines = lines[0:nvals]
+                    legelements = [Line2D([0],[0],color=linestyles.Colour(simname),
+                                          linestyle=l,label=n,
+                                          alpha=0.9,
+                                          path_effects=[pe.Stroke(linewidth=5, foreground='k'),
+                                                        pe.Normal()]) for l, n in zip(lines, linenames)]
+                    legend2 = ax.legend(handles=legelements, loc='lower center',framealpha=0.0)
                     for i in range(0,nvals):
+                        if firstline:
+                            label = linestyles.Label(simname)
+                            firstline = False
+                        else:
+                            label = None
                         ax.plot(t,y[:,i],color=linestyles.Colour(simname),
-                                label=linestyles.Label(simname)+" "+linenames[i],
+                                label=label,
                                 linestyle=lines[i],alpha=0.9,
                                 path_effects=[pe.Stroke(linewidth=5, foreground='k'), pe.Normal()])
         else:
@@ -325,9 +352,9 @@ def run(simfunc,simnamesets,plotlabels,compare=False):
             tcreated, sfe = starrelations.runforsim(simnames[0],"firsttime")
             tc -= tcreated
             # +ve values (2nd = larger)
-            names = [tsfe,mass,maxBfield,nphotonsHII,momentum,radius,
+            names = [maxdensity,tsfe,mass,maxBfield,nphotonsHII,momentum,radius,
                      momentumatstarpos,windenergy,windradius,photodens,windLcool,windLemitted]
-            effects = ["SFE","mass","max B field","Nphotons","momentum","radius",
+            effects = ["Maximum density","SFE","mass","max B field","Nphotons","momentum","radius",
                        "outflow momentum","wind bubble energy","wind bubble radius","average density of photoionised gas",
                        "Wind Bubble Cooling Luminosity","Wind Luminosity"]
             effectdict = {k:v for k,v in zip(names, effects)}
@@ -378,7 +405,8 @@ def run(simfunc,simnamesets,plotlabels,compare=False):
             if funcname == "windradius":
                 ax.set_ylabel("Sphericised radius of wind bubble / pc")
             if funcname == "windenergy":
-                ax.set_ylabel("Total energy in wind-shocked gas / erg")
+                ax.set_ylabel("Energy in wind-shocked gas / erg")
+                #legendloc = "lower right"
             if funcname == "windenergyemitted":
                 ax.set_ylabel("Cumulative energy emitted by winds / erg")
             if funcname == "windLcool":
@@ -390,8 +418,13 @@ def run(simfunc,simnamesets,plotlabels,compare=False):
             if funcname == "windenergyretained":
                 ax.set_ylabel("Fraction of wind energy input\nretained in the wind bubble",
                               multialignment='center')
-        leg = ax.legend(fontsize="x-small",loc=legendloc)
-        leg.get_frame().set_linewidth(0.0)
+                legendloc="lower right"
+        if legendloc is not None:
+            legend1 = ax.legend(fontsize="x-small",loc=legendloc,framealpha=0.0)
+            legend1.get_frame().set_linewidth(0.0)
+        if legend2 is not None:
+            ax.add_artist(legend2)
+            legend2.get_frame().set_linewidth(0.0)
         #ax.set_ylim([-0.01,0.25])
         ax.text(0.95, textloc,plotlabel, ha='right', va="top", transform=ax.transAxes)
     comparetxt = ""
@@ -415,13 +448,13 @@ if __name__=="__main__":
                  "120 "+Msolar+" Star,\n Dense Cloud"),compare=compare)
     '''
     # [momentumatstarpos,tsfe,momentum,radius,nphotonsHII,photodens]
+    for func in [maxdensity,tsfe]:
+        run(func,(["NOFB","UV_30","UVWIND_30","UV_60","UVWIND_60","UV_120","UVWIND_120"],
+                  ["NOFB_DENSE","UV_120_DENSE","UVWIND_120_DENSE"]),
+            ("Diffuse Cloud","Dense Cloud"),compare=False)
     for func in [momentumatstarpos]:
         run(func,(["UV_30","UVWIND_30","UV_60","UVWIND_60","UV_120","UVWIND_120"],
                   ["UV_120_DENSE","UVWIND_120_DENSE"]),
-            ("Diffuse Cloud","Dense Cloud"),compare=False)
-    for func in [tsfe]:
-        run(func,(["NOFB","UV_30","UVWIND_30","UV_60","UVWIND_60","UV_120","UVWIND_120"],
-                  ["NOFB_DENSE","UV_120_DENSE","UVWIND_120_DENSE"]),
             ("Diffuse Cloud","Dense Cloud"),compare=False)
     for func in [windLemittedvscool,windradiusratio,windenergyemitted,windmassemitted,windenergyretained,windenergy,windradius]:
         run(func,(["UVWIND_120","UVWIND_60","UVWIND_30"],["UVWIND_120_DENSE"]),
