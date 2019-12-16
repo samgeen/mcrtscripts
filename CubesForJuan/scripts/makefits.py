@@ -59,7 +59,7 @@ def makedir(folder):
         pass
 
 def runforsim(sim,nouts=None,times=None,pos=None,radius=None):
-    hydros = ["vx","vy","vz","rho","T","xHII","Bx","By","Bz","Bmag"]
+    hydros = ["vx","vy","vz","rho","T","xHII","xHeII","xHeIII","Bx","By","Bz","Bmag","NpHII","NpHeII","NpHeIII"]
     simname = sim.Name()
     simfolder = "../cubes/fits/"+simname
     makedir(simfolder)
@@ -96,6 +96,8 @@ if __name__=="__main__":
     myr = snap.RawData().info["unit_time"].express(C.Myr)
     t0code = 0.015533
     times = np.linspace(0.0,1.0,11) + t0code*myr # Myr
+    # All times
+    times = np.array([s.Time()*myr for s in sim.Snapshots()])
     #snap = sim.FindAtTime(times[0]/myr)
     # Pick the first star
     #stars = stellars.FindStellar(snap)
@@ -103,4 +105,6 @@ if __name__=="__main__":
     #radius = 25.0
     pos = np.zeros(3)+0.5
     radius = 0.4
+    # Run one first
+    runforsim(sim,times=[times[-5]],pos=pos,radius=radius)
     runforsim(sim,times=times,pos=pos,radius=radius)

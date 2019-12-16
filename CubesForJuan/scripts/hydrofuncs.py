@@ -152,6 +152,9 @@ class AllHydros(object):
         h["xHII"] = Hydro("$x_{\mathrm{HII}}$",lambda ro: lambda dset: dset["xHII"],["xHII"],"Reds","linear",(0,1))
         h["xHeII"] = Hydro("$x_{\mathrm{HeII}}$",lambda ro: lambda dset: dset["xHeII"],["xHeII"],"Reds","linear",(0,1))
         h["xHeIII"] = Hydro("$x_{\mathrm{HeIII}}$",lambda ro: lambda dset: dset["xHeIII"],["xHeIII"],"Reds","linear",(0,1))
+        h["NpHII"] = Hydro("$Np_{\mathrm{HII}}$",lambda ro: lambda dset: dset["NpHII"],["NpHII"],"Reds","linear",(None,None))
+        h["NpHeII"] = Hydro("$Np_{\mathrm{HeII}}$",lambda ro: lambda dset: dset["NpHeII"],["NpHeII"],"Reds","linear",(None,None))
+        h["NpHeIII"] = Hydro("$Np_{\mathrm{HeIII}}$",lambda ro: lambda dset: dset["NpHeIII"],["NpHeIII"],"Reds","linear",(None,None))
         # Gravitational energy - NOTE: doesn't really work in Pymses, including for completeness
         # h["gpe"] = Hydro("Gravitational Potential Energy",func???,[???],"YlOrRd","log",(None,None))
         # Magnetic field strength
