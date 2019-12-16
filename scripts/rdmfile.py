@@ -25,16 +25,17 @@ class RDMFile(object):
         '''
         # List of items to put in the fits file
         self._itemlist = []
-        # 
-        self._entries = {}
         self._first = True
 
     def AddPoints(self,x,y,z=None,label=None):
         '''
         Add points series from line or scatter plots
         '''
-        array = np.array([x,y,z])
-        self._addHDU(array,label)
+        if z is not None:
+            array = np.array([x,y,z])
+        else:
+            array = np.array([x,y])
+        self._AddHDU(array,label)
 
     def AddArray(self,array,label=None):
         '''
@@ -55,12 +56,13 @@ class RDMFile(object):
     
     def _AddHDU(self,array,label=None):
         '''
-        Private method that creates 
+        Private method that creates HDUs for the output file
         '''
         if label is None:
             label = ""
         if self._first:
             hdu = fits.PrimaryHDU(array)
+            self._first = False
         else:
             hdu = fits.ImageHDU(array)
         hdr = hdu.header

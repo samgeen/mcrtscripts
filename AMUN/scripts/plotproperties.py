@@ -18,6 +18,8 @@ from scipy.interpolate import interp1d
 
 from matplotlib.lines import Line2D
 
+import rdmfile
+
 def _tsfeinsnap(snap):
     mgas = 1e4
     sink = sinks.FindSinks(snap)
@@ -250,6 +252,7 @@ def run(simfunc,simnamesets,plotlabels,compare=False):
     funcname = simfunc.__name__
     fig, axes = plt.subplots(1,numcols,sharex=False,sharey=True)
     first = True
+    rdm = rdmfile.RDMFile()
     for ax, simnames, plotlabel in zip(axes,simnamesets,plotlabels):
         linenames = []
         # Do func-related stuff for all plots
@@ -314,9 +317,11 @@ def run(simfunc,simnamesets,plotlabels,compare=False):
                 #    y = y[mask]
                 legend2 = None
                 if len(y.shape) == 1:
-                    ax.plot(t,y,color=linestyles.Colour(simname),label=linestyles.Label(simname),
+                    label = linestyles.Label(simname)
+                    ax.plot(t,y,color=linestyles.Colour(simname),label=label,
                             linestyle=linestyles.Linestyle(simname),alpha=0.9,
                             path_effects=[pe.Stroke(linewidth=5, foreground='k'), pe.Normal()])
+                    rdm.AddPoints(t,y,label=label)
                 else:
                     ntimes, nvals = y.shape
                     lines = ["-","--",":",":-"]
@@ -339,6 +344,7 @@ def run(simfunc,simnamesets,plotlabels,compare=False):
                                 label=label,
                                 linestyle=lines[i],alpha=0.9,
                                 path_effects=[pe.Stroke(linewidth=5, foreground='k'), pe.Normal()])
+                        rdm.AddPoints(t,y[:,i],label=label)
         else:
             t1,y1 = simfunc(simnames[0])
             t2,y2 = simfunc(simnames[1])
@@ -367,6 +373,7 @@ def run(simfunc,simnamesets,plotlabels,compare=False):
             ax.plot(tc,-yc,color=linestyles.Colour(simnames[1]),label=labelminus,
                     linestyle="--",
                     path_effects=[pe.Stroke(linewidth=5, foreground='k'), pe.Normal()])
+            rdm.AddPoints(tc,yc,label=labelplus)
         # Overplot theoretical fits
         #if funcname == "momentum" and not compare:
             # Flat density profile
@@ -432,7 +439,9 @@ def run(simfunc,simnamesets,plotlabels,compare=False):
         comparetxt = "_compare"
     fig.subplots_adjust(wspace=0)
     fig.set_size_inches(7*numcols,6)
-    fig.savefig(plotfolder+funcname+"_both"+comparetxt+".pdf", dpi=80)
+    figname = plotfolder+funcname+"_both"+comparetxt+".pdf"
+    fig.savefig(figname, dpi=80)
+    rdm.Write(figname)
         
 if __name__=="__main__":
     '''
