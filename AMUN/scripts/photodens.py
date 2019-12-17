@@ -18,6 +18,7 @@ import matplotlib.patheffects as pe
 import starrelations
 import stellars
 import plotproperties
+import rdmfile
 
 LSIZE = 512
 
@@ -93,6 +94,7 @@ FindHIIRegionDensities = Hamu.Algorithm(_FindHIIRegionDensities)
 
 def plot(sims):
     plt.clf()
+    rdm = rdmfile.RDMFile(__file__)
     #numcols = len(sims)
     numcols = len(sims)//2
     numrows = len(sims)/numcols
@@ -138,7 +140,8 @@ def plot(sims):
                 r75.append(rho[3*lrho//4])
         for r, line in zip([rmin,rmax,rmed,r25,r75],[":",":","-","--","--"]):
             ax.plot(trho,r,color=color,linestyle=line,
-                path_effects=[pe.Stroke(linewidth=5, foreground='k'), pe.Normal()]) 
+                path_effects=[pe.Stroke(linewidth=5, foreground='k'), pe.Normal()])
+            rdm.AddPoints(trho,r,label=label+" LINE: "+line)
         textloc = 0.95
         ax.text(0.95, textloc,label, ha='right', va="top", transform=ax.transAxes)
         if first:
@@ -148,14 +151,17 @@ def plot(sims):
         ax.set_yscale("log")
     fig.subplots_adjust(wspace=0,hspace=0)
     fig.set_size_inches(11.5,8.0)
-    fig.savefig(plotfolder+"findHIIdensities.pdf", dpi=80)
-
+    figname = plotfolder+"findHIIdensities.pdf"
+    fig.savefig(figname, dpi=80)
+    rdm.Write(figname)
+    
 def findtcool(rhos,Lws):
     # Based on MacLow & McKee 1988 Eq 8
     return 2.3e4 * np.array(rhos)**(-0.71) * (np.array(Lws)/1e38)**(0.29)
     
 def plotcoolingtime(sims):
     plt.clf()
+    rdm = rdmfile.RDMFile(__file__)
     numcols = 1
     fig, ax = plt.subplots(1,numcols,sharex=False,sharey=True)
     for sim in sims:
@@ -194,7 +200,8 @@ def plotcoolingtime(sims):
         if "DENSE" in label:
             line = "--"
         ax.plot(trho,tcool,color=color,linestyle=line,label=label,
-                path_effects=[pe.Stroke(linewidth=5, foreground='k'), pe.Normal()]) 
+                path_effects=[pe.Stroke(linewidth=5, foreground='k'), pe.Normal()])
+        rdm.AddPoints(trho,tcool,label=label)
         #textloc = 0.95
         #ax.text(0.95, textloc,label, ha='right', va="top", transform=ax.transAxes)
     ax.set_xlabel("Time after 1st star formed / Myr")
@@ -204,8 +211,10 @@ def plotcoolingtime(sims):
     ax.set_yscale("log")
     fig.subplots_adjust(wspace=0)
     fig.set_size_inches(7,6)
-    fig.savefig(plotfolder+"coolingtime.pdf", dpi=80)
-        
+    figname = plotfolder+"coolingtime.pdf"
+    fig.savefig(figname,dpi=80)
+    rdm.Write(figname)
+    
 if __name__=="__main__":
     #sims = hamusims # [hamusims[x] for x in ["IMF1_04","IMF2_04",""]]
     #labels = ["IMF 1","IMF 2","Massive Cloud"]

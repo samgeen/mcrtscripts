@@ -252,7 +252,7 @@ def run(simfunc,simnamesets,plotlabels,compare=False):
     funcname = simfunc.__name__
     fig, axes = plt.subplots(1,numcols,sharex=False,sharey=True)
     first = True
-    rdm = rdmfile.RDMFile()
+    rdm = rdmfile.RDMFile(__file__)
     for ax, simnames, plotlabel in zip(axes,simnamesets,plotlabels):
         linenames = []
         # Do func-related stuff for all plots

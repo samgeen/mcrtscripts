@@ -11,6 +11,8 @@ import columndensity, rayMap, sliceMap, sinks, ysos, starrelations, listfigures
 
 from matplotlib import rc
 
+import rdmfile
+
 rc('axes', labelsize=8)
 rc('axes', labelsize=8,linewidth=0.5)
 rc('xtick', labelsize=8)
@@ -95,7 +97,7 @@ def rgb(r,g,b):
     return (float(r) / 255.0, float(g) / 255.0, float(b)/255.0)
 
 def MakeImageHamu(datas,hydros,wsink,ax,dolengthscale,cmap,plottime=False,timeL=None,label=None,
-                  starsink=None):
+                  starsink=None,rdm=None):
 
     ims = []
     for data, hydro in zip(datas, hydros):
@@ -148,6 +150,8 @@ def MakeImageHamu(datas,hydros,wsink,ax,dolengthscale,cmap,plottime=False,timeL=
         # Use the RGB map above
         flipsinks = True
         cax = ax.imshow(finalim,vmin=vmin,vmax=vmax,extent=(xarr.min(),xarr.max(),yarr.min(),yarr.max()))
+
+    rdm.AddArray(finalim,label=label+" IMAGE")
         
     # Plot the mesh
     #cmap = "YlGnBu_r"
@@ -168,10 +172,14 @@ def MakeImageHamu(datas,hydros,wsink,ax,dolengthscale,cmap,plottime=False,timeL=
                 sinkx = boxlen - sinkx
             # Draw all sinks
             ax.scatter(sinky,sinkx,s=area,c="w",alpha=0.5,edgecolors='w')
+            rdm.AddPoints(sinky,sinkx,label=label+" SINKS")
             # Draw star over main source
             if starsink is not None:
-                ax.scatter([sinky[starsink]],[sinkx[starsink]],
+                starsinky = [sinky[starsink]]
+                starsinkx = [sinkx[starsink]]
+                ax.scatter(starsinky,starsinkx,
                            marker="*",s=7*area,c="r",alpha=0.5,edgecolors="w")
+            rdm.AddPoints(starsinky, starsinkx,label=label+"STAR SINK")
             
     # Add scale axis
     scalecol = "w"
@@ -207,6 +215,8 @@ def MakeFigure(simnames,times,name,los=None,hydro="rho",Slice=False,wsink=False,
                 nonamelabel=False,timeL=None,shape=None,dpi=200.0,zoom=1.0):
     ncols = len(simnames)
     nrows = len(times)
+
+    rdm = rdmfile.RDMFile(__file__)
 
     if type(hydro) == type("thisisastring"):
         hydros = [hydro]
@@ -338,7 +348,7 @@ def MakeFigure(simnames,times,name,los=None,hydro="rho",Slice=False,wsink=False,
             sink = sinks.FindSinks(snap)
             starsink = np.where(sink.id == starsinkid)[0]
             im    = MakeImageHamu(datas,hydros,wsink,ax,dolengthscale,cmap,
-                                  plottime, timeL[ii],label = label,starsink=starsink)
+                                  plottime, timeL[ii],label = label,starsink=starsink,rdm=rdm)
             plottime      = False
             dolengthscale = False
 
@@ -373,6 +383,7 @@ def MakeFigure(simnames,times,name,los=None,hydro="rho",Slice=False,wsink=False,
     fig.savefig(figname,
                 pad_inches=0,
                 dpi=dpi)
+    rdm.Write(figname)
     # Crop out borders
     os.system("pdfcrop "+figname+" "+figname)
     print "Done!"
