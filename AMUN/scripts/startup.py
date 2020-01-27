@@ -117,8 +117,9 @@ if not amunold:
     simfolders["NOFB_DENSE"] = amunfolder+"04_nostar_dense"
     simfolders["UV_120_DENSE"] = amunfolder+"05_uvonly_120_dense"
     simfolders["UVWIND_120_DENSE"] = amunfolder+"06_uv+winds_120_dense"
-    simfolders["UV_60"] = amunfolder+"07_uvonly_60"
-    simfolders["UV_30"] = amunfolder+"08_uvonly_30"
+    simfolders["UV_60"] = amunfolder+"A7_uvonly_correctposition"
+#    simfolders["UV_30"] = amunfolder+"08_uvonly_30"
+    simfolders["UV_30"] = amunfolder+"A8_uvonly_correctposition"
     simfolders["UV_15"] = amunfolder+"09_uvonly_15"
     simfolders["SN_120"] = amunfolder+"10_snonly_120"
     simfolders["UVWIND_60"] = amunfolder+"11_uv+winds_60"
@@ -151,11 +152,18 @@ singlestar.star_setup(startableloc)
 # Useful functions
 # N_H to/from A_k (from Lombardi+ 2010)
 akconst = 1.75e22
+avconst = 1.8e21
 def AktoNH(Ak):
     return akconst*Ak
 
 def NHtoAk(NH):
     return NH/akconst
+
+def AvtoNH(Av):
+    return avconst*Av
+
+def NHtoAv(NH):
+    return NH/avconst
 
 def ColDenstoNH(dens):
     return dens*X/mHing

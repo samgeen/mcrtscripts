@@ -11,6 +11,8 @@ import profilesphere
 
 import scipy.optimize
 
+from collections import OrderedDict
+
 rays = None
 rads = None
 nprofs = 10000
@@ -268,8 +270,8 @@ def plotgradient(simname,hydro,time,centre,label=None,xlims=None,powfile=None,su
     # HACK
     print "Running for sim", simname, "hydro", hydro
     snaps = sim.Snapshots()
-    tcode = time * Myrins / unit_t
-    if not time is None:
+    if time is not None:
+        tcode = time * Myrins / unit_t
         snaps = [sim.FindAtTime(tcode)]
     for snap in snaps: 
         # Setup
@@ -278,6 +280,11 @@ def plotgradient(simname,hydro,time,centre,label=None,xlims=None,powfile=None,su
         path = "../plots/gradrays/"+simname+"/"+hydro
         mkdir(path)
         # Process
+        if suffix == "starpos":
+            starpos = findstarpos(simname,snap.Time())
+            if starpos is None:
+                continue # skip this iteration
+            centre = starpos
         r,p = makeprofsHamu(snap,hydro,centre)
         radii = r[0:nray]
         profs = np.reshape(p,(nprofs, nray)).T # No idea
@@ -360,11 +367,17 @@ def plotgradient(simname,hydro,time,centre,label=None,xlims=None,powfile=None,su
             suffix = ""
         plt.savefig(path+"/profile_"+suffix+str(snap.OutputNumber()).zfill(5)+".pdf",rasterized=True,dpi=200)
 
-def findstarpos(simname,time):
+def findstarpos(simname,time,useMyr=False):
     sim = hamusims[simname]
-    tcode = time * Myrins / unit_t
+    if useMyr:
+        tcode = time * Myrins / unit_t
+    else:
+        tcode = time
     snap = sim.FindAtTime(tcode)
     stellar = stellars.FindStellar(snap)
+    if len(stellar.mass) == 0:
+        print "No stellar objects in simname",simname,"at time",time
+        return None
     imax = np.where(stellar.mass == np.max(stellar.mass))[0][0]
     sinkid = stellar.sinkid[imax]-1
     sink = sinks.FindSinks(snap)
@@ -376,14 +389,20 @@ def findstarpos(simname,time):
 if __name__ == "__main__":
     # Make figure
     powfile = open("../plots/powerlaws.txt","w")
-    labels = {"UV_30":"UV only, 30 Msun star",
-              "UVWIND_30":"UV+Winds, 30 Msun star"}
+    labels = OrderedDict()
+    labels["NOFB"] = "No star"
+    labels["UV_30"] = "UV only, 30 Msun star"
+    labels["UVWIND_30"] = "UV+Winds, 30 Msun star"
     sims = labels.keys()
     #sims = ["MASS_04"]
     for simname in sims:
-        time = 4.2
-        starpos = findstarpos(simname,time)
+        time = None
         #import pdb; pdb.set_trace()
+        starpos = None
+        plotgradient(simname,"T",time,starpos,labels[simname],
+                     xlims=[0.03,25.0],powfile=powfile,suffix="starpos")
+        plotgradient(simname,"xHII",time,starpos,labels[simname],
+                     xlims=[0.03,25.0],powfile=powfile,suffix="starpos")
         plotgradient(simname,"nH",time,starpos,labels[simname],
                      xlims=[0.03,25.0],powfile=powfile,suffix="starpos")
         #plotgradient(simname,"nH",time,np.array([0.5,0.5,0.5]),"Geometric Centre",

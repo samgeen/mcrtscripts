@@ -387,6 +387,9 @@ def run(simfunc,simnamesets,plotlabels,compare=False):
             #plotpowerlaw(ax,4.0/(7.0-2.0*wcloud),10.0,"k--")
         # Set labels etc
         ax.set_xlim([0.0,1])
+        if funcname == "momentumatstarpos":
+            ax.set_xscale("log")
+            ax.set_xlim([3e-2,1])
         #if not "MASS" in simnames[0]:
         #    ax.set_xlim([3,7.3])
         #else:
@@ -457,13 +460,13 @@ if __name__=="__main__":
                  "120 "+Msolar+" Star,\n Dense Cloud"),compare=compare)
     '''
     # [momentumatstarpos,tsfe,momentum,radius,nphotonsHII,photodens]
-    for func in [maxdensity,tsfe]:
-        run(func,(["NOFB","UV_30","UVWIND_30","UV_60","UVWIND_60","UV_120","UVWIND_120"],
-                  ["NOFB_DENSE","UV_120_DENSE","UVWIND_120_DENSE"]),
-            ("Diffuse Cloud","Dense Cloud"),compare=False)
     for func in [momentumatstarpos]:
         run(func,(["UV_30","UVWIND_30","UV_60","UVWIND_60","UV_120","UVWIND_120"],
                   ["UV_120_DENSE","UVWIND_120_DENSE"]),
+            ("Diffuse Cloud","Dense Cloud"),compare=False)
+    for func in [maxdensity,tsfe]:
+        run(func,(["NOFB","UV_30","UVWIND_30","UV_60","UVWIND_60","UV_120","UVWIND_120"],
+                  ["NOFB_DENSE","UV_120_DENSE","UVWIND_120_DENSE"]),
             ("Diffuse Cloud","Dense Cloud"),compare=False)
     for func in [windLemittedvscool,windradiusratio,windenergyemitted,windmassemitted,windenergyretained,windenergy,windradius]:
         run(func,(["UVWIND_120","UVWIND_60","UVWIND_30"],["UVWIND_120_DENSE"]),

@@ -69,6 +69,6 @@ class RDMFile(object):
         hdr = hdu.header
         hdr["LABEL"] = label
         if self._first:
-            hdr["MODULENAME"] = self._modulename
+            hdr["MODULE"] = self._modulename
         self._itemlist.append(hdu)
         self._first = False
