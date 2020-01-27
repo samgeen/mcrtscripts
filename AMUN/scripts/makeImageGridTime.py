@@ -109,7 +109,12 @@ def MakeImageHamu(datas,hydros,wsink,ax,dolengthscale,cmap,plottime=False,timeL=
 
         # Specific hack for Lcool (ignore heating, cooling = +ve)
         if hydro == "Lcool" or "emission" in hydro:
-            im[im <= 0.0] = im[im > 0.0].min()*0.1
+            #if im.max() != im.min():
+            try:
+                minpositive = im[im > 0.0].min()*0.1
+            except:
+                minpositive = -1337.0
+            im[im <= 0.0] = minpositive
         ims.append(im)
 
     finalim = None
@@ -123,7 +128,8 @@ def MakeImageHamu(datas,hydros,wsink,ax,dolengthscale,cmap,plottime=False,timeL=
         yscale = hydrofuncs.yscale(hydro)
         vmin, vmax = hydrofuncs.hydro_range(hydro)
         if yscale == "log":
-            im = np.log10(im) # NOTE: make sure you don't have -ve or zero values here!
+            if im.max() != im.min():
+                im = np.log10(im) # NOTE: make sure you don't have -ve or zero values here!
         # Make image mesh
         xl, yl = im.shape
         xarr = np.arange(0,boxlen*1.0000001,boxlen/(xl-1.0))
@@ -135,11 +141,12 @@ def MakeImageHamu(datas,hydros,wsink,ax,dolengthscale,cmap,plottime=False,timeL=
             col = threecolour[ihydro]
             if finalim is None:
                 finalim = np.zeros((xl,yl,3))
-            imscaled = (im - im.min()) / (im.max() - im.min()) # Normalise values
-            finalim[:,:,0] += imscaled*col[0]
-            finalim[:,:,1] += imscaled*col[1]
-            finalim[:,:,2] += imscaled*col[2]
-            finalim[finalim > 1.0] = 1.0
+            if im.min() < im.max():
+                imscaled = (im - im.min()) / (im.max() - im.min()) # Normalise values
+                finalim[:,:,0] += imscaled*col[0]
+                finalim[:,:,1] += imscaled*col[1]
+                finalim[:,:,2] += imscaled*col[2]
+                finalim[finalim > 1.0] = 1.0
 
     flipsinks = False
     if len(ims) == 1:
@@ -391,7 +398,7 @@ def MakeFigure(simnames,times,name,los=None,hydro="rho",Slice=False,wsink=False,
 if __name__=="__main__":
 
     for dense in [False, True]:
-        for mass in [30,60,120][::-1]:
+        for mass in [30,60,120]:
             smass = str(mass)
             if not dense or mass == 120:
                 simset = ["NOFB","UV_"+smass,"UVWIND_"+smass]
@@ -401,9 +408,9 @@ if __name__=="__main__":
                     setname += "_dense"
                 #times = np.array([0.5, 0.75, 1.])
                 times = np.array([0.2]) # [0.9] # 3.5 Myr = tstarformed + 0.2 Myr 
-                zoom = 0.5
+                zoom = 0.25
                 if dense:
-                    zoom = 1.0
+                    zoom = 0.5
                 setname = setname+str(times[-1])+"Myr_"+"zoom"+str(zoom)+"_"
                 setname = setname.replace(".","p") # the extra dot confuses latex
                 #timeL = [str(x)+r' t$_{ff}$' for x in times]
@@ -412,16 +419,24 @@ if __name__=="__main__":
                 timesin = [(time,"MyrFirstStar") for time in times]
                 for los in "xyz":
                     figname = setname+"_"+los
-                    zoom2 = 1.0
-                    figname2 = figname.replace("zoom0p5","zoom1p0")
+                    zoom2 = 0.5
+                    if dense:
+                        zoom2 = 1.0
+                    figname2 = figname.replace("zoom"+str(zoom).replace(".","p"),
+                                               "zoom"+str(zoom2).replace(".","p"),)
                     # Slices
                     for hydro in ["Lcool","T","rho","xHII","P"]:
                         MakeFigure([simset[-1]],[timesin[-1]],name=figname+"windonly",los=los,hydro=hydro,Slice=True,wsink=True,starC=True,
                                    timeL=[timeL[-1]],zoom=zoom)
+                        MakeFigure(simset,[timesin[-1]],name=figname+"allphysics",los=los,hydro=hydro,Slice=True,wsink=True,starC=True,
+                                   timeL=[timeL[-1]],zoom=zoom)
                         #MakeFigure([simset[-1]],[timesin[-1]],name=figname2+"windonly",los=los,hydro=hydro,Slice=True,wsink=True,starC=True,timeL=[timeL[-1]],zoom=zoom2)
-                    # Merged emission map
+                    # Merged emission map - just wind
                     coolhydros = ["coolemission","ionemission","xrayemission2"]
                     MakeFigure([simset[-1]],[timesin[-1]],name=figname+"windonly",los=los,hydro=coolhydros,Slice=False,wsink=True,
+                               timeL=[timeL[-1]],zoom=zoom)
+                    #                     - All physics
+                    MakeFigure(simset,[timesin[-1]],name=figname+"allphysics",los=los,hydro=coolhydros,Slice=False,wsink=True,
                                timeL=[timeL[-1]],zoom=zoom)
                     # Separate emission maps
                     for hydro in ["ionemission","xrayemission2","coolemission"][::-1]:
