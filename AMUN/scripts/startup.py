@@ -152,7 +152,8 @@ singlestar.star_setup(startableloc)
 # Useful functions
 # N_H to/from A_k (from Lombardi+ 2010)
 akconst = 1.75e22
-avconst = 1.8e21
+# N_H to/from A_v (from Savage & Mathis 1979)
+avconst = 1.87e21
 def AktoNH(Ak):
     return akconst*Ak
 
