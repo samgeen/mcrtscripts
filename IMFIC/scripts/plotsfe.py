@@ -17,7 +17,7 @@ TWOMASSFWHM = 1.0/6.0 # Degrees
 
 Avhigh = 5.0
 
-def _drawlines(sim,colour=black):
+def _drawlines(sim,colour=black,multiangle=True):
     esims = []
     times = []
     utime = None
@@ -33,46 +33,51 @@ def _drawlines(sim,colour=black):
         # Do the observational estimates and sort in size
         effs[0] = sfeobs.SFEobsHamu(snap,'x',
                                     extincthigh=True,extinctlimit=Avhigh)
-        effs[1] = sfeobs.SFEobsHamu(snap,'x',frontToBack=False,
-                                    extincthigh=True,extinctlimit=Avhigh)
-        effs[2] = sfeobs.SFEobsHamu(snap,'y',
-                                    extincthigh=True,extinctlimit=Avhigh)
-        effs[3] = sfeobs.SFEobsHamu(snap,'y',frontToBack=False,
-                                    extincthigh=True,extinctlimit=Avhigh)
-        effs[4] = sfeobs.SFEobsHamu(snap,'z',
-                                    extincthigh=True,extinctlimit=Avhigh)
-        effs[5] = sfeobs.SFEobsHamu(snap,'z',frontToBack=False,
-                                    extincthigh=True,extinctlimit=Avhigh)
-        effs = np.sort(effs)
+        if multiangle:
+            effs[1] = sfeobs.SFEobsHamu(snap,'x',frontToBack=False,
+                                        extincthigh=True,extinctlimit=Avhigh)
+            effs[2] = sfeobs.SFEobsHamu(snap,'y',
+                                        extincthigh=True,extinctlimit=Avhigh)
+            effs[3] = sfeobs.SFEobsHamu(snap,'y',frontToBack=False,
+                                        extincthigh=True,extinctlimit=Avhigh)
+            effs[4] = sfeobs.SFEobsHamu(snap,'z',
+                                        extincthigh=True,extinctlimit=Avhigh)
+            effs[5] = sfeobs.SFEobsHamu(snap,'z',frontToBack=False,
+                                        extincthigh=True,extinctlimit=Avhigh)
+            effs = np.sort(effs)
         eobs[itime,:] = effs*100.0 # as a %
         times.append(snap.Time()*utime)
         itime += 1
     times = np.array(times)
     plt.plot(times,esims,color=colour,linestyle="--")
-    taba = np.concatenate((times,times[::-1]))
-    outer  = np.concatenate((eobs[:,0],eobs[:,5][::-1]))
-    middle = np.concatenate((eobs[:,1],eobs[:,4][::-1]))
-    inner  = np.concatenate((eobs[:,2],eobs[:,3][::-1]))
-    #import pdb; pdb.set_trace()
-    plt.fill(taba,inner ,alpha=0.33,edgecolor='none',facecolor=colour)
-    plt.fill(taba,middle,alpha=0.33,edgecolor='none',facecolor=colour)
-    plt.fill(taba,outer ,alpha=0.33,edgecolor='none',facecolor=colour)
+    if not multiangle:
+        plt.plot(times,esobs[:,0],color=colour,linestyle="--")
+    else:
+        taba = np.concatenate((times,times[::-1]))
+        outer  = np.concatenate((eobs[:,0],eobs[:,5][::-1]))
+        middle = np.concatenate((eobs[:,1],eobs[:,4][::-1]))
+        inner  = np.concatenate((eobs[:,2],eobs[:,3][::-1]))
+        #import pdb; pdb.set_trace()
+        plt.fill(taba,inner ,alpha=0.33,edgecolor='none',facecolor=colour)
+        plt.fill(taba,middle,alpha=0.33,edgecolor='none',facecolor=colour)
+        plt.fill(taba,outer ,alpha=0.33,edgecolor='none',facecolor=colour)
 
-def makeplot(sim,dolegend=True):
+def makeplot(sims,dolegend=True,plotlabel=""):
     # Get no-RT sim
-    nortname = sim.Name().replace("UV","UVWIND")
-    nortsim = Hamu.Simulation(nortname)
+    #nortname = sim.Name().replace("UV","UVWIND")
+    #nortsim = Hamu.Simulation(nortname)
     # Plot
     plt.clf()
     blank = "55"
-    _drawlines(nortsim,black)
-    _drawlines(sim,red)
+    for sim in sims:
+        _drawlines(sim,black,multiangle=False)
+    #_drawlines(sim,red)
     # Make cloud size text
     ax = plt.gca()
-    labelsize = "10$^4$ M$_{\odot}$"
-    ax.text(0.05, 0.95, labelsize, 
-            transform=ax.transAxes, fontsize="medium",
-            verticalalignment='top')
+    #labelsize = "10$^4$ M$_{\odot}$"
+    #ax.text(0.05, 0.95, labelsize, 
+    #        transform=ax.transAxes, fontsize="medium",
+    #        verticalalignment='top')
     if dolegend:
         # Make estimate type legend
         lines1 = [mlines.Line2D([],[],color='k',linestyle='--'),
@@ -82,23 +87,22 @@ def makeplot(sim,dolegend=True):
         leg1 = plt.legend(lines1,labels1,fontsize="small",
                           frameon=False,loc="lower left")
         # Make RT/NRT legend
-        lines2 = [mlines.Line2D([],[],color=red,linestyle='-'),
-                  mlines.Line2D([],[],color=black,linestyle='-')]
-        labels2 = ["With UV radiation + Winds",
-                   "With UV radiation"]
-        leg2 = plt.legend(lines2,labels2,fontsize="small",
-                          frameon=False,loc="center left")
+        #lines2 = [mlines.Line2D([],[],color=red,linestyle='-'),
+        #          mlines.Line2D([],[],color=black,linestyle='-')]
+        #labels2 = ["With UV radiation + Winds",
+        #           "With UV radiation"]
+        #leg2 = plt.legend(lines2,labels2,fontsize="small",
+        #                  frameon=False,loc="center left")
         plt.gca().add_artist(leg1)
     plt.xlabel("Time / Myr")
     plt.ylabel("\% SFE")
     folder = "../plots/sfe/"
     limtxt = "_Avlim"+str(int(Avhigh))
-    figname = "sfe_"+sim.Name()+limtxt+".pdf"
+    figname = "sfe_"+plotlabel+limtxt+".pdf"
     MakeDirs(folder)
     plt.savefig(folder+figname)
 
 
 if __name__=="__main__":
-    makeplot(hamusims["UV_30"])
-    makeplot(hamusims["UV_120"])
-    makeplot(hamusims["UV_60"])
+    makeplot([hamusims[sim] for sim in icsims],plotlabel="IC")
+    makeplot([hamusims[sim] for sim in imfsims],plotlabel="IMF")
