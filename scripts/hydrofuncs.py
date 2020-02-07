@@ -207,7 +207,7 @@ class AllHydros(object):
         coolvars = ["rho","P","vel","xHII","xHeII","xHeIII","NpHII","NpHeII","NpHeIII"]
         h["Lcool"] = Hydro("L$_{cool}$ / erg/s/cm$^{-3}$",func,coolvars,"YlOrRd","log",(None, None))
         # EMPTY DEFAULT HYDRO TO PREVENT ERRORS
-        h["DEFAULTEMPTY"] = Hydro("",lambda dset: dset[hydro],coolvars,"linear","linear",(None, None))
+        h["DEFAULTEMPTY"] = Hydro("",lambda dset: dset[hydro],coolvars,"Blues_r","log",(None, None))
         # Done!
         self._hydros = h
         

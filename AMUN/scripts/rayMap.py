@@ -20,21 +20,24 @@ acrosses = {'x':'y','y':'z','z':'x'}
 
 IMSIZE = 1024
 
-class MaxTempOperator(Operator):
-    def __init__(self, ro):
-        self._unit = ro.info["unit_temperature"].express(C.K)
-        def Tfunc(dset):
-            mufunc = lambda dset: 1./(0.76*(1.+dset["xHII"]) + \
-                       0.25*0.24*(1.+dset["xHeII"]+2.*dset["xHeIII"]))
-            T = dset["P"]/dset["rho"]*self._unit*mufunc(dset)
-            return T
-        d = {"T": Tfunc}
+class MaxOperator(Operator):
+    def __init__(self, ro, hydro_op):
+        #self._unit = ro.info["unit_temperature"].express(C.K)
+        #def Tfunc(dset):
+        #    mufunc = lambda dset: 1./(0.76*(1.+dset["xHII"]) + \
+        #               0.25*0.24*(1.+dset["xHeII"]+2.*dset["xHeIII"]))
+        #    T = dset["P"]/dset["rho"]*self._unit*mufunc(dset)
+        #    return T
+        d = {"h":  hydro_op}
         Operator.__init__(self, d, is_max_alos=True)
 
     def operation(self, int_dict):
-        mapT = int_dict.values()[0]
-        return mapT
+        mapHydro = int_dict.values()[0]
+        mask = (mapHydro <= 0.0)
+        mapHydro[mask] = 0.0
+        return mapHydro
 
+    '''
 def pymses_func(ro, hydro):
     if hydro == "rho":
         unit = ro.info["unit_density"].express(C.H_cc)
@@ -86,9 +89,14 @@ def hydro_label(hydro):
         return "Gravitational Potential Energy"
     if hydro == "Bmag":
         return "|B| (code units)"
+'''
 
 def _MapRayTrace(snap,hydro='rho',los='z',zoom=1.0):
-    allhydros = ["rho","P","xHII","B-left","B-right","xHeII","xHeIII"]
+    #allhydros = ["rho","P","xHII","B-left","B-right","xHeII","xHeIII"]
+    domax = False
+    if "max" in hydro:
+        hydro = hydro.replace("max","")
+        domax = True
     amr = hydrofuncs.amr_source(snap,hydro)
     size = np.zeros(2)+zoom
     centre = np.zeros(3)+0.5
@@ -99,7 +107,11 @@ def _MapRayTrace(snap,hydro='rho',los='z',zoom=1.0):
                     map_max_size=IMSIZE, log_sensitive=True)
     rt = pymses.analysis.visualization.raytracing.RayTracer(snap,amr.fields_to_read)
     def makeray(snap,hydro):
-        hydro_op = scop(hydrofuncs.scale_by_units(snap,hydro))
+        if domax:
+            op = hydrofuncs.scale_by_units(snap,hydro)
+            hydro_op = MaxOperator(snap,op)
+        else:
+            hydro_op = scop(hydrofuncs.scale_by_units(snap,hydro))
         im = rt.process(hydro_op,cam,surf_qty = hydrofuncs.surface_quantity(hydro))
         print "Made ray trace map for "+hydro+" (with min/max:", im.min(), im.max(), ")"
         return im
@@ -127,9 +139,11 @@ class RayTraceMap(object):
             # NOTE: boxlen should be in pc!!
             pixlength = self._snap.info["boxlen"] * zoom / float(IMSIZE)
         self._pixlength = pixlength
-        self._raytrace = _MapRayTraceHamu(self._snap.hamusnap,self._hydro,self._los,self._zoom)
+        self._raytrace = None
 
     def getRaytraceMap(self):
+        if self._raytrace is None:
+            self._raytrace = _MapRayTraceHamu(self._snap.hamusnap,self._hydro,self._los,self._zoom)
         return self._raytrace
 
     # Maybe in the future helpful

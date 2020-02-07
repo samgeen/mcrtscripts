@@ -2,6 +2,10 @@
 ../plots/vis/multiray/multirayTime_NH_windset_60Msun0p2Myr_zoom0p25__y.pdf
 ../plots/vis/multiray/multirayTime_NH_windset_120Msun0p2Myr_zoom0p25__y.pdf
 ../plots/vis/multiray/multirayTime_NH_windset_120Msun_dense0p2Myr_zoom0p5__y.pdf
+../plots/vis/multiray/multirayTime_maxT_windset_30Msun0p2Myr_zoom0p25__y.pdf
+../plots/vis/multiray/multirayTime_maxT_windset_60Msun0p2Myr_zoom0p25__y.pdf
+../plots/vis/multiray/multirayTime_maxT_windset_120Msun0p2Myr_zoom0p25__y.pdf
+../plots/vis/multiray/multirayTime_maxT_windset_120Msun_dense0p2Myr_zoom0p5__y.pdf
 ../plots/momentumatstarpos_both.pdf
 ../plots/tsfe_both.pdf
 ../plots/vis/slice/sliceTime_rho_windset_120Msun0p2Myr_zoom0p25__ywindonly.pdf

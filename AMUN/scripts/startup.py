@@ -146,7 +146,7 @@ def _MakeSims():
 _MakeSims()
 
 # Set up single star module
-startableloc = "/home/stgeen0/MCRT/mcrtscripts/StellarSources/Compressed/singlestar_z0.014"
+startableloc = "/home/stgeen0/StellarSources/Compressed/singlestar_z0.014"
 singlestar.star_setup(startableloc)
 
 # Useful functions
