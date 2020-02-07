@@ -39,7 +39,11 @@ class CacheFile(object):
             pikfile = open(self._Filename("data"),"rb")
             print "Loading from cache: snap", self._snapshot.OutputNumber(),\
                 self._algorithm.FunctionName(), "..."
-            output = pik.load(pikfile)
+            try:
+                output = pik.load(pikfile)
+            except:
+                print "Hamu: Error reading cache file", pikfile
+                raise ValueError
             pikfile.close()
             return output
         else:
@@ -174,6 +178,9 @@ class PymsesSnapshot(object):
         self._Setup()
         return self._snap
 
+    def Name(self):
+        return self._name
+
     def CachePath(self):
         #if self._name is None:
         #    pathname = self._snap.output_repos
@@ -224,7 +231,7 @@ class Simulation(object):
         self._snaps = OrderedDict()
         for out in self._outs:
             outnum = int(out[-5:])
-            self._snaps[outnum] = PymsesSnapshot(self._folder,outnum)
+            self._snaps[outnum] = PymsesSnapshot(self._folder,outnum,name)
 
     def Snapshots(self):
         return self._snaps.values()

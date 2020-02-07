@@ -96,8 +96,8 @@ def _createSliceMap_sink(snap,hydro='rho',los=None,zoom=1.0,starC=False):
 def rgb(r,g,b):
     return (float(r) / 255.0, float(g) / 255.0, float(b)/255.0)
 
-def MakeImageHamu(datas,hydros,wsink,ax,dolengthscale,cmap,plottime=False,timeL=None,label=None,
-                  starsink=None,rdm=None):
+def MakeImage(datas,hydros,snap,wsink,ax,dolengthscale,cmap,plottime=False,timeL=None,label=None,
+                  starsink=None,rdm=None,contours=[]):
 
     ims = []
     for data, hydro in zip(datas, hydros):
@@ -157,8 +157,22 @@ def MakeImageHamu(datas,hydros,wsink,ax,dolengthscale,cmap,plottime=False,timeL=
         # Use the RGB map above
         flipsinks = True
         cax = ax.imshow(finalim,vmin=vmin,vmax=vmax,extent=(xarr.min(),xarr.max(),yarr.min(),yarr.max()))
-
     rdm.AddArray(finalim,label=label+" IMAGE")
+        
+    # Overlay any contours requested
+    for contour in contours:
+        if contour == "Wind":
+            dmap = rayMap.RayTraceMap(snap,"xrayemission2",los,zoom=zoom) # Returns max T
+            contourim   = dmap.getRaytraceMap()
+            contourlims = [1e-37]
+            contourcolour = "r"
+        if contour == "Ionised":
+            dmap = rayMap.RayTraceMap(snap,"xHIImax",los,zoom=zoom) # Returns max xHII
+            contourim   = dmap.getRaytraceMap()
+            contourlims = [1e-2] # Find any xHII above a small value
+            contourcolour = "c"
+        ax.contour(xarr,yarr,np.flipud(contourim),contourlims,colors=contourcolour,alpha=0.5,linewidths=1.5)
+        rdm.AddArray(finalim,label=label+" contour"+contour)
         
     # Plot the mesh
     #cmap = "YlGnBu_r"
@@ -219,7 +233,7 @@ def MakeImageHamu(datas,hydros,wsink,ax,dolengthscale,cmap,plottime=False,timeL=
     return cax
 
 def MakeFigure(simnames,times,name,los=None,hydro="rho",Slice=False,wsink=False,starC=False,
-                nonamelabel=False,timeL=None,shape=None,dpi=200.0,zoom=1.0):
+                nonamelabel=False,timeL=None,shape=None,dpi=200.0,zoom=1.0,contours=[]):
     ncols = len(simnames)
     nrows = len(times)
 
@@ -354,8 +368,9 @@ def MakeFigure(simnames,times,name,los=None,hydro="rho",Slice=False,wsink=False,
             starsinkid = stellar.sinkid[np.where(smass == smass.max())]
             sink = sinks.FindSinks(snap)
             starsink = np.where(sink.id == starsinkid)[0]
-            im    = MakeImageHamu(datas,hydros,wsink,ax,dolengthscale,cmap,
-                                  plottime, timeL[ii],label = label,starsink=starsink,rdm=rdm)
+            im    = MakeImage(datas,hydros,snap,wsink,ax,dolengthscale,cmap,
+                              plottime, timeL[ii],label = label,starsink=starsink,rdm=rdm,
+                              contours=contours)
             plottime      = False
             dolengthscale = False
 
@@ -410,7 +425,7 @@ if __name__=="__main__":
                 times = np.array([0.2]) # [0.9] # 3.5 Myr = tstarformed + 0.2 Myr 
                 zoom = 0.25
                 if dense:
-                    zoom = 0.5
+                    zoom = 1.0
                 setname = setname+str(times[-1])+"Myr_"+"zoom"+str(zoom)+"_"
                 setname = setname.replace(".","p") # the extra dot confuses latex
                 #timeL = [str(x)+r' t$_{ff}$' for x in times]
@@ -421,9 +436,16 @@ if __name__=="__main__":
                     figname = setname+"_"+los
                     zoom2 = 0.5
                     if dense:
-                        zoom2 = 1.0
+                        zoom2 = 0.5
                     figname2 = figname.replace("zoom"+str(zoom).replace(".","p"),
                                                "zoom"+str(zoom2).replace(".","p"),)
+                    # Column density
+                    MakeFigure([simset[-1]],[timesin[-1]],name=figname+"windonly",los=los,hydro='NH',Slice=False,wsink=True,
+                               timeL=[timeL[-1]],zoom=zoom,contours=["Wind","Ionised"])
+                    # Column density (all sims)
+                    MakeFigure(simset,timesin,name=figname,los=los,hydro='NH',Slice=False,wsink=True,timeL=timeL,zoom=zoom,contours=["Wind","Ionised"])
+                    MakeFigure(simset,timesin,name=figname,los=los,hydro='maxT',Slice=False,wsink=True,timeL=timeL,zoom=zoom)
+
                     # Slices
                     for hydro in ["Lcool","T","rho","xHII","P"]:
                         MakeFigure([simset[-1]],[timesin[-1]],name=figname+"windonly",los=los,hydro=hydro,Slice=True,wsink=True,starC=True,
@@ -442,11 +464,6 @@ if __name__=="__main__":
                     for hydro in ["ionemission","xrayemission2","coolemission"][::-1]:
                         MakeFigure([simset[-1]],[timesin[-1]],name=figname+"windonly",los=los,hydro=hydro,Slice=False,wsink=True,
                                    timeL=[timeL[-1]],zoom=zoom)
-                    # Column density
-                    MakeFigure([simset[-1]],[timesin[-1]],name=figname+"windonly",los=los,hydro='NH',Slice=False,wsink=True,
-                               timeL=[timeL[-1]],zoom=zoom)
-                    # Column density (all sims)
-                    MakeFigure(simset,timesin,name=figname,los=los,hydro='NH',Slice=False,wsink=True,timeL=timeL,zoom=zoom)
                     # Temperature slice (all sims)
                     MakeFigure(simset,timesin,name=figname,los=los,hydro='T',Slice=True,wsink=True,timeL=timeL,zoom=zoom,starC=True)
         

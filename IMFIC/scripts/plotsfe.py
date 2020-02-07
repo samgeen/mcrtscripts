@@ -51,7 +51,7 @@ def _drawlines(sim,colour=black,multiangle=True):
     times = np.array(times)
     plt.plot(times,esims,color=colour,linestyle="--")
     if not multiangle:
-        plt.plot(times,esobs[:,0],color=colour,linestyle="--")
+        plt.plot(times,eobs[:,0],color="r",linestyle="-")
     else:
         taba = np.concatenate((times,times[::-1]))
         outer  = np.concatenate((eobs[:,0],eobs[:,5][::-1]))
@@ -81,11 +81,11 @@ def makeplot(sims,dolegend=True,plotlabel=""):
     if dolegend:
         # Make estimate type legend
         lines1 = [mlines.Line2D([],[],color='k',linestyle='--'),
-                  mlines.Line2D([],[],color='k',linestyle='-')]
+                  mlines.Line2D([],[],color='r',linestyle='-')]
         labels1 = [r"$\epsilon_{sim}$",
                    r"$\epsilon_{obs}$",]
         leg1 = plt.legend(lines1,labels1,fontsize="small",
-                          frameon=False,loc="lower left")
+                          frameon=False,loc="upper left")
         # Make RT/NRT legend
         #lines2 = [mlines.Line2D([],[],color=red,linestyle='-'),
         #          mlines.Line2D([],[],color=black,linestyle='-')]
