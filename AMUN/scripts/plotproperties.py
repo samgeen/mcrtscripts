@@ -20,6 +20,10 @@ from matplotlib.lines import Line2D
 
 import rdmfile
 
+sys.path.append("/home/stgeen0/MCRT/mcrtscripts/WindInUV/")
+
+import solvecriteria, stars
+
 def _tsfeinsnap(snap):
     mgas = 1e4
     sink = sinks.FindSinks(snap)
@@ -27,7 +31,7 @@ def _tsfeinsnap(snap):
 
 tsfeinsnap = Hamu.Algorithm(_tsfeinsnap)
 
-nprocs = 1
+nprocs = 10
 
 def tsfe(simname):
     global mgas
@@ -86,6 +90,27 @@ def windradiusratio(simname):
     #r *= boxlen
     #t -= tcreated
     return t, rw / ri
+
+def windradiusratio_analytic(simname):
+    print "Running for simulation", simname
+    sim = hamusims[simname]
+    metal = 0.014
+    starmass = float(str.join("",[i for i in simname if i.isdigit()]))
+    tcreated, sfe = starrelations.runforsim(simname,"firsttime")  
+    ts,ris = timefuncs.timefunc(sim,radiusinsnap,processes=nprocs)
+    star = stars.Star(starmass,metal)
+    rwvsri = []
+    for t, ri in zip(ts, ris):
+        ci = solvecriteria.SoundSpeedFromT(1e4) # from sampling simulations, is very close to this
+        print "ci", ci
+        cloud = solvecriteria.CloudFromr0n0(ri*pcincm,432.0,metal,ci=ci) # density doesn't really matter for this
+        tins = (t-tcreated)*Myrins
+        rivsrw = solvecriteria.RivsRw(tins,star,cloud)
+        if rivsrw > 0.0:
+            rwvsri.append(1.0/rivsrw)
+        else:
+            rwvsri.append(0.0)
+    return ts, np.array(rwvsri)
     
 windenergyinsnap = Hamu.Algorithm(findproperties.windenergyinsnap2)
 def windenergy(simname,kinonly=False,thermonly=False):
@@ -114,8 +139,25 @@ windradiusinsnap = Hamu.Algorithm(findproperties.windradiusinsnap)
 def windradius(simname):
     print "Running for simulation", simname
     sim = hamusims[simname]
+    if not "WIND" in simname:
+        # Run some fast thing just to get zeros for each time
+        t,dum = timefuncs.timefunc(sim,tsfeinsnap,processes=nprocs)
+        return t,dum*0.0
     tcreated, sfe = starrelations.runforsim(simname,"firsttime")  
     t,r = timefuncs.timefunc(sim,windradiusinsnap,processes=nprocs)
+    #t -= tcreated
+    return t, r
+
+freestreamradiusinsnap = Hamu.Algorithm(findproperties.freestreamradiusinsnap)
+def freestreamradius(simname):
+    print "Running for simulation", simname
+    sim = hamusims[simname]
+    if not "WIND" in simname:
+        # Run some fast thing just to get zeros for each time
+        t,dum = timefuncs.timefunc(sim,tsfeinsnap,processes=nprocs)
+        return t,dum*0.0
+    tcreated, sfe = starrelations.runforsim(simname,"firsttime")  
+    t,r = timefuncs.timefunc(sim,freestreamradiusinsnap,processes=nprocs)
     #t -= tcreated
     return t, r
 
@@ -245,7 +287,7 @@ def plotpowerlaw(ax,w,y0,linestyle,t0=0.3):
     y = y[mask]
     ax.plot(x,y,linestyle,zorder=0,alpha=0.7)
 
-def run(simfunc,simnamesets,plotlabels,compare=False):
+def run(simfunc,simnamesets,plotlabels,compare=False,secondfuncs=None):
     plt.clf()
     numcols = len(simnamesets)
     wcloud = 1.71 # cloud density profile power law index
@@ -274,7 +316,7 @@ def run(simfunc,simnamesets,plotlabels,compare=False):
         if funcname == "radius" or funcname == "radius2":
             #tlim = 1e-6
             if not compare:
-                ax.set_ylim([0.1,70])
+                ax.set_ylim([0.05,100])
             #ax.set_xlabel("Time after 1st star formed / Myr")
             textloc = 0.1
         #if funcname == "windradius":
@@ -322,6 +364,36 @@ def run(simfunc,simnamesets,plotlabels,compare=False):
                             linestyle=linestyles.Linestyle(simname),alpha=0.9,
                             path_effects=[pe.Stroke(linewidth=5, foreground='k'), pe.Normal()])
                     rdm.AddPoints(t,y,label=label)
+                    if secondfuncs:
+                        secondlines = ["--",":","-."]
+                        for i, secondfunc in enumerate(secondfuncs):
+                            secondline = secondlines[i]
+                            t2, y2 = secondfunc(simname)
+                            t2 -= tcreated
+                            ax.plot(t2,y2,color=linestyles.Colour(simname),
+                                    linestyle=secondline,alpha=0.9,
+                                    path_effects=[pe.Stroke(linewidth=3, foreground='k'), pe.Normal()])
+                        if funcname == "radius":
+                            legelements = [Line2D([0],[0],color=linestyles.Colour(simname),
+                                                  linestyle=ls,label=n,
+                                                  alpha=0.9,
+                                                  path_effects=[pe.Stroke(linewidth=lw, foreground='k'),
+                                                                pe.Normal()]) for ls,lw, n in zip(["-"]+secondlines,
+                                                                                                  [5,3,3],
+                                                                                                  ["H II Region","Wind Bubble",
+                                                                                                   "$V >$ 1000 km/s"])]
+                            legend2 = ax.legend(handles=legelements, loc='upper right',framealpha=0.0,fontsize="x-small")
+                        if funcname == "windradiusratio":
+                            #import pdb; pdb.set_trace()
+                            legelements = [Line2D([0],[0],color=linestyles.Colour(simname),
+                                                  linestyle=ls,label=n,
+                                                  alpha=0.9,
+                                                  path_effects=[pe.Stroke(linewidth=lw, foreground='k'),
+                                                                pe.Normal()]) for ls,lw, n in zip(["-",secondlines[0]],
+                                                                                                  [5,3],
+                                                                                                  ["Simulation",
+                                                                                                   "Analytic Model"])]
+                            legend2 = ax.legend(handles=legelements, loc='lower right',framealpha=0.0,fontsize="x-small")
                 else:
                     ntimes, nvals = y.shape
                     lines = ["-","--",":",":-"]
@@ -359,9 +431,10 @@ def run(simfunc,simnamesets,plotlabels,compare=False):
             tc -= tcreated
             # +ve values (2nd = larger)
             names = [maxdensity,tsfe,mass,maxBfield,nphotonsHII,momentum,radius,
-                     momentumatstarpos,windenergy,windradius,photodens,windLcool,windLemitted]
+                     momentumatstarpos,windenergy,windradius,freestreamradius,photodens,windLcool,windLemitted]
             effects = ["Maximum density","SFE","mass","max B field","Nphotons","momentum","radius",
-                       "outflow momentum","wind bubble energy","wind bubble radius","average density of photoionised gas",
+                       "outflow momentum","wind bubble energy","wind bubble radius","free streaming radius",
+                       "average density of photoionised gas",
                        "Wind Bubble Cooling Luminosity","Wind Luminosity"]
             effectdict = {k:v for k,v in zip(names, effects)}
             effect = effectdict[simfunc]
@@ -387,13 +460,14 @@ def run(simfunc,simnamesets,plotlabels,compare=False):
             #plotpowerlaw(ax,4.0/(7.0-2.0*wcloud),10.0,"k--")
         # Set labels etc
         ax.set_xlim([0.0,1])
-        if funcname == "momentumatstarpos":
+        if funcname == "momentumatstarpos" or funcname == "radius" or funcname == "windradius" or funcname == "freestreamradius":
             ax.set_xscale("log")
             ax.set_xlim([3e-2,1])
         #if not "MASS" in simnames[0]:
         #    ax.set_xlim([3,7.3])
         #else:
         #    ax.set_xlim([1,5])
+        ncollegend = 1
         if first:
             first = False
             legendloc = "upper left"
@@ -407,13 +481,17 @@ def run(simfunc,simnamesets,plotlabels,compare=False):
                 ax.set_ylabel("Outflow Momentum / g cm s$^{-1}$")
             if funcname == "radius":
                 ax.set_ylabel("Mean HII Region radius / pc")
-                legendloc = "center right"
+                legendloc = "upper left"
+                ncollegend=3
             if funcname == "radius2":
                 ax.set_ylabel("Sphericised HII Region radius / pc")
             if funcname == "nphotonsHII":
                 ax.set_ylabel("Ionising Photon Emission Rate / s$^{-1}$")
             if funcname == "windradius":
                 ax.set_ylabel("Sphericised radius of wind bubble / pc")
+            if funcname == "windradiusratio":
+                ax.set_ylabel("$r_{w,s} / r_{i,s}$")
+                legendloc = "upper center"
             if funcname == "windenergy":
                 ax.set_ylabel("Energy in wind-shocked gas / erg")
                 #legendloc = "lower right"
@@ -430,11 +508,12 @@ def run(simfunc,simnamesets,plotlabels,compare=False):
                               multialignment='center')
                 legendloc="lower right"
         if legendloc is not None:
-            legend1 = ax.legend(fontsize="x-small",loc=legendloc,framealpha=0.0)
+            legend1 = ax.legend(fontsize="x-small",loc=legendloc,framealpha=0.0,ncol=ncollegend)
             legend1.get_frame().set_linewidth(0.0)
         if legend2 is not None:
-            ax.add_artist(legend2)
-            legend2.get_frame().set_linewidth(0.0)
+            if funcname != "radius" or "DENSE" in simname:
+                ax.add_artist(legend2)
+                legend2.get_frame().set_linewidth(0.0)
         #ax.set_ylim([-0.01,0.25])
         ax.text(0.95, textloc,plotlabel, ha='right', va="top", transform=ax.transAxes)
     comparetxt = ""
@@ -460,14 +539,30 @@ if __name__=="__main__":
                  "120 "+Msolar+" Star,\n Dense Cloud"),compare=compare)
     '''
     # [momentumatstarpos,tsfe,momentum,radius,nphotonsHII,photodens]
+    allnames = ["NOFB","UV_30","UVWIND_30","UV_60","UVWIND_60","UV_120","UVWIND_120"]
+    allfbnames = ["UV_30","UVWIND_30","UV_60","UVWIND_60","UV_120","UVWIND_120"]
+    allwindnames = ["UVWIND_120","UVWIND_60","UVWIND_30"]
+    for func in [windradiusratio]:
+        run(func,(allwindnames,
+                  ["UVWIND_120_DENSE"]),
+            ("Diffuse Cloud","Dense Cloud"),compare=False,secondfuncs=(windradiusratio_analytic,))
+'''
+        for func in [windLemittedvscool,windradiusratio,windenergyemitted,windmassemitted,windenergyretained,windenergy,windradius,freestreamradius,windradiusratio][::-1]:
+        run(func,(allwindnames,
+                  ["UVWIND_120_DENSE"]),
+            ("Diffuse Cloud","Dense Cloud"))
+
+    for func in [radius]:
+        run(func,(allfbnames,
+                  ["UV_120_DENSE","UVWIND_120_DENSE"]),
+            ("Diffuse Cloud","Dense Cloud"),compare=False,secondfuncs=(windradius,freestreamradius))
     for func in [momentumatstarpos]:
-        run(func,(["UV_30","UVWIND_30","UV_60","UVWIND_60","UV_120","UVWIND_120"],
+        run(func,(allfbnames,
                   ["UV_120_DENSE","UVWIND_120_DENSE"]),
             ("Diffuse Cloud","Dense Cloud"),compare=False)
     for func in [maxdensity,tsfe]:
-        run(func,(["NOFB","UV_30","UVWIND_30","UV_60","UVWIND_60","UV_120","UVWIND_120"],
+        run(func,(allnames,
                   ["NOFB_DENSE","UV_120_DENSE","UVWIND_120_DENSE"]),
             ("Diffuse Cloud","Dense Cloud"),compare=False)
-    for func in [windLemittedvscool,windradiusratio,windenergyemitted,windmassemitted,windenergyretained,windenergy,windradius]:
-        run(func,(["UVWIND_120","UVWIND_60","UVWIND_30"],["UVWIND_120_DENSE"]),
-            ("Diffuse Cloud","Dense Cloud"))
+
+'''

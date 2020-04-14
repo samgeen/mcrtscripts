@@ -15,6 +15,8 @@ import matplotlib.patheffects as pe
 
 import triaxfinder
 
+windtemp = 2e4 # Kelvin
+
 def massinsnap(snap,nHthresh=0.0):
     print "Finding mass in snap", snap.iout
     amr = snap.amr_source(["rho","P"])
@@ -83,7 +85,7 @@ def etherminsnap(snap,wind=False):
         vels = cells["vel"]
         uvel = snap.info["unit_velocity"].express(C.cm/C.s)
         spds = np.sqrt(np.sum(vels**2.0,1))
-        mask = np.logical_or(spds*uvel/1e5 > 100.0,temp > 1e5)
+        mask = np.logical_or(spds*uvel/1e5 > 100.0,temp > windtemp)
         etherm = etherm[mask]
     return np.sum(etherm)
 
@@ -105,7 +107,7 @@ def ekininsnap(snap,wind=False):
                                   0.25*0.24*(1.+dset["xHeII"]+2.*dset["xHeIII"]))  
         temp = cells["P"]/cells["rho"]*snap.info["unit_temperature"].express(C.K)*mufunc(cells)
         # Over 100 km/s or T > 1e5 K
-        mask = np.logical_or(spds*uvel/1e5 > 100.0,temp > 1e5)
+        mask = np.logical_or(spds*uvel/1e5 > 100.0,temp > windtemp)
         ekin = ekin[mask]
     ekin =  np.sum(ekin)*ue
     time = snap.info["time"]*snap.info["unit_time"].express(C.Myr)
@@ -134,8 +136,8 @@ def Lcoolinsnap(snap,wind=False):
     dedt = rtcooling.Finddedt(temp,nHs,xion,Zsolar,Np=Nps,Fp=None,p_gas=None,a_exp=np.array([1.0]))
     Lcool = dedt * vols
     if wind:
-        # Over 100 km/s or T > 1e5 K
-        windmask = np.logical_or(spds*uvel/1e5 > 100.0,temp > 1e5)
+        # Over 100 km/s or T > windtemp
+        windmask = np.logical_or(spds*uvel/1e5 > 100.0,temp > windtemp)
         Lcool = Lcool[windmask]
     Lcool =  np.sum(Lcool)
     time = snap.info["time"]*snap.info["unit_time"].express(C.Myr)
@@ -285,6 +287,9 @@ def totalmomentuminsnap(snap,nHlow=0.0,nHhigh=0.0):
 def windradiusinsnap(snap):
     return radiusinsnap3(snap,wind=True)
 
+def freestreamradiusinsnap(snap):
+    return radiusinsnap3(snap,freestream=True)
+
 def densityprofileinsnap(snap):
     print "Finding density profile in snap", snap.iout
 
@@ -369,7 +374,7 @@ def surfacedensityprofileinsnap(snap):
  
     exit() 
     
-def radiusinsnap(snap,wind=False):
+def radiusinsnap(snap,wind=False,freestream=False):
     print "Finding radius of HII region in snap", snap.iout
     boxlen = snap.info["boxlen"]
     amr = snap.amr_source(["rho","P","xHII"])
@@ -387,7 +392,7 @@ def radiusinsnap(snap,wind=False):
         mask = np.where(ion > thresh)
         weight = mcode[mask]*ion[mask]
     else:
-        mask = np.where(temp > 1e5)
+        mask = np.where(temp > windtemp)
         weight = mcode[mask]
     x = pos[mask,0]*boxlen
     y = pos[mask,1]*boxlen
@@ -408,7 +413,7 @@ def radiusinsnap(snap,wind=False):
     #print "RADIUS FOUND", radius
     return radius
 
-def radiusinsnap3(snap,wind=False):
+def radiusinsnap3(snap,wind=False,freestream=False):
     '''
     2nd implementation: measure volume of ionised gas and sphericise
     '''
@@ -425,15 +430,17 @@ def radiusinsnap3(snap,wind=False):
     mcode = vols*rhos
     msum = np.sum(mcode)
     # Speeds for winds
+    uvel = snap.info["unit_velocity"].express(C.cm/C.s)
+    vels = cells["vel"]
+    spds = np.sqrt(np.sum(vels**2.0,1))
     if wind:
-        uvel = snap.info["unit_velocity"].express(C.cm/C.s)
-        vels = cells["vel"]
-        spds = np.sqrt(np.sum(vels**2.0,1))
         mufunc = lambda dset: 1./(0.76*(1.+dset["xHII"]) + \
                                   0.25*0.24*(1.+dset["xHeII"]+2.*dset["xHeIII"]))  
         temp = cells["P"]/cells["rho"]*snap.info["unit_temperature"].express(C.K)*mufunc(cells)
         # Over 100 km/s or T > 1e5 K
-        mask = np.logical_or(spds*uvel/1e5 > 100.0,temp > 1e5)
+        mask = np.logical_or(spds*uvel/1e5 > 100.0,temp > windtemp)
+    elif freestream:
+        mask = spds*uvel/1e5 > 1000.0 # Heuristic limit in km/s
     else:
         thresh = 0.1 # fiducial "non-ionised" threshold
         mask = np.where(ion > thresh)
@@ -468,7 +475,7 @@ def photodensinsnap(snap):
                               0.25*0.24*(1.+dset["xHeII"]+2.*dset["xHeIII"]))  
     temp = cells["P"]/cells["rho"]*snap.info["unit_temperature"].express(C.K)*mufunc(cells)
     # Over 100 km/s or T > 1e5 K
-    notwindmask = np.logical_and(spds*uvel/1e5 < 100.0,temp < 1e5)
+    notwindmask = np.logical_and(spds*uvel/1e5 < 100.0,temp < windtemp)
     thresh = 0.1 # fiducial "non-ionised" threshold
     mask = np.logical_and(ion > thresh,notwindmask)
     # Get volume-weighted average density of ionised gas

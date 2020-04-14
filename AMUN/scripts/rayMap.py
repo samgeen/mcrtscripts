@@ -91,7 +91,7 @@ def hydro_label(hydro):
         return "|B| (code units)"
 '''
 
-def _MapRayTrace(snap,hydro='rho',los='z',zoom=1.0):
+def _MapRayTrace(snap,hydro='rho',los='z',zoom=1.0,starC=False):
     #allhydros = ["rho","P","xHII","B-left","B-right","xHeII","xHeIII"]
     domax = False
     if "max" in hydro:
@@ -100,6 +100,10 @@ def _MapRayTrace(snap,hydro='rho',los='z',zoom=1.0):
     amr = hydrofuncs.amr_source(snap,hydro)
     size = np.zeros(2)+zoom
     centre = np.zeros(3)+0.5
+    if starC:
+        stars = stellars.FindStellar(snap)
+        boxlen = snap.info["boxlen"]
+        centre = np.array([stars.x[0], stars.y[0], stars.z[0]])/boxlen
     up = ups[los]
 
     cam  = v.Camera(center=centre, line_of_sight_axis=los, 
@@ -111,7 +115,12 @@ def _MapRayTrace(snap,hydro='rho',los='z',zoom=1.0):
             op = hydrofuncs.scale_by_units(snap,hydro)
             hydro_op = MaxOperator(snap,op)
         else:
-            hydro_op = scop(hydrofuncs.scale_by_units(snap,hydro))
+            if hydro == "rho" or hydro == "nH":
+                func = hydrofuncs.scale_by_units(snap,hydro)
+                hydro_op = v.FractionOperator(lambda dset: func(dset)*func(dset),
+                                              lambda dset: func(dset))
+            else:
+                hydro_op = scop(hydrofuncs.scale_by_units(snap,hydro))
         im = rt.process(hydro_op,cam,surf_qty = hydrofuncs.surface_quantity(hydro))
         print "Made ray trace map for "+hydro+" (with min/max:", im.min(), im.max(), ")"
         return im
@@ -125,7 +134,7 @@ class RayTraceMap(object):
     '''
     Ray density map 
     '''
-    def __init__(self,snap,hydro,los='z',pixlength=None,zoom=1.0):
+    def __init__(self,snap,hydro,los='z',pixlength=None,zoom=1.0,starC=False):
         '''
         los                         - Line of sight (strings 'x','y','z')
         pixlength                   - Length of pixels in parsecs
@@ -140,10 +149,11 @@ class RayTraceMap(object):
             pixlength = self._snap.info["boxlen"] * zoom / float(IMSIZE)
         self._pixlength = pixlength
         self._raytrace = None
+        self._starC = starC
 
     def getRaytraceMap(self):
         if self._raytrace is None:
-            self._raytrace = _MapRayTraceHamu(self._snap.hamusnap,self._hydro,self._los,self._zoom)
+            self._raytrace = _MapRayTraceHamu(self._snap.hamusnap,self._hydro,self._los,self._zoom,self._starC)
         return self._raytrace
 
     # Maybe in the future helpful
