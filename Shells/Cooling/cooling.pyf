@@ -1,0 +1,20 @@
+!    -*- f90 -*-
+! Note: the context of this file is case sensitive.
+
+python module cooling ! in 
+    interface  ! in :cooling
+        subroutine solve_cooling_ramses(nh,t2,zsolar,dt,gammain,ncell,deltat2out) ! in :cooling:cooling_ramses.f90
+            use cooling_module
+            real(kind=8) dimension(ncell) :: nh
+            real(kind=8) dimension(ncell),depend(ncell) :: t2
+            real(kind=8) dimension(ncell),depend(ncell) :: zsolar
+            real(kind=8) intent(in) :: dt
+            real(kind=8) intent(in) :: gammain
+            integer, optional,check(len(nh)>=ncell),depend(nh) :: ncell=len(nh)
+            real(kind=8) dimension(ncell),intent(out),depend(ncell) :: deltat2out
+        end subroutine solve_cooling_ramses
+    end interface 
+end python module cooling
+
+! This file was auto-generated with f2py (version:2).
+! See http://cens.ioc.ee/projects/f2py2e/
