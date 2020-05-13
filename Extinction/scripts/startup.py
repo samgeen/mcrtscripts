@@ -62,6 +62,8 @@ allsims = ["23_LEGO","26_LEGO"]
 #mainsimfolder = "/home/sgeen/MC_RT/runs_anais/"
 mainsimfolder = "/home/lego/geen/LEGO/"
 
+
+Hamu.CACHEPATH = "/cral3/geen/cache/"
 hamusims = {}
 for simname in allsims:
     sim = Hamu.MakeSimulation(simname,mainsimfolder+simname,label)
