@@ -363,7 +363,7 @@ if __name__ == "__main__":
     #powfile = open("../plots/powerlaws.txt","w")
     for simname in allsims:
         FindColumnsInSim(simname)
-        time = 3.38 # Time of first sink formation
+        #time = 3.38 # Time of first sink formation
         #starpos = findstarpos(simname,time)
         #plotgradient(simname,"rho",time,starpos,"Star's Position",
         #             xlims=[0.03,25.0],powfile=powfile,suffix="starpos")
