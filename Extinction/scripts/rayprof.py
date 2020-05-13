@@ -88,7 +88,7 @@ profileHamu = Hamu.Algorithm(medianprofile)
 def column(snap,centre):
     global nray, nprofs,rays,rads
     # Get column density around centre along each ray
-    r,p = makeprofsHamu(snap,"nH",centre)
+    r,p = makeprofs(snap,"nH",centre)
     radii = r[0:nray]*snap.info["unit_length"].express(C.cm)
     dr = radii[1] - radii[0]
     profs = np.reshape(p,(nprofs, nray)).T # No idea
@@ -343,23 +343,30 @@ def FindStarPositions(snap):
         positions.append(pos)
     return positions, stellar.mass
 
-def FindColumns(simname,time):
-    sim = hamusims[simname]
-    tcode = time * Myrins / unit_t
-    snap = sim.FindAtTime(tcode)
+def _FindColumnsInSnap(snap):
     positions, masses = FindStarPositions(snap)
     columns = [column(snap,centre) for centre in positions]
     return columns, masses
+FindColumnsInSnap = Hamu.Algorithm(_FindColumnsInSnap)
+
+def FindColumnsInSim(simname)
+    sim = hamusims[simname]
+    for snap in sim.Snapshots():
+        columns, masses = FindColumnsInSnap(snap)
+
+
 # TODO: Work out how to plot this for initial tests
+# TODO: Instead pick one LOS and draw rays from each star out to that
 
 if __name__ == "__main__":
     # Make figure
-    powfile = open("../plots/powerlaws.txt","w")
-    for simname in imfsims:
+    #powfile = open("../plots/powerlaws.txt","w")
+    for simname in allsims:
+        FindColumnsInSim(simname)
         time = 3.38 # Time of first sink formation
-        starpos = findstarpos(simname,time)
-        plotgradient(simname,"rho",time,starpos,"Star's Position",
-                     xlims=[0.03,25.0],powfile=powfile,suffix="starpos")
-        plotgradient(simname,"rho",time,np.array([0.5,0.5,0.5]),"Geometric Centre",
-                     xlims=[0.03,25.0],powfile=powfile,suffix="centre")
-    powfile.close()
+        #starpos = findstarpos(simname,time)
+        #plotgradient(simname,"rho",time,starpos,"Star's Position",
+        #             xlims=[0.03,25.0],powfile=powfile,suffix="starpos")
+        #plotgradient(simname,"rho",time,np.array([0.5,0.5,0.5]),"Geometric Centre",
+        #             xlims=[0.03,25.0],powfile=powfile,suffix="centre")
+    #powfile.close()
