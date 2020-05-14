@@ -23,7 +23,7 @@ def extinctionbymass(simname):
 
 def extinctionforeachsnap(simname):
     sim = hamusims[simname]
-    for snap in sim.Snapshots()[27:38]:
+    for snap in sim.Snapshots():
         extinctioninsnap(snap, simname)
         
 def extinctioninsnap(snap, simname):
@@ -56,6 +56,8 @@ def extinctioninsnap(snap, simname):
     plt.xlabel("Stellar Mass / Msun")
     plt.ylabel("V-band extinction")
     plt.yscale("log")
+    plt.xlim([8,120])
+    plt.ylim([0.1,1e3])
     figname = "../plots/extinctions/extinctioninsnap_"+simname+"_"+str(snap.OutputNumber()).zfill(5)+".png"
     print "Plotting", figname
     plt.savefig(figname)
