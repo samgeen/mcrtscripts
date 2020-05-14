@@ -133,16 +133,27 @@ class AllHydros(object):
         #   I know, I know...
         # Mass density
         func = lambda ro: lambda dset: dset["rho"]*ro.info["unit_density"].express(C.g_cc)
-        h["rho"] = Hydro("Density / g/cm$^{3}$",func,["rho"],"RdPu_r","log",(-28, -19))
+        h["rho"] = Hydro("Density / g/cm$^{3}$",func,["rho"],"RdPu_r","log",(-25, -17))
         # Hydrogen number density
         func = lambda ro: lambda dset: dset["rho"]*ro.info["unit_density"].express(C.H_cc)
         h["nH"] = Hydro("Density / atoms/cm$^{3}$",func,["rho"],"RdPu_r","log",(0, 6))
         # Column (number) density
         func =  lambda ro: lambda dset: dset["rho"]*ro.info["unit_density"].express(C.H_cc)*ro.info["unit_length"].express(C.cm)
-        h["NH"] = Hydro("$N_{\mathrm{H}}$ / cm$^{-2}$",func,["rho"],"RdPu_r","log",(20.5,23.0),surfacequantity=True)
+        h["NH"] = Hydro("$N_{\mathrm{H}}$ / cm$^{-2}$",func,["rho"],"RdPu_r","log",(20.5,24.0),surfacequantity=True)
         # Thermal pressure
-        func = lambda ro: lambda dset: dset["P"]*ro.info["unit_pressure"].express(C.barye)
-        h["P"] = Hydro("Pressure / ergs/cm$^3$",func,["P"],"YlOrRd","log",(None, None))
+        Pfunc = lambda ro: lambda dset: dset["P"]*ro.info["unit_pressure"].express(C.barye)
+        h["P"] = Hydro("Pressure / ergs/cm$^3$",Pfunc,["P"],"YlOrRd","log",(None, None))
+        # Thermal energy (same as thermal pressure)
+        h["Etherm"] = Hydro("Thermal energy density / ergs/cm$^3$",Pfunc,["P"],"YlOrRd","log",(-16.0,-7.0))
+        # Kinetic energy
+        EKfunc = lambda ro: lambda dset: dset["rho"]*ro.info["unit_density"].express(C.g_cc)* \
+                  np.sum(dset["vel"]**2,1)*(ro.info["unit_velocity"].express(C.cm/C.s))**2
+        h["Ekin"] = Hydro("Kinetic energy density / ergs/cm$^3$",EKfunc,["rho","vel"],"PuBuGn","log",(-16.0, -7.0))
+        # Kinetic energy / Thermal Energy
+        EKperEThermfunc = lambda ro: lambda dset: dset["rho"]*ro.info["unit_density"].express(C.g_cc)* \
+                  np.sum(dset["vel"]**2,1)*(ro.info["unit_velocity"].express(C.cm/C.s))**2 / \
+                  (dset["P"]*ro.info["unit_pressure"].express(C.barye))
+        h["EkinperEtherm"] = Hydro("Kinetic energy / Thermal energy",EKperEThermfunc,["rho","vel","P"],"RdYlBu","log",(-3.0,3.0))
         # Temperature
         mufunc = lambda dset: 1./(0.76*(1.+dset["xHII"]) + \
                      0.25*0.24*(1.+dset["xHeII"]+2.*dset["xHeIII"]))
@@ -188,8 +199,8 @@ class AllHydros(object):
             return findvrad
         h["vrad"] = Hydro("$v_{\mathrm{radial}}$ / km/s",vradfunc,["vel"],"BuGn","log",(None, None))
         # Gas speed
-        func = lambda ro: lambda dset: np.sqrt(np.sum(dset["vel"]**2,1))*ro.info["unit_velocity"].express(C.km/C.s)
-        h["spd"] = Hydro("Gas Speed / km/s",func,["vel"],"BuGn","log",(None, None))
+        spdfunc = lambda ro: lambda dset: np.sqrt(np.sum(dset["vel"]**2,1))*ro.info["unit_velocity"].express(C.km/C.s)
+        h["spd"] = Hydro("Gas Speed / km/s",spdfunc,["vel"],"BuGn","log",(None, None))
         # Velocity vector (x)
         func = lambda ro: lambda dset: dset["vel"][:,0]*ro.info["unit_velocity"].express(C.km/C.s)
         h["vx"] = Hydro("$v_{\mathrm{x}}$ / km/s",func,["vel"],"BuGn","log",(None, None))

@@ -542,6 +542,7 @@ if __name__=="__main__":
     allnames = ["NOFB","UV_30","UVWIND_30","UV_60","UVWIND_60","UV_120","UVWIND_120"]
     allfbnames = ["UV_30","UVWIND_30","UV_60","UVWIND_60","UV_120","UVWIND_120"]
     allwindnames = ["UVWIND_120","UVWIND_60","UVWIND_30"]
+    allwindpressnames = ["UVWINDPRESS_"+str(num) for num in [30,60,120]]
     for func in [windradiusratio]:
         run(func,(allwindnames,
                   ["UVWIND_120_DENSE"]),
