@@ -25,6 +25,8 @@ import stellars
 import timefuncs
 import singlestar
 
+from collections import OrderedDict
+
 #Hamu.Workspace("HIISFE")
 
 # Physical conversions
@@ -55,7 +57,7 @@ Msolar = "M$_{\odot}$"
 plotfolder = "../plots/"
 
 # Simulation names
-allsims = ["23_LEGO","26_LEGO"]
+allsims = ["18_LEGO","23_LEGO","26_LEGO"]
 
 # Simulation locations
 #mainsimfolder = "/home/hd/hd_hd/hd_mp149/MCRT/runs/"
@@ -64,8 +66,9 @@ mainsimfolder = "/home/lego/geen/LEGO/"
 
 
 Hamu.CACHEPATH = "/cral3/geen/cache/"
-hamusims = {}
+hamusims = OrderedDict()
 for simname in allsims:
+    label = simname
     sim = Hamu.MakeSimulation(simname,mainsimfolder+simname,label)
     hamusims[simname] = sim
 
