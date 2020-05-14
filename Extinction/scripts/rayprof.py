@@ -11,7 +11,7 @@ import profilesphere
 
 rays = None
 rads = None
-nprofs = 10000
+nprofs = 100
 nray = 1000
 rextent = None
 
@@ -43,22 +43,36 @@ def makerays(centre):
     rays[:,1] += centre[1]
     rays[:,2] += centre[2]
 
-def makeprofs(snap, hydro,centre):
+def makeprofs(snap, hydro,centres,amr=None):
     '''
     Make profiles
     '''
     global rays, rads, nprofs, nray
     if rays is None or rads is None:
-        makerays(centre)
-    amr = hydrofuncs.amr_source(snap,hydro)
-    dset = pymses.analysis.sample_points(amr,rays)
-    #if dset.reorder_indices is not None:
-    #    p = dset[hydro][dset.reorder_indices]
-    #else:
-    #    p = dset[hydro]
-    p = hydrofuncs.scale_by_units(snap, hydro)(dset)
-    r = rads*snap.info["unit_length"].express(C.pc)
-    return r, p
+        makerays([0,0,0])
+    allrays = np.zeros((rays.shape[0]*len(centres),3))
+    iray = 0
+    lenray = nprofs*nray
+    # Gather all rays
+    for centre in centres:
+        allrays[iray:iray+lenray,0] = rays[:,0]+centre[0]
+        allrays[iray:iray+lenray,1] = rays[:,1]+centre[1]
+        allrays[iray:iray+lenray,2] = rays[:,2]+centre[2]
+        iray += lenray
+    if amr is None:
+        amr = hydrofuncs.amr_source(snap,hydro)
+    dset = pymses.analysis.sample_points(amr,allrays)
+    allp = hydrofuncs.scale_by_units(snap, hydro)(dset)
+    rs = []
+    profs = []
+    iray = 0
+    for centre in centres:
+        r = rads[iray:iray+lenray]*snap.info["unit_length"].express(C.pc)
+        p = allp[iray:iray+lenray]
+        iray += lenray
+        rs.append(r)
+        profs.append(p)
+    return rs, profs
 
 makeprofsHamu = Hamu.Algorithm(makeprofs)
 
@@ -85,18 +99,22 @@ medianprofileHamu = Hamu.Algorithm(medianprofile)
 # Compatability hack for other scripts
 profileHamu = Hamu.Algorithm(medianprofile)
 
-def column(snap,centre):
+def makecolumn(snap,centres,amr):
     global nray, nprofs,rays,rads
     # Get column density around centre along each ray
-    r,p = makeprofs(snap,"nH",centre)
-    radii = r[0:nray]*snap.info["unit_length"].express(C.cm)
+    rs,profs = makeprofs(snap,"nH",centres,amr)
+    radii = (rs[0])[0:nray]*pcincm # Convert radius from pc to cm
     dr = radii[1] - radii[0]
-    profs = np.reshape(p,(nprofs, nray)).T # No idea
-    columns = np.sum(profs,axis=1)*dr
-    # Debug check to make sure I didn't mess up the index in the sum above
-    if len(columns != nprofs):
-        print "OOPS NOT NPROFS"
-        raise ValueError
+    columns = []
+    for prof in profs:
+        p = np.reshape(prof,(nprofs, nray)).T # No idea
+        cols = np.sum(p,axis=0)*dr
+        columns.append(cols)
+        # Debug check to make sure I didn't mess up the index in the sum above
+        if len(cols) != nprofs:
+            print len(cols), nprofs
+            print "OOPS NOT NPROFS"
+            raise ValueError
     # Return NH
     return columns
 
@@ -333,27 +351,51 @@ def plotgradient(simname,hydro,time,centre,label=None,xlims=None,powfile=None,su
         plt.savefig(path+"/profile_"+suffix+str(snap.OutputNumber()).zfill(5)+".pdf",rasterized=True,dpi=200)
 
 def FindStarPositions(snap):
-    stellar = stellars.FindStellar(snap)
+    stellar = stellars.FindStellar(snap.hamusnap)
     positions = []
-    for istellar in len(stellar.mass):
+    for istellar in range(0,len(stellar.mass)):
         sinkid = stellar.sinkid[istellar]
         sink = sinks.FindSinks(snap)
-        boxlen = snap.RawData().info["boxlen"]
-        pos = np.array([sink.x[sinkid],sink.y[sinkid],sink.z[sinkid]])/boxlen
+        sinkloc = np.where(sink.id == sinkid)
+        boxlen = snap.info["boxlen"]
+        pos = np.array([sink.x[sinkloc],sink.y[sinkloc],sink.z[sinkloc]])/boxlen
         positions.append(pos)
     return positions, stellar.mass
 
 def _FindColumnsInSnap(snap):
     positions, masses = FindStarPositions(snap)
-    columns = [column(snap,centre) for centre in positions]
+    amr = hydrofuncs.amr_source(snap,"rho")
+    columns = [makecolumn(snap,centre,amr) for centre in positions]
     return columns, masses
-FindColumnsInSnap = Hamu.Algorithm(_FindColumnsInSnap)
+FindColumnsByStarInSnap = Hamu.Algorithm(_FindColumnsInSnap)
 
-def FindColumnsInSim(simname)
+# This is *much* more efficient where nsink << nstellar
+def _FindColumnsInSnapBySink(snap):
+    sink = sinks.FindSinks(snap)
+    stellar = stellars.FindStellar(snap)
+    amr = hydrofuncs.amr_source(snap,"rho")
+    boxlen = snap.info["boxlen"]
+    posns = []
+    sinkids = []
+    for isink in range(0,len(sink.id)):
+        sinkid = sink.id[isink]
+        pos = np.array([sink.x[isink],sink.y[isink],sink.z[isink]])/boxlen
+        posns.append(pos)
+        sinkids.append(sinkid)
+    columns = []
+    if len(posns) > 0:        
+        columns = makecolumn(snap,posns,amr)
+    return columns, sinkids
+FindColumnsBySinkInSnap = Hamu.Algorithm(_FindColumnsInSnapBySink)
+
+def FindColumnsInSim(simname):
+    DEBUG = False
     sim = hamusims[simname]
     for snap in sim.Snapshots():
-        columns, masses = FindColumnsInSnap(snap)
-
+        columns, masses = FindColumnsBySinkInSnap(snap)
+        if DEBUG and len(masses) > 0:
+            print columns, masses
+            return
 
 # TODO: Work out how to plot this for initial tests
 # TODO: Instead pick one LOS and draw rays from each star out to that
@@ -361,7 +403,8 @@ def FindColumnsInSim(simname)
 if __name__ == "__main__":
     # Make figure
     #powfile = open("../plots/powerlaws.txt","w")
-    for simname in allsims:
+    
+    for simname in [allsims[0]]:
         FindColumnsInSim(simname)
         #time = 3.38 # Time of first sink formation
         #starpos = findstarpos(simname,time)

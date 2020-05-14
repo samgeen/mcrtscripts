@@ -53,7 +53,8 @@ def DrawPieChart(ax,X, Y, ratios, size):
         ax.scatter([X],[Y] , marker=(xyi,0), s=size, facecolor=colours[i],
                    lw=0.5)
 
-def MakeImage(snap,los,ax,dolengthscale,cmap,label=None,dpi=200.0,simname=None,zoom=1.0,labelpos=(0.9,0.1)):
+def MakeImage(snap,los,ax,dolengthscale,cmap,label=None,dpi=200.0,simname=None,zoom=1.0,labelpos=(0.9,0.1),
+              drawtracks=True):
     imtype = "columndensity"
     cax = None
     if snap is not None:
@@ -89,14 +90,14 @@ def MakeImage(snap,los,ax,dolengthscale,cmap,label=None,dpi=200.0,simname=None,z
         except:
             lenm = 0
         if lenm > 0:
-            area = np.pi * sinkm / 10.0
-        # This is x/y-inverted thanks to the weirdness of 
-        #        numpy/pyplot image axes
-        #if ysoage == 0.0:
-        ax.scatter(sinky,sinkx,s=area,c="w",alpha=0.5,edgecolors='w')
+            area = np.pi * sinkm / 100.0
+            # This is x/y-inverted thanks to the weirdness of 
+            #        numpy/pyplot image axes
+            #if ysoage == 0.0:
+            ax.scatter(sinky,sinkx,s=area,c="w",alpha=0.5,edgecolors='c')
 
         # Draw star tracks
-        if simname is not None:
+        if simname is not None and drawtracks:
             tracks, tracktimes, dummy = trackstars.runforsim(simname)
             if los == "z":
                 xtrack = 0
@@ -148,17 +149,19 @@ def MakeImage(snap,los,ax,dolengthscale,cmap,label=None,dpi=200.0,simname=None,z
     #ax.axis("off")
     return cax
 
-def MakeFigure(simnames,times,name,los,nonamelabel=False,shape=None,dpi=200.0,zoom=1.0,timelabels=False):
+def MakeFigure(sims,snapsdict,name,los,nonamelabel=False,shape=None,dpi=200.0,zoom=1.0,timelabels=False,
+               drawtracks=True):
     hydro = "NH"
     nrows = 1
     ncols = 1
+    simnames = [sim.Name() for sim in sims]
     # Make a square array of images
-    while len(simnames)*len(times) > nrows*ncols:
+    while len(simnames)*len(snapsdict[simnames[0]]) > nrows*ncols:
         nrows += 1
         ncols += 1
     # Do we fill the whole square?
     square = True
-    if len(simnames)*len(times) < nrows*ncols:
+    if len(simnames)*len(snapsdict[simnames[0]]) < nrows*ncols:
         square = False
     # Make figure
     fig, axes = plt.subplots(nrows=nrows, ncols=ncols, 
@@ -168,27 +171,30 @@ def MakeFigure(simnames,times,name,los,nonamelabel=False,shape=None,dpi=200.0,zo
     # Run for all sims
     dolengthscale = True
     isim = -1
-    for ax in axes.flatten():
+    try:
+        flaxes = axes.flatten()
+    except:
+        flaxes = [axes]
+    for ax in flaxes:
         ax.set_axis_off()
         ax.set_aspect("equal","datalim")
         ax.axis("off")
     labelpos = (0.9,0.1)
     if square:
         labelpos = (0.9,0.9)
-    for simname in simnames:
+    for sim in sims:
+        simname = sim.Name()
         cmap = linestyles.ColourMap(simname)
-        sim = Hamu.Simulation(simname)
         label = linestyles.Label(simname)
-        for time in times:
+        for snap in snapsdict[simname]:
             isim += 1
-            snap = sim.FindAtTime(time)
-            ax = axes.flatten()[isim]
+            ax = flaxes[isim]
             if timelabels:
                 timestr = "%.1f" % snaptime.Myr(snap)
                 label = timestr+" Myr"
             im = MakeImage(snap,los,ax,dolengthscale,cmap,
                            label=label,
-                           dpi=dpi, simname=simname,zoom=zoom,labelpos=labelpos)
+                           dpi=dpi, simname=simname,zoom=zoom,labelpos=labelpos,drawtracks=drawtracks)
             dolengthscale = False
     # Make empty frames to remove axis scales, etc
     #for irest in range(isim,nrows*ncols):
@@ -215,7 +221,7 @@ def MakeFigure(simnames,times,name,los,nonamelabel=False,shape=None,dpi=200.0,zo
     #wsname = Hamu.SimData.Settings.Settings()["CurrentWorkspace"]
     folder = "../plots/vis/multiray/"
     MakeDirs(folder)
-    figname = folder+"multiray_"+hydro+suffix+".pdf"
+    figname = folder+"multiray_"+hydro+suffix+".png"
     print "Saving figure "+figname+"..."
     fig.subplots_adjust(hspace=0.02, wspace=0.02, 
                         left=0.20,right=1.0,
@@ -229,13 +235,15 @@ def MakeFigure(simnames,times,name,los,nonamelabel=False,shape=None,dpi=200.0,zo
     print "Done!"
 
 if __name__=="__main__":
-    time = 1.5*tffcloud_code
-    times = np.array([1.0,1.5,2.0,2.5])*tffcloud_code
-    zoom = 0.7 # 1.0
-    for i in range(0,13):
+    #time = 1.5*tffcloud_code
+    #times = np.array([1.0,1.5,2.0,2.5])*tffcloud_code
+    zoom = 0.5 # 1.0
+    print hamusims
+    for sim in hamusims.itervalues():
         for los in "xyz":
-            MakeFigure([icsims[i]],times,name="drifttimes_ic"+str(i)+los,los=los,zoom=zoom,timelabels=True)
-    for los in "xyz":
-        MakeFigure([imfsims[2]],times,name="drifttimes"+los,los=los,zoom=zoom,timelabels=True)
-    MakeFigure(imfsims,[time],name="imf",los='z',zoom=zoom)
-    MakeFigure(icsims,[time],name="ic",los='z',zoom=zoom)
+            for i, snap in enumerate(sim.Snapshots()):
+                print "Snap", i+1
+                simsnapdict = {sim.Name():[snap]}
+                MakeFigure([sim],simsnapdict,
+                           name="columns"+sim.Name()+los+str(i+1).zfill(5),los=los,zoom=zoom,timelabels=True,
+                           drawtracks=False)

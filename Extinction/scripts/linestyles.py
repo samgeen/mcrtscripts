@@ -34,7 +34,7 @@ def RunNum(simname):
         run = "imf"
     else:
         run = "ic"
-    num = int(simname[-2:])
+    num = 7
     return run, num
 
 def Colour(simname):
