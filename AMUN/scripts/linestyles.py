@@ -92,8 +92,8 @@ def Colour(simname):
     return "#000000"
 
 def Linestyle(simname):
-    lines = ["--","-",":","-."]
-    physics = ["NOFB","UVWIND","UV","SN"]
+    lines = ["--","-",":",":-","-"]
+    physics = ["NOFB","UVWINDPRESS","UVWIND","UV","SN"]
     for num, phys in enumerate(physics):
         if phys in simname:
             return lines[num]
