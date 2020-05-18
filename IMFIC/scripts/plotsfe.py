@@ -6,7 +6,7 @@ Sam Geen, January 2020
 
 from startup import *
 
-import sfeobs, sfesim, linestyles
+import sfeobs, sfesim, linestyles, rdmfile
 
 from pymses.utils import constants as C
 
@@ -17,7 +17,7 @@ TWOMASSFWHM = 1.0/6.0 # Degrees
 
 Avhigh = 5.0
 
-def _drawlines(sim,colour=black,multiangle=True):
+def _drawlines(sim,colour=black,multiangle=True,rdm=None):
     esims = []
     times = []
     utime = None
@@ -49,9 +49,13 @@ def _drawlines(sim,colour=black,multiangle=True):
         times.append(snap.Time()*utime)
         itime += 1
     times = np.array(times)
+    if rdm is not None:
+        rdm.AddPoints(times,esims,label=sim.Name()+" "+"sim")
     plt.plot(times,esims,color=colour,linestyle="--")
     if not multiangle:
         plt.plot(times,eobs[:,0],color="r",linestyle="-")
+        if rdm is not None:
+            rdm.AddPoints(times,eobs[:,0],label=sim.Name()+" "+"obs")
     else:
         taba = np.concatenate((times,times[::-1]))
         outer  = np.concatenate((eobs[:,0],eobs[:,5][::-1]))
@@ -69,8 +73,9 @@ def makeplot(sims,dolegend=True,plotlabel=""):
     # Plot
     plt.clf()
     blank = "55"
+    rdm = rdmfile.RDMFile(__file__)
     for sim in sims:
-        _drawlines(sim,black,multiangle=False)
+        _drawlines(sim,black,multiangle=False,rdm=rdm)
     #_drawlines(sim,red)
     # Make cloud size text
     ax = plt.gca()
@@ -101,7 +106,8 @@ def makeplot(sims,dolegend=True,plotlabel=""):
     figname = "sfe_"+plotlabel+limtxt+".pdf"
     MakeDirs(folder)
     plt.savefig(folder+figname)
-
+    rdm.Write(folder+figname)
+    
 
 if __name__=="__main__":
     makeplot([hamusims[sim] for sim in icsims],plotlabel="IC")
