@@ -6,41 +6,120 @@ Sam Geen, May 2020
 from startup import *
 import rayprof
 
+from pymses.utils import constants as C  
 
-def extinctionbymass(simname):
+from scipy import interpolate
+
+def extinctionbyparticle(simname,wholesink):
+    # wholesink - if True, use whole sink mass, otherwise list by stellar objects
     sim = hamusims[simname]
-    masstracks = {}
+    particletracks = {}
+    isnaps = {}
     # Hack to get this to run on already processed data
-    for snap in sim.Snapshots()[0:17]:
-        c,m = rayprof.FindColumnsInSnap(snap)
-        for columns, mass in zip(c,m):
-            if mass not in masstracks:
-                masstracks[mass] = []
-            masstracks[mass].append(columns)
-    for mass, track in masstracks.iteritems():
-        masstracks[mass] = np.array(track)
-        print masstracks[mass].shape
+    for snap in sim.Snapshots():
+        print "RUNNING FOR SNAP", snap.OutputNumber()
+        stellar = stellars.FindStellar(snap)
+        if len(stellar.mass) == 0:
+            continue
+        sink = sinks.FindSinks(snap)
+        # Load columns of each sink
+        sinktocolumns = makecolumnsinsinksdict(snap)
+        if len(sinktocolumns.keys()) <= 0:
+            continue
+        # Either list by stellar mass
+        if not wholesink:
+            particles = stellar.mass
+            sinklist = stellar.sinkid
+        # Or by sink ID for whole sink
+        else:
+            particles = sink.id
+            sinklist = sink.id
+        for particle, sinkid in zip(particles,sinklist):
+            if particle not in particletracks:
+                particletracks[particle] = []
+                isnaps[particle] = []
+            particletracks[particle].append(sinktocolumns[sinkid])
+            isnaps[particle].append(snap.OutputNumber()-1)
+    for particle, track in particletracks.iteritems():
+        # Shape will be ntimes x nrays (nrays = 100 by default)
+        particletracks[particle] = np.array(track)
+    return particletracks, isnaps
+
+def extinctionattimes(simname,times,wholesink):
+    sim = hamusims[simname]
+    snaptimes = np.array([snap.Time() for snap in sim.Snapshots()])
+    snap = sim.Snapshots()[0]
+    codetoMyr = snap.RawData().info["unit_time"].express(C.Myr)
+    snaptimesMyr = snaptimes*codetoMyr
+    if len(times) == 0:
+        times = np.linspace(0,snaptimesMyr[-1],1000)
+    particletracks, isnaps = extinctionbyparticle(simname,wholesink)
+    interptracks = {}
+    for particle, track in particletracks.iteritems():
+        interptracks[particle] = []
+        nrays = track.shape[1]
+        for iray in range(0,nrays):
+            parttimes = snaptimesMyr[isnaps[particle]]
+            interptracks[particle].append(interpolate.interp1d(parttimes,
+                                                               track[:,iray]))
+    for itime, time in enumerate(times):
+        plt.clf()
+        mincol = 0.1
+        for particle, tracks in interptracks.iteritems():
+            columns = []
+            if wholesink:
+                sink = sinks.FindSinks(snap)
+            try:
+                for track in tracks:
+                    c = track(time)
+                    if c < mincol:
+                        c = mincol
+                    columns.append(c)
+                cols = np.sort(columns)
+                exts = NHtoAv(cols)
+                if not wholesink:
+                    mass = particle
+                else:
+                    mass = sink.mass[sink.id == particle]
+                marr = exts*0.0 + mass
+                # Make weights that peak at 1
+                weights = np.concatenate([np.linspace(0.1,1,len(exts)//2),
+                                          np.linspace(1,0.1,len(exts)//2)])
+                plt.scatter(marr,exts,c=weights,alpha=0.1,edgecolors='none',cmap="Blues")
+            except ValueError:
+                pass
+        plt.xlabel("Stellar Mass / Msun")
+        plt.ylabel("V-band extinction")
+        plt.yscale("log")
+        plt.xlim([8,120])
+        plt.ylim([mincol,1e3])
+        plt.text(100,0.2,("%.2f" % time)+" Myr")
+        figname = "../plots/extinctions/extinctionattime_"+simname+"_"+str(itime).zfill(5)+".png"
+        print "Plotting", figname
+        plt.savefig(figname)
+
+                                
+def makecolumnsinsinksdict(snap):
+    cols,isinks = rayprof.FindColumnsBySinkInSnap(snap)
+    if len(isinks) <= 0:
+        return {}
+    sinktocolumns = {}
+    for columns, isink in zip(cols,isinks):
+        sinktocolumns[isink] = columns
+    return sinktocolumns
 
 def extinctionforeachsnap(simname):
     sim = hamusims[simname]
     for snap in sim.Snapshots():
         extinctioninsnap(snap, simname)
-        
+
 def extinctioninsnap(snap, simname):
     stellar = stellars.FindStellar(snap)
     if len(stellar.mass) == 0:
         return
     plt.clf()
     # Load columns of each sink
-    cols,isinks = rayprof.FindColumnsBySinkInSnap(snap)
-    if len(isinks) < 0:
-        return
-    sinktocolumns = {}
-    print isinks
-    for col in cols:
-        print "MIN COLS", col[0:10]
-    for columns, isink in zip(cols,isinks):
-        sinktocolumns[isink] = columns
+    sinktocolumns = makecolumnsinsinksdict(snap)
     # Plot stellar objects
     for istellar in range(0,len(stellar.mass)):
         sinkid = stellar.sinkid[istellar]
@@ -64,4 +143,7 @@ def extinctioninsnap(snap, simname):
                 
         
 if __name__=="__main__":
-    extinctionforeachsnap("18_LEGO")
+    extinctionattimes("18_LEGO",[],False)
+    #extinctionforeachsnap("18_LEGO")
+    #extinctionbyparticle("18_LEGO",True)
+    #extinctionbyparticle("18_LEGO",False)

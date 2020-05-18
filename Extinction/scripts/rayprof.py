@@ -404,7 +404,7 @@ if __name__ == "__main__":
     # Make figure
     #powfile = open("../plots/powerlaws.txt","w")
     
-    for simname in [allsims[0]]:
+    for simname in [allsims[1:]]:
         FindColumnsInSim(simname)
         #time = 3.38 # Time of first sink formation
         #starpos = findstarpos(simname,time)
