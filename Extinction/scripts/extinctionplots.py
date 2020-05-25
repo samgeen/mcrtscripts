@@ -10,6 +10,8 @@ from pymses.utils import constants as C
 
 from scipy import interpolate
 
+AVtext = "A$_{\mathrm{V}}$"
+
 def extinctionbyparticle(simname,wholesink):
     # wholesink - if True, use whole sink mass, otherwise list by stellar objects
     sim = hamusims[simname]
@@ -98,7 +100,6 @@ def extinctionattimes(simname,times,wholesink):
         print "Plotting", figname
         plt.savefig(figname)
 
-                                
 def makecolumnsinsinksdict(snap):
     cols,isinks = rayprof.FindColumnsBySinkInSnap(snap)
     if len(isinks) <= 0:
@@ -107,7 +108,81 @@ def makecolumnsinsinksdict(snap):
     for columns, isink in zip(cols,isinks):
         sinktocolumns[isink] = columns
     return sinktocolumns
-
+        
+def cumulativeextinction(snap,simname,wholesink,dofraction,ylims=None):
+    # Plot N(<extinction) vs extinction
+    # wholesink : bool - use whole sink or just the stellar objects (massive stars)?
+    # If set, do mass visible instead of photon count
+    # dofraction : bool - if set, do Nvisible/Ntotal versus just Nvisible
+    nrays = rayprof.nprofs # Number of rays cast from each sink
+    stellar = stellars.FindStellar(snap)
+    sink = sinks.FindSinks(snap)
+    particletocolumns = {}
+    if not wholesink:
+        if len(stellar.mass) == 0:
+            return
+        masses = stellar.mass
+        sinklist = stellar.sinkid
+    # Or by sink ID for whole sink
+    else:
+        if len(sink.mass) == 0:
+            return
+        masses = sink.mass
+        sinklist = sink.id
+    sinktocolumns = makecolumnsinsinksdict(snap)
+    # Set up values to plot
+    nbins = 200
+    extaxis = np.logspace(-1,2,nbins) # It's a pun
+    cumuldist = np.zeros((nrays,nbins))
+    weights = np.concatenate([np.linspace(0.1,1,nrays//2),
+                              np.linspace(1,0.1,nrays//2)])
+    cumultot = 0.0
+    for mass, sinkid in zip (masses, sinklist):
+        try:
+            columns = sinktocolumns[sinkid]
+        except KeyError:
+            print sinkid, sink.id, sink.mass, sinktocolumns
+            raise KeyError
+        cols = np.sort(columns)
+        exts = NHtoAv(cols)
+        toadd = 1.0
+        functext = "N"
+        funcunits = ""
+        if wholesink:
+            toadd = mass
+            functext = "M"
+            funcunits = " / "+Msolar
+        cumultot += toadd
+        for icol, ext in enumerate(exts):
+           cumuldist[icol,np.where(ext < extaxis)] += toadd
+    cumuldist = cumultot - cumuldist
+    # Plot
+    plt.clf()
+    cmap = plt.get_cmap("Blues")
+    for icol in range(0,nrays//2):
+        plt.plot(extaxis,cumuldist[icol,:],color=cmap(weights[icol]))
+    for icol in range(nrays//2,nrays)[::-1]:
+        plt.plot(extaxis,cumuldist[icol,:],color=cmap(weights[icol]))
+    plt.xscale("log")
+    plt.yscale("log")
+    plt.ylim(ylims)
+    plt.xlabel(AVtext)
+    plt.ylabel(functext+"($<$"+AVtext+")"+funcunits)
+    time = snap.Time()*snap.RawData().info["unit_time"].express(C.Myr)
+    xtxt = extaxis.min()
+    ytxt = cumuldist[cumuldist > 0].min()*1.1
+    if ylims is not None:
+        ytxt = ylims[0]*1.2
+    plt.text(xtxt,ytxt,("%.2f" % time)+" Myr")
+    figname = "../plots/extinctions/cumulextinction"+simname+"_"+str(snap.OutputNumber()).zfill(5)+".png"
+    print "Plotting", figname
+    plt.savefig(figname)
+    
+def cumulativeextinctionforeachsnap(simname,wholesink,dofraction,ylims=None):
+    sim = hamusims[simname]
+    for snap in sim.Snapshots():
+        cumulativeextinction(snap,simname,wholesink,dofraction,ylims)
+           
 def extinctionforeachsnap(simname):
     sim = hamusims[simname]
     for snap in sim.Snapshots():
@@ -143,7 +218,9 @@ def extinctioninsnap(snap, simname):
                 
         
 if __name__=="__main__":
-    extinctionattimes("18_LEGO",[],False)
+    #snap = hamusims["18_LEGO"].Snapshots()[50]
+    cumulativeextinctionforeachsnap("18_LEGO",True,True,[1.0,1e4])
+    #extinctionattimes("18_LEGO",[],False)
     #extinctionforeachsnap("18_LEGO")
     #extinctionbyparticle("18_LEGO",True)
     #extinctionbyparticle("18_LEGO",False)
