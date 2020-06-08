@@ -447,9 +447,9 @@ def radiusinsnap3(snap,wind=False,freestream=False):
     # Get volume of ionised gas
     # Assume gas is either fully ionised or neutral on a sub-grid scale
     # Also include a basic threshold
-    ionvol = np.sum(vols[mask]*ion[mask])
-    ionrad = ionvol**(1.0/3.0) * (3.0 / 4.0 / np.pi)
-    return ionrad*boxlen
+    vol = np.sum(vols[mask]*ion[mask])
+    rad = vol**(1.0/3.0) * (3.0 / 4.0 / np.pi)
+    return rad*boxlen
 
 def photodensinsnap(snap):
     '''

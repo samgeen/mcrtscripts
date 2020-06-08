@@ -92,9 +92,11 @@ def Colour(simname):
     return "#000000"
 
 def Linestyle(simname):
-    lines = ["--","-",":",":-","-"]
-    physics = ["NOFB","UVWINDPRESS","UVWIND","UV","SN"]
+    lines = ["--","-",":","-.","-","-","--"]
+    physics = ["NOFB","UVWINDPRESS","UVWIND","UV","SN","UVWINDCR25","UVWINDCR26"]
     for num, phys in enumerate(physics):
+        if "momentumfix" in simname:
+            return "--"
         if phys in simname:
             return lines[num]
     print "No linestype for simulation", simname,"found, returning -"

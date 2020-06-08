@@ -449,12 +449,14 @@ if __name__=="__main__":
             smass = str(mass)
             if not dense or mass == 120:
                 simset = ["NOFB","UV_"+smass,"UVWIND_"+smass]
+                if not dense and mass == 120:
+                    simset += ["UVWIND_120_momentumfix"]
                 setname = "windset_"+smass+"Msun"
                 if dense:
                     simset = [x+"_DENSE" for x in simset]
                     setname += "_dense"
                 #times = np.array([0.5, 0.75, 1.])
-                times = np.array([0.3]) # np.array([0.9]) # [0.9] # 3.5 Myr = tstarformed + 0.2 Myr 
+                times = np.array([0.2]) # np.array([0.9]) # [0.9] # 3.5 Myr = tstarformed + 0.2 Myr 
                 zoom = 0.25
                 if dense:
                     zoom = 1.0
@@ -473,7 +475,7 @@ if __name__=="__main__":
                                                "zoom"+str(zoom2).replace(".","p"),)
                     # Run for movie
                     imovie = 0
-                    tmovies = np.linspace(0.1,1.0,50)
+                    tmovies = []#np.linspace(0.1,1.0,50)
                     for tmovie in tmovies:
                         imovie += 1
                         timein = (tmovie,"MyrFirstStar")
@@ -535,5 +537,5 @@ if __name__=="__main__":
                         MakeFigure([simset[-1]],[timesin[-1]],name=figname+"windonly",los=los,hydro=hydro,Slice=False,wsink=True,
                                    timeL=[timeL[-1]],zoom=zoom)
                     # Temperature slice (all sims)
-                    MakeFigure(simset,timesin,name=figname,los=los,hydro='T',Slice=True,wsink=True,timeL=timeL,zoom=zoom,starC=True)
+                    MakeFigure(simset,timesin,name=figname,los=los,hydro='T',Slice=True,wsink=True,timeL=timeL,zoom=zoom,starC=True,forcerun=True)
         
