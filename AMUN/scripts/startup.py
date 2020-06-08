@@ -110,6 +110,7 @@ if amunold:
 if not amunold:
     mainsimfolder = "/home/stgeen0/MCRT/runs/"
     amunfolder = mainsimfolder+"69_AMUN_onestar/"
+    crfolder = mainsimfolder+"80_amun_yohan_cr/"
     simfolders = {}
     simfolders["NOFB"] = amunfolder+"01_nostar"
     simfolders["UV_120"] = amunfolder+"A2_uvonly120_correctposition"
@@ -129,6 +130,9 @@ if not amunold:
     simfolders["UVWINDPRESS_30"] = amunfolder+"14_uv+winds+press_30"
     simfolders["UVWINDPRESS_60"] = amunfolder+"16_uv+winds+press_60"
     simfolders["UVWINDPRESS_120"] = amunfolder+"15_uv+winds+press_120"
+    simfolders["UVWIND_120_momentumfix"] = amunfolder+"B3_uv+winds_120_momentumfix"
+    simfolders["UVWINDCR25_120"] = crfolder+"D1e25"
+    simfolders["UVWINDCR26_120"] = crfolder+"D1e26"
     allsims = simfolders.keys()
     
 # Populate list of Hamu simulations

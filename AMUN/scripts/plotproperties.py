@@ -539,19 +539,14 @@ if __name__=="__main__":
                  "120 "+Msolar+" Star,\n Dense Cloud"),compare=compare)
     '''
     # [momentumatstarpos,tsfe,momentum,radius,nphotonsHII,photodens]
-    allnames = ["NOFB","UV_30","UVWIND_30","UV_60","UVWIND_60","UV_120","UVWIND_120"]
-    allfbnames = ["UV_30","UVWIND_30","UV_60","UVWIND_60","UV_120","UVWIND_120"]
-    allwindnames = ["UVWIND_120","UVWIND_60","UVWIND_30"]
+    alluvnames = ["UV_"+str(num) for num in [30,60,120]]
+    allwindnames = ["UVWIND_"+str(num) for num in [30,60,120]]+["UVWIND_120_momentumfix"]
     allwindpressnames = ["UVWINDPRESS_"+str(num) for num in [30,60,120]]
+    allfbnames = alluvnames+allwindnames+allwindpressnames
+    allnames = ["NOFB"]+allfbnames
     for func in [windradiusratio]:
-        run(func,(allwindnames,
-                  ["UVWIND_120_DENSE"]),
+        run(func,(allwindnames+allwindpressnames,["UVWIND_120_DENSE"]),
             ("Diffuse Cloud","Dense Cloud"),compare=False,secondfuncs=(windradiusratio_analytic,))
-'''
-        for func in [windLemittedvscool,windradiusratio,windenergyemitted,windmassemitted,windenergyretained,windenergy,windradius,freestreamradius,windradiusratio][::-1]:
-        run(func,(allwindnames,
-                  ["UVWIND_120_DENSE"]),
-            ("Diffuse Cloud","Dense Cloud"))
 
     for func in [radius]:
         run(func,(allfbnames,
@@ -561,9 +556,15 @@ if __name__=="__main__":
         run(func,(allfbnames,
                   ["UV_120_DENSE","UVWIND_120_DENSE"]),
             ("Diffuse Cloud","Dense Cloud"),compare=False)
+        '''
     for func in [maxdensity,tsfe]:
         run(func,(allnames,
                   ["NOFB_DENSE","UV_120_DENSE","UVWIND_120_DENSE"]),
             ("Diffuse Cloud","Dense Cloud"),compare=False)
-
+'''
+'''
+        for func in [windLemittedvscool,windradiusratio,windenergyemitted,windmassemitted,windenergyretained,windenergy,windradius,freestreamradius,windradiusratio][::-1]:
+        run(func,(allwindnames,
+                  ["UVWIND_120_DENSE"]),
+            ("Diffuse Cloud","Dense Cloud"))
 '''
