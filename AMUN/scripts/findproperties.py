@@ -451,6 +451,55 @@ def radiusinsnap3(snap,wind=False,freestream=False):
     rad = vol**(1.0/3.0) * (3.0 / 4.0 / np.pi)
     return rad*boxlen
 
+def maxwindradiusatstarpos(snap):
+    return maxradiusatstarpos(snap,wind=True)
+
+def maxradiusatstarpos(snap,wind=False):
+    print "Finding max radius in snap", snap.iout
+    # Find star position
+    stellar = stellars.FindStellar(snap.hamusnap)
+    if len(stellar.mass) == 0:
+        return 0.0
+    imax = np.where(stellar.mass == np.max(stellar.mass))[0][0]
+    sinkid = stellar.sinkid[imax]-1
+    sink = sinks.FindSinks(snap.hamusnap)
+    boxlen = snap.info["boxlen"]
+    starpos = np.array([sink.x[sinkid],sink.y[sinkid],sink.z[sinkid]])/boxlen
+    centre = starpos
+    # Get cell positions
+    amr = snap.amr_source(["rho","vel"])
+    cell_source = CellsToPoints(amr)
+    cells = cell_source.flatten()
+    vols = (cells.get_sizes())**3.0
+    pos = cells.points+0.0
+    pos[:,0] -= centre[0]
+    pos[:,1] -= centre[1]
+    pos[:,2] -= centre[2]
+    rads = pos+0.0
+    dist = np.sqrt(np.sum(pos**2,1))
+    for i in range(0,3):
+        rads[:,i] /= dist
+    if wind:
+        uvel = snap.info["unit_velocity"].express(C.cm/C.s)
+        vels = cells["vel"]
+        spds = np.sqrt(np.sum(vels**2.0,1))
+        mufunc = lambda dset: 1./(0.76*(1.+dset["xHII"]) + \
+                                  0.25*0.24*(1.+dset["xHeII"]+2.*dset["xHeIII"]))  
+        temp = cells["P"]/cells["rho"]*snap.info["unit_temperature"].express(C.K)*mufunc(cells)
+        # Over 100 km/s or T > 1e5 K
+        mask = np.logical_or(spds*uvel/1e5 > 100.0,temp > windtemp)
+    else:
+        thresh = 0.1 # fiducial "non-ionised" threshold
+        mask = np.where(ion > thresh)
+    try:
+        rads = rads[mask]
+    except:
+        print "Oops, mask doesn't contain info, returning 0.0"
+        return 0.0 # Mask doesn't work
+    maxrad = rads[mask].max()
+    print "MAXRAD:", maxrad
+    return maxrad
+
 def photodensinsnap(snap):
     '''
     Average density of photoionised gas (not including wind-shocked gas)
