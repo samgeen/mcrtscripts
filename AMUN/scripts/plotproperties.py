@@ -132,7 +132,8 @@ def windLemittedvscool(simname):
     tcreated, sfe = starrelations.runforsim(simname,"firsttime")
     t,Lwe = timefuncs.timefunc(sim,windLemittedHamu)
     t,Lwc = timefuncs.timefunc(sim,windLcoolinsnap,processes=nprocs)
-    Lout = np.array([Lwe, Lwc]).T
+    t,Lwx = timefuncs.timefunc(sim,xrayLcoolinsnap,processes=nprocs)
+    Lout = np.array([Lwe, Lwc, Lwx]).T
     return t, Lout
 
 windradiusinsnap = Hamu.Algorithm(findproperties.windradiusinsnap)
@@ -162,6 +163,7 @@ def freestreamradius(simname):
     return t, r
 
 windLcoolinsnap = Hamu.Algorithm(findproperties.windLcoolinsnap)
+xrayLcoolinsnap = Hamu.Algorithm(findproperties.xrayLcoolinsnap)
 def windLcool(simname):
     print "Running for simulation", simname
     sim = hamusims[simname]
@@ -327,8 +329,8 @@ def run(simfunc,simnamesets,plotlabels,compare=False,secondfuncs=None):
             ax.set_ylim([1e44,1e50])
             linenames = ["Total","Thermal","Kinetic"]
         if funcname == "windLemittedvscool":
-            linenames = ["Emitted","Cooling"]
-            ax.set_ylim([1e33,3e38])
+            linenames = ["Emitted","Cooling","Cooling $> 10^{6}$ K"]
+            ax.set_ylim([1e31,1e39])
         #if funcname == "momentum":
         #    tlim = 1e-6
         #    ax.set_xlabel("Time after 1st star formed / Myr")
@@ -405,7 +407,9 @@ def run(simfunc,simnamesets,plotlabels,compare=False,secondfuncs=None):
                                           alpha=0.9,
                                           path_effects=[pe.Stroke(linewidth=5, foreground='k'),
                                                         pe.Normal()]) for l, n in zip(lines, linenames)]
-                    legend2 = ax.legend(handles=legelements, loc='lower center',framealpha=0.0)
+                    # Lol hacks
+                    if funcname != "windLemittedvscool" or "DENSE" in simname:
+                        legend2 = ax.legend(handles=legelements, loc='lower center',framealpha=0.0)
                     for i in range(0,nvals):
                         if firstline:
                             label = linestyles.Label(simname)
@@ -540,31 +544,29 @@ if __name__=="__main__":
     '''
     # [momentumatstarpos,tsfe,momentum,radius,nphotonsHII,photodens]
     alluvnames = ["UV_"+str(num) for num in [30,60,120]]
-    allwindnames = ["UVWIND_"+str(num) for num in [30,60,120]]+["UVWIND_120_momentumfix"]
+    allwindnames = ["UVWIND_"+str(num) for num in [30,60,120]]
     allwindpressnames = ["UVWINDPRESS_"+str(num) for num in [30,60,120]]
     allfbnames = alluvnames+allwindnames+allwindpressnames
     allnames = ["NOFB"]+allfbnames
+    windpressnames = ["UVWIND_120_DENSE"]
     for func in [windradiusratio]:
-        run(func,(allwindnames+allwindpressnames,["UVWIND_120_DENSE"]),
+        run(func,(allwindnames+allwindpressnames,["UVWIND_120_DENSE","UVWINDPRESS_120_DENSE"]),
             ("Diffuse Cloud","Dense Cloud"),compare=False,secondfuncs=(windradiusratio_analytic,))
 
     for func in [radius]:
         run(func,(allfbnames,
-                  ["UV_120_DENSE","UVWIND_120_DENSE"]),
+                  ["UV_120_DENSE","UVWIND_120_DENSE","UVWINDPRESS_120_DENSE"]),
             ("Diffuse Cloud","Dense Cloud"),compare=False,secondfuncs=(windradius,freestreamradius))
     for func in [momentumatstarpos]:
         run(func,(allfbnames,
-                  ["UV_120_DENSE","UVWIND_120_DENSE"]),
+                  ["UV_120_DENSE","UVWIND_120_DENSE","UVWINDPRESS_120_DENSE"]),
             ("Diffuse Cloud","Dense Cloud"),compare=False)
         '''
     for func in [maxdensity,tsfe]:
         run(func,(allnames,
-                  ["NOFB_DENSE","UV_120_DENSE","UVWIND_120_DENSE"]),
+                  ["NOFB_DENSE","UV_120_DENSE","UVWIND_120_DENSE","UVWINDPRESS_120_DENSE"]),
             ("Diffuse Cloud","Dense Cloud"),compare=False)
 '''
-'''
-        for func in [windLemittedvscool,windradiusratio,windenergyemitted,windmassemitted,windenergyretained,windenergy,windradius,freestreamradius,windradiusratio][::-1]:
-        run(func,(allwindnames,
-                  ["UVWIND_120_DENSE"]),
+    for func in [windLemittedvscool,windradiusratio,windenergyemitted,windmassemitted,windenergyretained,windenergy,windradius,freestreamradius,windradiusratio]:
+        run(func,(allwindpressnames,["UVWINDPRESS_120_DENSE"]),
             ("Diffuse Cloud","Dense Cloud"))
-'''

@@ -263,7 +263,7 @@ def MakeImage(datas,hydros,snap,wsink,ax,dolengthscale,cmap,plottime=False,timeL
 
 def MakeFigure(simnames,times,name,los=None,hydro="rho",Slice=False,wsink=False,starC=False,
                nonamelabel=False,timeL=None,shape=None,dpi=200.0,zoom=1.0,contours=[],forcerun=False,zoombox=-1,
-               plotcolorbar=True):
+               plotcolorbar=True,doplottime=False):
     ncols = len(simnames)
     nrows = len(times)
 
@@ -325,8 +325,7 @@ def MakeFigure(simnames,times,name,los=None,hydro="rho",Slice=False,wsink=False,
 
     # Run for all sims
     dolengthscale = False
-    doplottime      = False
-    isim = -1
+    isim = 0
     for ax in axes.flatten():
         ax.set_axis_off()
         ax.set_aspect("equal", "datalim")
@@ -444,19 +443,17 @@ def MakeFigure(simnames,times,name,los=None,hydro="rho",Slice=False,wsink=False,
 
 if __name__=="__main__":
 
-    for dense in [False, True]:
-        for mass in [30,60,120]:
+    for dense in [False, True][::-1]:
+        for mass in [30,60,120][::-1]:
             smass = str(mass)
             if not dense or mass == 120:
-                simset = ["NOFB","UV_"+smass,"UVWIND_"+smass]
-                if not dense and mass == 120:
-                    simset += ["UVWIND_120_momentumfix"]
+                simset = ["NOFB","UV_"+smass,"UVWINDPRESS_"+smass]
                 setname = "windset_"+smass+"Msun"
                 if dense:
                     simset = [x+"_DENSE" for x in simset]
                     setname += "_dense"
                 #times = np.array([0.5, 0.75, 1.])
-                times = np.array([0.2]) # np.array([0.9]) # [0.9] # 3.5 Myr = tstarformed + 0.2 Myr 
+                times = np.array([0.4]) # np.array([0.9]) # [0.9] # 3.5 Myr = tstarformed + 0.2 Myr 
                 zoom = 0.25
                 if dense:
                     zoom = 1.0
@@ -489,6 +486,19 @@ if __name__=="__main__":
                         #    MakeFigure([simset[-1]],[timein],name=figname+"movieslice",los=los,hydro=hydro,
                         #               Slice=True,wsink=True,starC=True,
                         #               timeL=[tmovieL],zoom=zoom,forcerun=True)
+                    # Merged emission map - just wind
+                    coolhydros = ["coolemission","ionemission","xrayemission2"]
+                    timesmerged = [0.1,0.2,0.3,0.4]
+                    timesmergedIn = [(time,"MyrFirstStar") for time in timesmerged]
+                    timesmergedL = [str(x)+r' Myr' for x in timesmerged]
+                    MakeFigure([simset[-1]],timesmergedIn,name=figname+"windonly_sequence",los=los,hydro=coolhydros,Slice=False,wsink=True,
+                               timeL=timesmergedL,zoom=zoom,forcerun=True,doplottime=True)
+                    MakeFigure([simset[-1]],[timesin[-1]],name=figname+"windonly",los=los,hydro=coolhydros,Slice=False,wsink=True,
+                               timeL=[timeL[-1]],zoom=zoom,forcerun=True)
+                    #                     - All physics
+                    MakeFigure(simset,[timesin[-1]],name=figname+"allphysics",los=los,hydro=coolhydros,Slice=False,wsink=True,
+                               timeL=[timeL[-1]],zoom=zoom)
+
                     # Slices
                     for hydro in ["rho","Ekin","Etherm","EkinperEtherm","xrayemission2"]:
                         MakeFigure([simset[-1]],[timesin[-1]],name=figname2+"windonly",los=los,hydro=hydro,
@@ -498,13 +508,13 @@ if __name__=="__main__":
                     for hydro in ["Lcool","T","rho","xHII","P"]:
                         MakeFigure([simset[-1]],[timesin[-1]],name=figname2+"windonly",los=los,hydro=hydro,
                                    Slice=True,wsink=True,starC=True,
-                                   timeL=[timeL[-1]],zoom=zoom2)
+                                   timeL=[timeL[-1]],zoom=zoom2,forcerun=True)
                         MakeFigure([simset[-1]],[timesin[-1]],name=figname+"windonly",los=los,hydro=hydro,
                                    Slice=True,wsink=True,starC=True,
-                                   timeL=[timeL[-1]],zoom=zoom)
+                                   timeL=[timeL[-1]],zoom=zoom,forcerun=True)
                         MakeFigure(simset,[timesin[-1]],name=figname+"allphysics",los=los,hydro=hydro,
                                    Slice=True,wsink=True,starC=True,
-                                   timeL=[timeL[-1]],zoom=zoom)
+                                   timeL=[timeL[-1]],zoom=zoom,forcerun=True)
                         #MakeFigure([simset[-1]],[timesin[-1]],name=figname2+"windonly",los=los,hydro=hydro,Slice=True,wsink=True,starC=True,timeL=[timeL[-1]],zoom=zoom2)
 
                     # Plot for Raphael
@@ -525,13 +535,6 @@ if __name__=="__main__":
                                plotcolorbar=(mass==30))
                     #MakeFigure(simset,timesin,name=figname,los=los,hydro='maxT',Slice=False,wsink=True,timeL=timeL,zoom=zoom)
 
-                    # Merged emission map - just wind
-                    coolhydros = ["coolemission","ionemission","xrayemission2"]
-                    MakeFigure([simset[-1]],[timesin[-1]],name=figname+"windonly",los=los,hydro=coolhydros,Slice=False,wsink=True,
-                               timeL=[timeL[-1]],zoom=zoom)
-                    #                     - All physics
-                    MakeFigure(simset,[timesin[-1]],name=figname+"allphysics",los=los,hydro=coolhydros,Slice=False,wsink=True,
-                               timeL=[timeL[-1]],zoom=zoom)
                     # Separate emission maps
                     for hydro in ["ionemission","xrayemission2","coolemission"][::-1]:
                         MakeFigure([simset[-1]],[timesin[-1]],name=figname+"windonly",los=los,hydro=hydro,Slice=False,wsink=True,
