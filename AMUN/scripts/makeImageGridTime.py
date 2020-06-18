@@ -491,7 +491,9 @@ if __name__=="__main__":
                     timesmerged = [0.1,0.2,0.3,0.4]
                     timesmergedIn = [(time,"MyrFirstStar") for time in timesmerged]
                     timesmergedL = [str(x)+r' Myr' for x in timesmerged]
-                    MakeFigure([simset[-1]],timesmergedIn,name=figname+"windonly_sequence",los=los,hydro=coolhydros,Slice=False,wsink=True,
+                    MakeFigure([simset[-2]],timesmergedIn,name=figname+"windonly_sequence",los=los,hydro=coolhydros,Slice=False,wsink=True,
+                               timeL=timesmergedL,zoom=zoom,forcerun=True,doplottime=True)
+                    MakeFigure([simset[-1]],timesmergedIn,name=figname+"windpressonly_sequence",los=los,hydro=coolhydros,Slice=False,wsink=True,
                                timeL=timesmergedL,zoom=zoom,forcerun=True,doplottime=True)
                     MakeFigure([simset[-1]],[timesin[-1]],name=figname+"windonly",los=los,hydro=coolhydros,Slice=False,wsink=True,
                                timeL=[timeL[-1]],zoom=zoom,forcerun=True)

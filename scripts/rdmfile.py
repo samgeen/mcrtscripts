@@ -7,7 +7,6 @@ import os, sys
 import numpy as np
 
 from astropy.io import fits
-import zipfile
 
 class RDMFile(object):
     '''
@@ -57,9 +56,9 @@ class RDMFile(object):
         hdul = fits.HDUList(self._itemlist)
         hdul.writeto(filename,overwrite=True)
         # Zip the file
-        zip = zipfile.ZipFile(filename.replace(".fits",".zip"),"w")
-        zip.write(filename)
-        zip.close()
+        # I tried the Python zipfile module and it didn't work so eh
+        zfilename = filename.replace(".fits",".zip")
+        os.system("zip "+zfilename+" "+filename)
         # Remove the uncompressed fits file
         os.system("rm "+filename)
 
