@@ -368,6 +368,8 @@ def run(simfunc,simnamesets,plotlabels,compare=False,secondfuncs=None):
                     rdm.AddPoints(t,y,label=label)
                     if secondfuncs:
                         secondlines = ["--",":","-."]
+                        # HACK, just use the simname linestyles
+                        secondlines = [linestyles.Linestyle(simname)]*3
                         for i, secondfunc in enumerate(secondfuncs):
                             secondline = secondlines[i]
                             t2, y2 = secondfunc(simname)
@@ -376,14 +378,14 @@ def run(simfunc,simnamesets,plotlabels,compare=False,secondfuncs=None):
                                     linestyle=secondline,alpha=0.9,
                                     path_effects=[pe.Stroke(linewidth=3, foreground='k'), pe.Normal()])
                         if funcname == "radius":
+                            rlabels = ["H II Region","Wind Bubble"]#,"$V >$ 1000 km/s"]
                             legelements = [Line2D([0],[0],color=linestyles.Colour(simname),
                                                   linestyle=ls,label=n,
                                                   alpha=0.9,
                                                   path_effects=[pe.Stroke(linewidth=lw, foreground='k'),
                                                                 pe.Normal()]) for ls,lw, n in zip(["-"]+secondlines,
                                                                                                   [5,3,3],
-                                                                                                  ["H II Region","Wind Bubble",
-                                                                                                   "$V >$ 1000 km/s"])]
+                                                                                                  rlabels)]
                             legend2 = ax.legend(handles=legelements, loc='upper right',framealpha=0.0,fontsize="x-small")
                         if funcname == "windradiusratio":
                             #import pdb; pdb.set_trace()
@@ -550,13 +552,14 @@ if __name__=="__main__":
     allnames = ["NOFB"]+allfbnames
     windpressnames = ["UVWIND_120_DENSE"]
     for func in [windradiusratio]:
-        run(func,(allwindnames+allwindpressnames,["UVWIND_120_DENSE","UVWINDPRESS_120_DENSE"]),
+        run(func,(allwindpressnames,["UVWINDPRESS_120_DENSE"]),
             ("Diffuse Cloud","Dense Cloud"),compare=False,secondfuncs=(windradiusratio_analytic,))
 
     for func in [radius]:
+        sfuncs = (windradius,) #freestreamradius)
         run(func,(allfbnames,
                   ["UV_120_DENSE","UVWIND_120_DENSE","UVWINDPRESS_120_DENSE"]),
-            ("Diffuse Cloud","Dense Cloud"),compare=False,secondfuncs=(windradius,freestreamradius))
+            ("Diffuse Cloud","Dense Cloud"),compare=False,secondfuncs=sfuncs)
     for func in [momentumatstarpos]:
         run(func,(allfbnames,
                   ["UV_120_DENSE","UVWIND_120_DENSE","UVWINDPRESS_120_DENSE"]),
