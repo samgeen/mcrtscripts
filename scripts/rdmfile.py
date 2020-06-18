@@ -3,9 +3,11 @@ Create archive .fits file for tracking Research Data Management of figures
 Sam Geen, December 2019
 '''
 
+import os, sys
 import numpy as np
 
 from astropy.io import fits
+import zipfile
 
 class RDMFile(object):
     '''
@@ -54,6 +56,13 @@ class RDMFile(object):
             filename = filename.replace(".pdf",".fits")
         hdul = fits.HDUList(self._itemlist)
         hdul.writeto(filename,overwrite=True)
+        # Zip the file
+        zip = zipfile.ZipFile(filename.replace(".fits",".zip"),"w")
+        zip.write(filename)
+        zip.close()
+        # Remove the uncompressed fits file
+        os.system("rm "+filename)
+
 
     # NON-INTERFACE FUNCTION _AddHDU
     def _AddHDU(self,array,label=None):
