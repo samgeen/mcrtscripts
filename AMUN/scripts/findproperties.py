@@ -13,6 +13,8 @@ from pymses.filters import CellsToPoints,RegionFilter
 
 import matplotlib.patheffects as pe
 
+import time
+
 import triaxfinder
 
 windtemp = 2e4 # Kelvin
@@ -114,7 +116,7 @@ def ekininsnap(snap,wind=False):
     print "KINETIC ENERGY FOUND @ ",time,"Myr:", ekin
     return ekin
 
-def Lcoolinsnap(snap,wind=False):
+def Lcoolinsnap(snap,wind=False,xray=False):
     print "Finding cooling luminosity in snap", snap.iout
     import rtcooling
     amr = snap.amr_source(["rho","P","vel","xHII","xHeII","xHeIII","NpHII","NpHeII","NpHeIII"])
@@ -136,8 +138,14 @@ def Lcoolinsnap(snap,wind=False):
     dedt = rtcooling.Finddedt(temp,nHs,xion,Zsolar,Np=Nps,Fp=None,p_gas=None,a_exp=np.array([1.0]))
     Lcool = dedt * vols
     if wind:
+        thresh = windtemp
         # Over 100 km/s or T > windtemp
-        windmask = np.logical_or(spds*uvel/1e5 > 100.0,temp > windtemp)
+        windmask = np.logical_or(spds*uvel/1e5 > 100.0,temp > thresh)
+        Lcool = Lcool[windmask]
+    if xray:
+        thresh = 1e6
+        # For x-ray, just choose hot gas
+        windmask = temp > thresh
         Lcool = Lcool[windmask]
     Lcool =  np.sum(Lcool)
     time = snap.info["time"]*snap.info["unit_time"].express(C.Myr)
@@ -151,6 +159,9 @@ def windenergyinsnap2(snap):
 
 def windLcoolinsnap(snap):
     return Lcoolinsnap(snap,wind=True)
+
+def xrayLcoolinsnap(snap):
+    return Lcoolinsnap(snap,xray=True)
 
 def energyinsnap(snap,wind=False):
     etherm = etherminsnap(snap,wind)
@@ -467,7 +478,7 @@ def maxradiusatstarpos(snap,wind=False):
     starpos = np.array([sink.x[sinkid],sink.y[sinkid],sink.z[sinkid]])/boxlen
     centre = starpos
     # Get cell positions
-    amr = snap.amr_source(["rho","vel"])
+    amr = snap.amr_source(["rho","xHII","xHeII","xHeIII","P","vel"])
     cell_source = CellsToPoints(amr)
     cells = cell_source.flatten()
     vols = (cells.get_sizes())**3.0
@@ -476,9 +487,9 @@ def maxradiusatstarpos(snap,wind=False):
     pos[:,1] -= centre[1]
     pos[:,2] -= centre[2]
     rads = pos+0.0
-    dist = np.sqrt(np.sum(pos**2,1))
-    for i in range(0,3):
-        rads[:,i] /= dist
+    #dist = np.sqrt(np.sum(pos**2,1))
+    #for i in range(0,3):
+    #    rads[:,i] /= dist
     if wind:
         uvel = snap.info["unit_velocity"].express(C.cm/C.s)
         vels = cells["vel"]
@@ -487,18 +498,20 @@ def maxradiusatstarpos(snap,wind=False):
                                   0.25*0.24*(1.+dset["xHeII"]+2.*dset["xHeIII"]))  
         temp = cells["P"]/cells["rho"]*snap.info["unit_temperature"].express(C.K)*mufunc(cells)
         # Over 100 km/s or T > 1e5 K
-        mask = np.logical_or(spds*uvel/1e5 > 100.0,temp > windtemp)
+        mask = np.logical_or(spds*uvel/1e5 > 100.0,temp > 1e6)#windtemp)
     else:
         thresh = 0.1 # fiducial "non-ionised" threshold
         mask = np.where(ion > thresh)
     try:
-        rads = rads[mask]
+        selectedrads = rads[mask]
     except:
         print "Oops, mask doesn't contain info, returning 0.0"
         return 0.0 # Mask doesn't work
-    maxrad = rads[mask].max()
-    print "MAXRAD:", maxrad
-    return maxrad
+    if len(selectedrads) == 0:
+        return 0.0
+    maxrad = selectedrads.max()
+    print "MAXRAD AT CENTRE:", maxrad, centre
+    return maxrad*boxlen
 
 def photodensinsnap(snap):
     '''

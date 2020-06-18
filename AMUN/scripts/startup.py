@@ -130,6 +130,7 @@ if not amunold:
     simfolders["UVWINDPRESS_30"] = amunfolder+"14_uv+winds+press_30"
     simfolders["UVWINDPRESS_60"] = amunfolder+"16_uv+winds+press_60"
     simfolders["UVWINDPRESS_120"] = amunfolder+"15_uv+winds+press_120"
+    simfolders["UVWINDPRESS_120_DENSE"] = amunfolder+"17_uv+winds+press_120_dense"
     simfolders["UVWIND_120_momentumfix"] = amunfolder+"B3_uv+winds_120_momentumfix"
     simfolders["UVWINDCR25_120"] = crfolder+"D1e25"
     simfolders["UVWINDCR26_120"] = crfolder+"D1e26"
