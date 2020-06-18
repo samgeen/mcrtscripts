@@ -57,10 +57,11 @@ class RDMFile(object):
         hdul.writeto(filename,overwrite=True)
         # Zip the file
         # I tried the Python zipfile module and it didn't work so eh
-        zfilename = filename.replace(".fits",".zip")
-        os.system("zip "+zfilename+" "+filename)
+        # This doesn't work either. I have no idea.
+        #zfilename = filename.replace(".fits",".zip")
+        #os.system("zip "+zfilename+" "+filename)
         # Remove the uncompressed fits file
-        os.system("rm "+filename)
+        #os.system("rm "+filename)
 
 
     # NON-INTERFACE FUNCTION _AddHDU
