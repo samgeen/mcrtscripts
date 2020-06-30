@@ -27,13 +27,13 @@ def NH_op(snap):
 
 
 
-def _MapColDens(snap,los='z',zoom=1.0):
+def _MapColDens(snap,los='z',centre=[0.5,0.5,0.5],zoom=1.0):
     # NOTE!! FINDS COLUMN DENSITY IN g cm^2
     hydro = "rho"
     amr = hydrofuncs.amr_source(snap,hydro)
     hydro_op = NH_op(snap)
     size = np.zeros(2)+zoom
-    centre = np.zeros(3)+0.5
+    centre = np.array(centre)
     up = ups[los]
 
     cam  = v.Camera(center=centre, line_of_sight_axis=los, 
@@ -56,7 +56,7 @@ class DensityMap(object):
     Map of densities with ability to convert & assign thresholds
     '''
     def __init__(self,snap,los='z',NHlow=None,NHhigh=None,
-                 columndensitymap=None,pixlength=None,PSFsize=None,zoom=1.0):
+                 columndensitymap=None,pixlength=None,PSFsize=None,centre=[0.5,0.5,0.5],zoom=1.0):
         '''
         los                         - Line of sight (strings 'x','y','z')
         NHlow                       - Values below this are set to zero
@@ -66,10 +66,12 @@ class DensityMap(object):
                  USE FUNCTIONS IN startup.py TO REMAP TO THESE UNITS
         pixlength                   - Length of pixels in parsecs
         PSFsize                     - Size of the PSF in parsecs (consistent with pixlen)
+        centre                      - Centre of image to draw (default is [0.5]*3)
         zoom                        - Factor to zoom (<1 = zoom, 1 = full box)
         '''
         self._snap = snap
         self._los = los
+        self._centre = centre
         self._zoom = zoom
         if pixlength is None:
             # NOTE: boxlen should be in pc!!
@@ -90,6 +92,7 @@ class DensityMap(object):
                           self._NHlow,self._NHhigh,
                           columndensitymap=newmap,
                           pixlength=self._pixlength,
+                          centre=self._centre,
                           zoom=self._zoom)
 
     def Flatten(self):
@@ -99,7 +102,7 @@ class DensityMap(object):
         return newmap
 
     def _SetupMap(self):
-        self._coldens = _MapColDensHamu(self._snap.hamusnap,self._los,self._zoom)
+        self._coldens = _MapColDensHamu(self._snap.hamusnap,self._los,self._centre,self._zoom)
         # Apply PSF to image
         if self._PSFsize is not None:
             width = self._PSFsize / self._pixlength

@@ -23,7 +23,7 @@ import pymses
 import sinks
 import stellars
 import timefuncs
-import singlestar
+#import singlestar
 
 from collections import OrderedDict
 
