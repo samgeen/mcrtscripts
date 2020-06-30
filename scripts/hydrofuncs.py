@@ -153,7 +153,7 @@ class AllHydros(object):
         EKperEThermfunc = lambda ro: lambda dset: dset["rho"]*ro.info["unit_density"].express(C.g_cc)* \
                   np.sum(dset["vel"]**2,1)*(ro.info["unit_velocity"].express(C.cm/C.s))**2 / \
                   (dset["P"]*ro.info["unit_pressure"].express(C.barye))
-        h["EkinperEtherm"] = Hydro("Kinetic energy / Thermal energy",EKperEThermfunc,["rho","vel","P"],"RdYlBu","log",(-3.0,3.0))
+        h["EkinperEtherm"] = Hydro("$E_{kin} / E_{therm}$",EKperEThermfunc,["rho","vel","P"],"RdYlBu","log",(-3.0,3.0))
         # Temperature
         mufunc = lambda dset: 1./(0.76*(1.+dset["xHII"]) + \
                      0.25*0.24*(1.+dset["xHeII"]+2.*dset["xHeIII"]))

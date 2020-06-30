@@ -31,7 +31,7 @@ def _tsfeinsnap(snap):
 
 tsfeinsnap = Hamu.Algorithm(_tsfeinsnap)
 
-nprocs = 10
+nprocs = 1
 
 def tsfe(simname):
     global mgas
@@ -318,7 +318,7 @@ def run(simfunc,simnamesets,plotlabels,compare=False,secondfuncs=None):
         if funcname == "radius" or funcname == "radius2":
             #tlim = 1e-6
             if not compare:
-                ax.set_ylim([0.05,100])
+                ax.set_ylim([0.08,110])
             #ax.set_xlabel("Time after 1st star formed / Myr")
             textloc = 0.1
         #if funcname == "windradius":
@@ -526,12 +526,13 @@ def run(simfunc,simnamesets,plotlabels,compare=False,secondfuncs=None):
     if compare:
         comparetxt = "_compare"
     fig.subplots_adjust(wspace=0)
-    fig.set_size_inches(7*numcols,6)
+    fig.set_size_inches(8*numcols,6)
     figname = plotfolder+funcname+"_both"+comparetxt+".pdf"
     fig.savefig(figname, dpi=80)
     rdm.Write(figname)
+    fig.clear()
         
-if __name__=="__main__":
+def runall():
     '''
     for compare in [True]:
         for func in [momentumatstarpos,tsfe,momentum,radius,nphotonsHII,photodens]:
@@ -554,6 +555,7 @@ if __name__=="__main__":
     for func in [windradiusratio]:
         run(func,(allwindpressnames,["UVWINDPRESS_120_DENSE"]),
             ("Diffuse Cloud","Dense Cloud"),compare=False,secondfuncs=(windradiusratio_analytic,))
+        
 
     for func in [radius]:
         sfuncs = (windradius,) #freestreamradius)
@@ -570,6 +572,9 @@ if __name__=="__main__":
                   ["NOFB_DENSE","UV_120_DENSE","UVWIND_120_DENSE","UVWINDPRESS_120_DENSE"]),
             ("Diffuse Cloud","Dense Cloud"),compare=False)
 '''
-    for func in [windLemittedvscool,windradiusratio,windenergyemitted,windmassemitted,windenergyretained,windenergy,windradius,freestreamradius,windradiusratio]:
+    for func in [windLemittedvscool,windenergyemitted,windmassemitted,windenergyretained,windenergy,windradius,freestreamradius]:
         run(func,(allwindpressnames,["UVWINDPRESS_120_DENSE"]),
             ("Diffuse Cloud","Dense Cloud"))
+
+if __name__=="__main__":
+    runall()        
