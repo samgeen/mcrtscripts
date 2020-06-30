@@ -9,9 +9,14 @@ from abc import ABCMeta, abstractmethod
 from pymses.utils import constants as C
 
 import sys
-sys.path.append("../../Cooling/f2py") 
-import rtcooling
-
+sys.path.append("../../Cooling/f2py")
+usecooling = True
+try:
+    import rtcooling
+except ImportError:
+    print "rtcooling MODULE FAILED TO IMPORT, USING WITHOUT COOLING IN HYDROFUNCS"
+    usecooling = False
+    
 # Base hydro variable class used to define the interface
 # e.g. density, temperature, magnetic field strength, etc
 class AbstractHydro(ABCMeta):
@@ -214,9 +219,10 @@ class AllHydros(object):
         func = lambda ro: lambda dset: dset["rho"]*np.sum(dset["vel"]**2,1)*ro.info["unit_pressure"].express(C.barye)
         h["Pram"] = Hydro("Ram Pressure / ergs/cm$^3$",func,["rho","vel"],"YlOrRd","log",(None, None))
         # Cooling rate (energy density change per unit time)
-        func = lambda ro: rtcooling.dedtOnCells(ro)
         coolvars = ["rho","P","vel","xHII","xHeII","xHeIII","NpHII","NpHeII","NpHeIII"]
-        h["Lcool"] = Hydro("L$_{cool}$ / erg/s/cm$^{-3}$",func,coolvars,"YlOrRd","log",(None, None))
+        if usecooling:
+            func = lambda ro: rtcooling.dedtOnCells(ro)
+            h["Lcool"] = Hydro("L$_{cool}$ / erg/s/cm$^{-3}$",func,coolvars,"YlOrRd","log",(None, None))
         # EMPTY DEFAULT HYDRO TO PREVENT ERRORS
         h["DEFAULTEMPTY"] = Hydro("",lambda dset: dset[hydro],coolvars,"Blues_r","log",(None, None))
         # Done!

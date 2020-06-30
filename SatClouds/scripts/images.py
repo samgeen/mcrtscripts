@@ -13,7 +13,7 @@ IMSIZE = columndensity.IMSIZE
 
 def FindLscale(boxlen):
     # Find the best match for the length scale bar
-    lscales = np.array([1,2,5,10,20,50,100,200,500])
+    lscales = np.array([1,2,5,10,20,50,100,200,500,1e3,5e3,1e4,5e4,1e5,5e5,1e6])
     # Ideal length is around 20% of the box length
     ideal = 0.2*boxlen
     # Find closest value to ideal
@@ -53,21 +53,26 @@ def DrawPieChart(ax,X, Y, ratios, size):
         ax.scatter([X],[Y] , marker=(xyi,0), s=size, facecolor=colours[i],
                    lw=0.5)
 
-def MakeImage(snap,los,ax,dolengthscale,cmap,label=None,dpi=200.0,simname=None,zoom=1.0,labelpos=(0.9,0.1),
-              drawtracks=True):
+def MakeImage(snap,los,ax,dolengthscale,cmap,label=None,dpi=200.0,simname=None,
+              centre=[0.5,0.5,0.5],zoom=1.0,
+              labelpos=(0.9,0.1),drawtracks=True):
     imtype = "columndensity"
     cax = None
     if snap is not None:
         boxlen = snap.RawData().info["boxlen"]
+        boxlen = 12.5e6
         numtxt = str(snap.RawData().iout).zfill(5)
         hydro = "NH"
-        dmap = columndensity.DensityMap(snap.RawData(),los,zoom=zoom)
+        dmap = columndensity.DensityMap(snap.RawData(),los,centre=centre,zoom=zoom)
         im = dmap.NH()
         # Plot image map
         yscale = hydrofuncs.yscale(hydro)
         if yscale == "log":
             im = np.log10(im)
             vmin, vmax = hydrofuncs.hydro_range(hydro)
+        # ! HACK!
+        vmin = 19
+        vmax = 22
         # Make image mesh
         xl, yl = im.shape
         xarr = np.arange(0,zoom*boxlen*1.0000001,zoom*boxlen/(xl-1.0))
@@ -82,19 +87,24 @@ def MakeImage(snap,los,ax,dolengthscale,cmap,label=None,dpi=200.0,simname=None,z
         ax.set_ylim(0,zoom*boxlen)
 
         # Plot sinks
-        sinkx, sinky, sinkm = ProjectSinks(snap,los)
-        sinkx -= 0.5*(1.0-zoom)*boxlen
-        sinky -= 0.5*(1.0-zoom)*boxlen
+        nosinks = False
         try:
-            lenm = len(np.atleast_1d(sinkm))
+            sinkx, sinky, sinkm = ProjectSinks(snap,los)
         except:
-            lenm = 0
-        if lenm > 0:
-            area = np.pi * sinkm / 100.0
-            # This is x/y-inverted thanks to the weirdness of 
-            #        numpy/pyplot image axes
-            #if ysoage == 0.0:
-            ax.scatter(sinky,sinkx,s=area,c="w",alpha=0.5,edgecolors='c')
+            nosinks=True
+        if not nosinks:
+            sinkx -= 0.5*(1.0-zoom)*boxlen
+            sinky -= 0.5*(1.0-zoom)*boxlen
+            try:
+                lenm = len(np.atleast_1d(sinkm))
+            except:
+                lenm = 0
+            if lenm > 0:
+                area = np.pi * sinkm / 100.0
+                # This is x/y-inverted thanks to the weirdness of 
+                #        numpy/pyplot image axes
+                #if ysoage == 0.0:
+                ax.scatter(sinky,sinkx,s=area,c="w",alpha=0.5,edgecolors='c')
 
         # Draw star tracks
         if simname is not None and drawtracks:
@@ -149,8 +159,8 @@ def MakeImage(snap,los,ax,dolengthscale,cmap,label=None,dpi=200.0,simname=None,z
     #ax.axis("off")
     return cax
 
-def MakeFigure(sims,snapsdict,name,los,nonamelabel=False,shape=None,dpi=200.0,zoom=1.0,timelabels=False,
-               drawtracks=True):
+def MakeFigure(sims,snapsdict,name,los,nonamelabel=False,shape=None,dpi=200.0,centre=[0.5,0.5,0.5],zoom=1.0,
+               timelabels=False,drawtracks=True):
     hydro = "NH"
     nrows = 1
     ncols = 1
@@ -194,7 +204,7 @@ def MakeFigure(sims,snapsdict,name,los,nonamelabel=False,shape=None,dpi=200.0,zo
                 label = timestr+" Myr"
             im = MakeImage(snap,los,ax,dolengthscale,cmap,
                            label=label,
-                           dpi=dpi, simname=simname,zoom=zoom,labelpos=labelpos,drawtracks=drawtracks)
+                           dpi=dpi, simname=simname,centre=centre,zoom=zoom,labelpos=labelpos,drawtracks=drawtracks)
             dolengthscale = False
     # Make empty frames to remove axis scales, etc
     #for irest in range(isim,nrows*ncols):
@@ -202,7 +212,7 @@ def MakeFigure(sims,snapsdict,name,los,nonamelabel=False,shape=None,dpi=200.0,zo
     #    empty = MakeImage(None,los,ax,dolengthscale,cmap,label="",dpi=dpi)
     # Add colour bar for hydro variable
     print "Making colour bar..."
-    cax = fig.add_axes([0.43, 0.10, 0.54, 0.03])
+    cax = fig.add_axes([0.28, 0.17, 0.64, 0.03])
     cbar = fig.colorbar(im,cax=cax,orientation="horizontal")
     label = hydrofuncs.hydro_label((hydro))
     if not "xH" in hydro:
@@ -211,8 +221,8 @@ def MakeFigure(sims,snapsdict,name,los,nonamelabel=False,shape=None,dpi=200.0,zo
         cbarcol = "w"
     else:
         cbarcol = "k"
-    cbar.set_label(label,fontsize="x-large",color=cbarcol)
-    cbar.ax.tick_params(labelsize="x-large",labelcolor=cbarcol)
+    cbar.set_label(label,color=cbarcol)
+    cbar.ax.tick_params(labelcolor=cbarcol)
     cbar.solids.set_edgecolor("face")
     # Save figure
     suffix = ""
@@ -221,12 +231,13 @@ def MakeFigure(sims,snapsdict,name,los,nonamelabel=False,shape=None,dpi=200.0,zo
     #wsname = Hamu.SimData.Settings.Settings()["CurrentWorkspace"]
     folder = "../plots/vis/multiray/"
     MakeDirs(folder)
-    figname = folder+"multiray_"+hydro+suffix+".png"
+    figname = folder+"multiray_"+hydro+suffix+".pdf"
     print "Saving figure "+figname+"..."
     fig.subplots_adjust(hspace=0.02, wspace=0.02, 
                         left=0.20,right=1.0,
-                        bottom=0.00,top=1.0)
+                        bottom=0.0,top=1.0)
     fig.set_size_inches(finches*ncols/0.8,finches*nrows)
+    print finches*ncols/0.8,finches*nrows
     fig.savefig(figname,
                 pad_inches=0,
                 dpi=dpi)
@@ -235,15 +246,32 @@ def MakeFigure(sims,snapsdict,name,los,nonamelabel=False,shape=None,dpi=200.0,zo
     print "Done!"
 
 if __name__=="__main__":
-    #time = 1.5*tffcloud_code
-    #times = np.array([1.0,1.5,2.0,2.5])*tffcloud_code
-    zoom = 0.5 # 1.0
-    print hamusims
+    print "Go!"
     for sim in hamusims.itervalues():
-        for los in "xyz":
-            for i, snap in enumerate(sim.Snapshots()):
-                print "Snap", i+1
-                simsnapdict = {sim.Name():[snap]}
-                MakeFigure([sim],simsnapdict,
-                           name="columns"+sim.Name()+los+str(i+1).zfill(5),los=los,zoom=zoom,timelabels=True,
-                           drawtracks=False)
+        snaps = [sim.Snapshots()[-1]]
+        for halo in ["MW","LMC","SMC"]:
+            if halo == "MW":
+                centre = [0.74372745, 0.31386477, 0.33639288]
+                zoom = 0.1 * 0.186 / 12.5 # 500 kpc in boxlen units (boxlen = 12.5 Mpc)
+            if halo == "LMC":
+                centre = [0.7384616,  0.2984448,  0.33035183]
+                zoom = 0.1 * 0.033266526 / 12.5
+            if halo == "SMC":
+                centre = [0.73871505, 0.29955167, 0.32425034]
+                zoom = 0.1 * 0.031961612 /12.5
+            for los in "xyz":
+                for zoomout in [True, False]:
+                    for snap in snaps:
+                        i = snap.OutputNumber()-1
+                        print "Snap", i+1
+                        simsnapdict = {sim.Name():[snap]}
+                        zoomtxt = ""
+                        zfact = 1.0
+                        ztxt = "RGAL"
+                        if zoomout:
+                            ztxt = "RVIR"
+                            zfact = 10.0
+                        MakeFigure([sim],simsnapdict,
+                                   name="columns"+sim.Name()+halo+los+ztxt+str(i+1).zfill(5),los=los,
+                                   centre=centre,zoom=zoom*zfact,
+                                   timelabels=True,drawtracks=False)
