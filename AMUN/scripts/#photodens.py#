@@ -157,7 +157,7 @@ def plot(sims):
     
 def findtcool(rhos,Lws):
     # Based on MacLow & McKee 1988 Eq 8
-    return 2.3e4 * (np.array(rhos)/(mH/X))**(-0.71) * (np.array(Lws)/1e38)**(0.29)
+    return 2.3e4 * np.array(rhos)**(-0.71) * (np.array(Lws)/1e38)**(0.29)
     
 def plotcoolingtime(sims):
     plt.clf()
@@ -218,8 +218,8 @@ def plotcoolingtime(sims):
 if __name__=="__main__":
     #sims = hamusims # [hamusims[x] for x in ["IMF1_04","IMF2_04",""]]
     #labels = ["IMF 1","IMF 2","Massive Cloud"]
-    #plot(sims, labels)
-    simnames = ["UVWINDPRESS_30","UVWINDPRESS_60","UVWINDPRESS_120","UVWINDPRESS_120_DENSE"]
+    #plot(sims, labels)PRESS
+    simnames = ["UVWIND_30","UVWIND_60","UVWIND_120","UVWIND_120_DENSE"]
     sims = [hamusims[name] for name in simnames]
     plotcoolingtime(sims)
     plot(sims)
