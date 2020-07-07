@@ -60,17 +60,38 @@ def ParticleImage(snap, los, ax, centre, zoom):
     '''
     Overlay a particle image
     '''
+    ltoi = ["x":0,"y":1,"z":2]
     # Get particle data from RAMSES
     source = snap.RawData().particle_source(["mass", "epoch"])
     cube = Cube(centre,zoom)
     parts = RegionFilter(cube, source)
     # Filter only stars
     star_filter = lambda dset: dset["epoch"] != 0.0
-    stars = PointFunctionFilter(star_filter, parts)
-    import pdb; pdb.set_trace()
-    im = np.zeros((IMSIZE,IMSIZE,3))
-
-
+    stars = PointFunctionFilter(star_filter, parts).flatten()
+    # Get the particle positions in the screen array
+    im = np.zeros((IMSIZE,IMSIZE,4))
+    ix = ltoi[columndensity.acrosses[los]]
+    iy = ltoi[columndensity.ups[los]]
+    xpos = (((stars.points[:,ix]-centre[ix])/zoom + 0.5)*IMSIZE).astype(np.int)
+    ypos = (((stars.points[:,iy]-centre[iy])/zoom + 0.5)*IMSIZE).astype(np.int)
+    # Plot older stars as red
+    mask = np.abs(stars["epoch"])*unit_t/Myrins > 10.0
+    im[xpos[mask],ypos[mask],0] += stars["mass"][mask]
+    # Plot younger stars as blue
+    mask = np.abs(stars["epoch"])*unit_t/Myrins < 10.0
+    im[xpos[mask],ypos[mask],2] += stars["mass"][mask]
+    imr = im[:,:,0]
+    imb = im[:,:,2]
+    imr[imr == 0.0] = imr[imr > 0.0].min()
+    imb[imb == 0.0] = imb[imb > 0.0].min()
+    imr = np.log10(imr)
+    imb = np.log10(imb)
+    im[:,:,0] = (imr - imr.min()) / (imr.max() - imr.min())
+    im[:,:,2] = (imb - imb.min()) / (imb.max() - imb.min())
+    im[:,:,3] = 0.7
+    # Plot to the figure axis
+    cax = ax.imshow(im)
+    cax.set_rasterized(True)
 
 
 def MakeImage(snap,los,ax,dolengthscale,cmap,label=None,dpi=200.0,simname=None,
