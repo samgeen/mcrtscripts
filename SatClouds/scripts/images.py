@@ -8,6 +8,7 @@ from startup import *
 from pymses.utils import constants as C
 from pymses.utils.regions import Cube
 from pymses.filters import RegionFilter
+from pymses.filters import PointFunctionFilter
 
 import columndensity, sinks, ysos, trackstars
 
@@ -63,7 +64,11 @@ def ParticleImage(snap, los, ax, centre, zoom):
     source = snap.RawData().particle_source(["mass", "epoch"])
     cube = Cube(centre,zoom)
     parts = RegionFilter(cube, source)
+    # Filter only stars
+    star_filter = lambda dset: dset["epoch"] != 0.0
+    stars = PointFunctionFilter(star_filter, parts)
     import pdb; pdb.set_trace()
+    im = np.zeros((IMSIZE,IMSIZE,3))
 
 
 
