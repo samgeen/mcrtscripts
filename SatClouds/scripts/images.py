@@ -6,6 +6,8 @@ Sam Geen, June 2016
 from startup import *
 
 from pymses.utils import constants as C
+from pymses.utils.regions import Cube
+from pymses.filters import RegionFilter
 
 import columndensity, sinks, ysos, trackstars
 
@@ -53,9 +55,22 @@ def DrawPieChart(ax,X, Y, ratios, size):
         ax.scatter([X],[Y] , marker=(xyi,0), s=size, facecolor=colours[i],
                    lw=0.5)
 
+def ParticleImage(snap, los, ax, centre, zoom):
+    '''
+    Overlay a particle image
+    '''
+    # Get particle data from RAMSES
+    source = snap.RawData().particle_source(["mass", "epoch"])
+    cube = Cube(centre,zoom)
+    parts = RegionFilter(cube, source)
+    import pdb; pdb.set_trace()
+
+
+
+
 def MakeImage(snap,los,ax,dolengthscale,cmap,label=None,dpi=200.0,simname=None,
               centre=[0.5,0.5,0.5],zoom=1.0,
-              labelpos=(0.9,0.1),drawtracks=True):
+              labelpos=(0.9,0.1),drawtracks=True,drawparts=True):
     imtype = "columndensity"
     cax = None
     if snap is not None:
@@ -85,6 +100,10 @@ def MakeImage(snap,los,ax,dolengthscale,cmap,label=None,dpi=200.0,simname=None,
         cax.set_rasterized(True)
         ax.set_xlim(0,zoom*boxlen)
         ax.set_ylim(0,zoom*boxlen)
+
+        # Overplot the particle data
+        if drawparts:
+            ParticleImage(snap, los, ax, centre, zoom)
 
         # Plot sinks
         nosinks = False
