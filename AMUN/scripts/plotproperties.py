@@ -485,6 +485,7 @@ def run(simfunc,simnamesets,plotlabels,compare=False,secondfuncs=None):
                 ax.set_ylabel("Momentum / g cm s$^{-1}$")
             if funcname == "momentumatstarpos":
                 ax.set_ylabel("Outflow Momentum / g cm s$^{-1}$")
+                ncollegend=2
             if funcname == "radius":
                 ax.set_ylabel("Mean HII Region radius / pc")
                 legendloc = "upper left"
@@ -563,8 +564,8 @@ def runall():
                   ["UV_120_DENSE","UVWIND_120_DENSE","UVWINDPRESS_120_DENSE"]),
             ("Diffuse Cloud","Dense Cloud"),compare=False,secondfuncs=sfuncs)
     for func in [momentumatstarpos]:
-        run(func,(allfbnames,
-                  ["UV_120_DENSE","UVWIND_120_DENSE","UVWINDPRESS_120_DENSE"]),
+        run(func,(allnames,
+                  ["NOFB_DENSE","UV_120_DENSE","UVWIND_120_DENSE","UVWINDPRESS_120_DENSE"]),
             ("Diffuse Cloud","Dense Cloud"),compare=False)
         '''
     for func in [maxdensity,tsfe]:
