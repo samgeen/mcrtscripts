@@ -10,7 +10,7 @@ import numpy as np
 sys.path.append("../../scripts")
 import customplot
 
-sys.path.append("/home/stgeen0/Programming/")
+sys.path.append("/home/samgeen/Programming/")
 
 import HamuLite as Hamu
 
@@ -111,6 +111,8 @@ if numsims > 4:
 simfolders["ERIC-NOWIND"] = ericsimfolder_nowind
 simfolders["ERIC-WIND"] = ericsimfolder_wind
 
+simfolders["ROLF-HIRES"] = "/home/samgeen/amun/runs/81_zoomin/02_level17"
+
 # Populate list of Hamu simulations
 # TODO - make these on demand rather than on loadup?
 #        (Might save time if we use 
@@ -129,7 +131,7 @@ def _MakeSims():
 _MakeSims()
 
 # Set up single star module
-startableloc = "/home/stgeen0/MCRT/mcrtscripts/StellarSources/Compressed/singlestar_z0.014"
+startableloc = "/home/samgeen/StellarSources/Compressed/singlestar_z0.014"
 singlestar.star_setup(startableloc)
 
 # Useful functions

@@ -180,7 +180,7 @@ class AllHydros(object):
                 def bfunc(dset):
                     b = 0.5*(dset["B-left"]+dset["B-right"])
                     if axis == "all":
-                        np.sqrt((b**2).sum(axis=1))*bunit(dset)
+                        return np.sqrt((b**2).sum(axis=1))*unit
                     return b[:,axis]*unit
                 return bfunc
             return howmanylayersareyouonmydude
