@@ -167,22 +167,22 @@ def MakeImage(datas,hydros,snap,wsink,ax,dolengthscale,cmap,plottime=False,timeL
             dmap = rayMap.RayTraceMap(snap,"xrayemission2",los,zoom=zoom) # Returns hot emission
             contourim   = dmap.getRaytraceMap()
             contourlims = [1e-37]
-            contourcolour = "r"
+            contourcolour = "c"
         if contour == "Ionised":
             dmap = rayMap.RayTraceMap(snap,"xHIImax",los,zoom=zoom) # Returns max xHII
             contourim   = dmap.getRaytraceMap()
             contourlims = [1e-2] # Find any xHII above a small value
-            contourcolour = "c"
+            contourcolour = "r"
         if contour == "WindSlice":
             dmap = sliceMap.SliceMap(snap,"xrayemission2",los=los,zoom=zoom,starC=starC)
             contourim   = dmap.getSliceMap()
             contourlims = [1e-29]
-            contourcolour = "r"
+            contourcolour = "c"
         if contour == "IonisedSlice":
             dmap = sliceMap.SliceMap(snap,"xHII",los=los,zoom=zoom,starC=starC)
             contourim   = dmap.getSliceMap()
             contourlims = [1e-2]
-            contourcolour = "c"
+            contourcolour = "r"
         if contour == "FreeStreamSlice":
             dmap = sliceMap.SliceMap(snap,"spd",los=los,zoom=zoom,starC=starC)
             contourim   = dmap.getSliceMap()
@@ -236,29 +236,37 @@ def MakeImage(datas,hydros,snap,wsink,ax,dolengthscale,cmap,plottime=False,timeL
     if dolengthscale:
         # length scale in pc (hopefully this is what units boxlen is in)
         lscale = FindLscale(boxlen)
-        x1 = 0.98 * boxlen 
+        x1 = 0.98 * boxlen
         x2 = x1 - lscale
+        textx = x2 - 0.02 * boxlen
+        textalign = "right"
+        # HACK
+        if not label:
+            x1 = 0.02 * boxlen
+            x2 = x1 + lscale
+            textx = x2 + 0.02 * boxlen
+            textalign = "left"
         y1 = 0.90 * boxlen
         y2 = y1
         ax.plot([x1,x2],[y1,y2],scalecol)
-        ax.text(x2-0.02*boxlen,y2, "  "+str(lscale)+" pc",color=scalecol,
-                horizontalalignment="right",
+        ax.text(textx,y2, "  "+str(lscale)+" pc",color=scalecol,
+                horizontalalignment=textalign,
                 verticalalignment="center",fontsize="large")
     # Add label
     if label:
-        xt = 0.9 * boxlen
-        yt = 0.1 * boxlen
+        xt = 0.98 * boxlen
+        yt = 0.02 * boxlen
         ax.text(xt,yt,label,
                 horizontalalignment="right",
-                verticalalignment="center",
+                verticalalignment="bottom",
                 color=scalecol,fontsize="large")
     # Add time 
     if plottime:
-        xt = 0.1 * boxlen
-        yt = 0.9 * boxlen
+        xt = 0.02 * boxlen
+        yt = 0.02 * boxlen
         ax.text(xt,yt,timeL,
                 horizontalalignment="left",
-                verticalalignment="center",
+                verticalalignment="bottom",
                 color=scalecol,fontsize="large")
     return cax
 
@@ -383,14 +391,15 @@ def MakeFigure(simnames,times,name,los=None,hydro="rho",Slice=False,wsink=False,
                 return data
             datas = [MakeData(hydro) for hydro in hydros]
                             
-            if (simname == simnames[-1] and ii == 0):
+            if (simname == simnames[-1] and ii == len(times)-1):
                 dolengthscale = True 
             if (simname == simnames[0]) and len(axes) > 1:
                 plottime = True
             if not doplottime:
                 plottime = False
             label = ""
-            if not nonamelabel:
+            # Only plot name label for the first image in a simulation
+            if not nonamelabel and ii == 0:
                 label =  linestyles.Label(simname)
             #if len(axes) == 1:
             #    label = None
@@ -414,7 +423,10 @@ def MakeFigure(simnames,times,name,los=None,hydro="rho",Slice=False,wsink=False,
     # Colorbar at the top of all the plots
     if len(hydros) == 1 and plotcolorbar:
         hydro = hydros[0]
-        cax  = fig.add_axes([0.4, 0.98, 0.4, 0.02])
+        if label:
+            cax  = fig.add_axes([0.24, 0.98, 0.72, 0.02])
+        else:
+            cax  = fig.add_axes([0.24, 0.1, 0.72, 0.02])
         cbar = fig.colorbar(im,cax=cax,orientation="horizontal")
         label = hydrofuncs.hydro_label((hydro))
         if not "xH" in hydro:
@@ -444,8 +456,8 @@ def MakeFigure(simnames,times,name,los=None,hydro="rho",Slice=False,wsink=False,
 
 if __name__=="__main__":
 
-    for dense in [False, True]:
-        for mass in [30,60,120][::-1]:
+    for dense in [True, False]:
+        for mass in [30,60,120]:
             smass = str(mass)
             if not dense or mass == 120:
                 simset = ["NOFB","UV_"+smass,"UVWINDPRESS_"+smass]
@@ -466,7 +478,7 @@ if __name__=="__main__":
                 #timesin = [(time*tffcloud_code,"code") for time in times]
                 timeL = [str(x)+r' Myr' for x in times]
                 timesin = [(time,"MyrFirstStar") for time in times]
-                for los in "xyz":
+                for los in "zyx":
                     figname = setname+"_"+los
                     allfigname = figname.replace(smass+"Msun","allstars")
                     zoom2 = 0.5
@@ -503,13 +515,33 @@ if __name__=="__main__":
                     #    presssimnames = ["UVWINDPRESS_"+x for x in ["30","60","120","120_DENSE"]]
                     #    MakeFigure(presssimnames,timesmergedIn,name=allfigname+"windpressonly_sequence",los=los,hydro=coolhydros,Slice=False,wsink=True,
                     #            timeL=timesmergedL,zoom=zoom,forcerun=True,doplottime=True)
+
+                    # Forcing this figure to run
+                    MakeFigure([simset[-1]],[timesin[-1]],name=figname+"ERF",los=los,hydro=coolhydros,
+                               Slice=False,wsink=True,starC=True,nonamelabel=True,
+                               timeL=[timeL[-1]],zoom=1.0,forcerun=True)
+                    MakeFigure([simset[-1]],[timesin[-1]],name=figname+"ERF",los=los,hydro="T",
+                               Slice=True,wsink=True,starC=True,nonamelabel=True,
+                               timeL=[timeL[-1]],zoom=1.0,forcerun=True)
+                    MakeFigure([simset[-1]],[timesin[-1]],name=figname+"ERF",los=los,hydro="NH",
+                               Slice=False,wsink=True,starC=True,nonamelabel=True,
+                               timeL=[timeL[-1]],zoom=1.0,forcerun=True,contours=["Wind"])
+
                     DEBUG = False
+                    for hydro in [coolhydros,"NH"]:
+                        contours = []
+                        if hydro == "NH":
+                            contours = ["Wind","Ionised"]
+                            MakeFigure([simset[-1]],timesmergedIn,name=figname+"windpressonly_sequence",
+                                       los=los,hydro=hydro,Slice=False,wsink=True,
+                                       timeL=timesmergedL,zoom=zoom,forcerun=True,
+                                       doplottime=True,contours=contours,
+                                       plotcolorbar=(mass==30))
+
                     if DEBUG:
                         MakeFigure([simwindname],timesmergedIn,name=figname+"windonly_sequence",los=los,hydro=coolhydros,Slice=False,wsink=True,
                                timeL=timesmergedL,zoom=zoom,forcerun=True,doplottime=True)
-                    MakeFigure([simset[-1]],timesmergedIn,name=figname+"windpressonly_sequence",los=los,hydro=coolhydros,Slice=False,wsink=True,
-                               timeL=timesmergedL,zoom=zoom,forcerun=True,doplottime=True)
-                    MakeFigure([simset[-1]],[timesin[-1]],name=figname+"windonly",los=los,hydro=coolhydros,Slice=False,wsink=True,
+                        MakeFigure([simset[-1]],[timesin[-1]],name=figname+"windonly",los=los,hydro=coolhydros,Slice=False,wsink=True,
                                timeL=[timeL[-1]],zoom=zoom,forcerun=True)
                     #                     - All physics
                     if DEBUG:

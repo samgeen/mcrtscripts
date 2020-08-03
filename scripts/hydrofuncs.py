@@ -165,7 +165,7 @@ class AllHydros(object):
         func = lambda ro: lambda dset: dset["P"]/dset["rho"]*ro.info["unit_temperature"].express(C.K)*mufunc(dset)
         h["T"] = Hydro("Temperature / K",func,["rho","P","xHII","xHeII","xHeIII"],"YlOrRd","log",(0,8))
         # Ionisation Fraction(s)
-        h["xHII"] = Hydro("$x_{\mathrm{HII}}$",lambda ro: lambda dset: dset["xHII"],["xHII"],"Reds","linear",(0,1))
+        h["xHII"] = Hydro("$x_{\mathrm{HII}}$",lambda ro: lambda dset: dset["xHII"],["xHII"],"PRGn","linear",(0,1))
         h["xHeII"] = Hydro("$x_{\mathrm{HeII}}$",lambda ro: lambda dset: dset["xHeII"],["xHeII"],"Reds","linear",(0,1))
         h["xHeIII"] = Hydro("$x_{\mathrm{HeIII}}$",lambda ro: lambda dset: dset["xHeIII"],["xHeIII"],"Reds","linear",(0,1))
         # Gravitational energy - NOTE: doesn't really work in Pymses, including for completeness

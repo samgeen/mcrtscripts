@@ -216,6 +216,20 @@ def windLemitted(simname):
     t, we = timefuncs.timefunc(sim,windLemittedHamu)
     return t, we
 
+
+def _windmomemitted(snap):
+    return starrelations.findcumulmomwinds(snap.hamusnap)
+windmomemittedHamu = Hamu.Algorithm(_windmomemitted)
+
+def windmomemitted(simname):
+    print "Running for simulation", simname
+    sim = hamusims[simname]
+    tcreated, sfe = starrelations.runforsim(simname,"firsttime")
+    t, wm = timefuncs.timefunc(sim,windmomemittedHamu,processes=nprocs)
+    #import pdb; pdb.set_trace()
+    return t, wm
+
+
 def windenergyretained(simname):
     print "Running for simulation", simname
     sim = hamusims[simname]
@@ -289,7 +303,7 @@ def plotpowerlaw(ax,w,y0,linestyle,t0=0.3):
     y = y[mask]
     ax.plot(x,y,linestyle,zorder=0,alpha=0.7)
 
-def run(simfunc,simnamesets,plotlabels,compare=False,secondfuncs=None):
+def run(simfunc,simnamesets,plotlabels,compare=False,secondfuncs=None,gradient=False,suffix=""):
     plt.clf()
     numcols = len(simnamesets)
     wcloud = 1.71 # cloud density profile power law index
@@ -306,7 +320,7 @@ def run(simfunc,simnamesets,plotlabels,compare=False,secondfuncs=None):
         if not "MASS" in simnames[0]:
             tlim = 2.0
         #ax.set_xlabel("Time / Myr")
-        ax.set_xlabel("Time after 1st star formed / Myr")
+        ax.set_xlabel("Time after star formed / Myr")
         textloc = 0.95
         xticks = None
         if funcname == "maxdensity":
@@ -424,11 +438,14 @@ def run(simfunc,simnamesets,plotlabels,compare=False,secondfuncs=None):
                                 path_effects=[pe.Stroke(linewidth=5, foreground='k'), pe.Normal()])
                         rdm.AddPoints(t,y[:,i],label=label)
         else:
+            legend2 = None
             t1,y1 = simfunc(simnames[0])
             t2,y2 = simfunc(simnames[1])
             f = interp1d(t1,y1)
             tc = t2+0.0
-            yc = y2 - f(tc)
+            yc = y2[tc > t1.min()]
+            tc = tc[tc > t1.min()]
+            yc = yc - f(tc)
             #if scale == "log":
             #    mask = tc > tlim
             #    tc = tc[mask]
@@ -446,6 +463,11 @@ def run(simfunc,simnamesets,plotlabels,compare=False,secondfuncs=None):
             effect = effectdict[simfunc]
             labelplus = "Winds increase "+effect
             labelminus = "Winds decrease "+effect
+            if gradient:
+                newt = np.linspace(tc[0],tc[-1],1000)
+                newy = interp1d(tc,yc)(newt)
+                tc = newt
+                yc = np.concatenate(([0],np.diff(newy)/np.diff(newt))).flatten()/Myrins
             ax.plot(tc,yc,color=linestyles.Colour(simnames[1]),label=labelplus,
                         path_effects=[pe.Stroke(linewidth=5, foreground='k'), pe.Normal()])
             # -ve values (2nd = smaller)
@@ -453,7 +475,27 @@ def run(simfunc,simnamesets,plotlabels,compare=False,secondfuncs=None):
                     linestyle="--",
                     path_effects=[pe.Stroke(linewidth=5, foreground='k'), pe.Normal()])
             rdm.AddPoints(tc,yc,label=labelplus)
-        # Overplot theoretical fits
+            if secondfuncs:
+                secondlines = [":","-."]
+                # HACK, just use the simname linestyles
+                secondlines = [linestyles.Linestyle(simnames[1])]*2
+                for i, secondfunc in enumerate(secondfuncs):
+                    secondline = secondlines[i]
+                    t2, y2 = secondfunc(simnames[1])
+                    t2 -= tcreated
+                    if gradient:
+                        newt = np.linspace(t2[0],t2[-1],1000)
+                        newy = interp1d(t2,y2)(newt)
+                        t2 = newt
+                        y2 = np.concatenate(([0],np.diff(newy)/np.diff(newt))).flatten()/Myrins
+                    ax.plot(t2,y2,color=linestyles.Colour(simnames[1]),
+                            linestyle=secondline,alpha=0.9,
+                            path_effects=[pe.Stroke(linewidth=3, foreground='k'), pe.Normal()])
+                    if gradient:
+                        ax.set_ylim([4e40/Myrins,1.2e44/Myrins])
+                    else:
+                        ax.set_ylim([1e40,1e42])
+            # Overplot theoretical fits
         #if funcname == "momentum" and not compare:
             # Flat density profile
             #plotpowerlaw(ax,9.0/7.0,2e43,"k:",t0=0.5)
@@ -484,8 +526,11 @@ def run(simfunc,simnamesets,plotlabels,compare=False,secondfuncs=None):
             if funcname == "momentum":
                 ax.set_ylabel("Momentum / g cm s$^{-1}$")
             if funcname == "momentumatstarpos":
-                ax.set_ylabel("Outflow Momentum / g cm s$^{-1}$")
-                ncollegend=2
+                if gradient:
+                    ax.set_ylabel("$\mathrm{d}\Delta p / \mathrm{dt}$ / g cm s$^{-2}$")
+                else:
+                    ax.set_ylabel("Outflow Momentum / g cm s$^{-1}$")
+                    ncollegend = 2
             if funcname == "radius":
                 ax.set_ylabel("Mean HII Region radius / pc")
                 legendloc = "upper left"
@@ -525,10 +570,12 @@ def run(simfunc,simnamesets,plotlabels,compare=False,secondfuncs=None):
         ax.text(0.95, textloc,plotlabel, ha='right', va="top", transform=ax.transAxes)
     comparetxt = ""
     if compare:
-        comparetxt = "_compare"
+        comparetxt += "_compare"
+    if gradient:
+        comparetxt += "_gradient"
     fig.subplots_adjust(wspace=0)
     fig.set_size_inches(8*numcols,6)
-    figname = plotfolder+funcname+"_both"+comparetxt+".pdf"
+    figname = plotfolder+funcname+"_both"+comparetxt+suffix+".pdf"
     fig.savefig(figname, dpi=80)
     rdm.Write(figname)
     fig.clear()
@@ -553,6 +600,51 @@ def runall():
     allfbnames = alluvnames+allwindnames+allwindpressnames
     allnames = ["NOFB"]+allfbnames
     windpressnames = ["UVWIND_120_DENSE"]
+    for func in [momentumatstarpos]:
+        run(func,(["UV_30","UVWIND_30"],
+                  ["UV_60","UVWIND_60"],
+                  ["UV_120","UVWIND_120"],
+                  ["UV_120_DENSE","UVWIND_120_DENSE"]),
+            ("30 "+Msolar+" Star,\n Diffuse Cloud",
+             "60 "+Msolar+" Star,\n Diffuse Cloud",
+             "120 "+Msolar+" Star,\n Diffuse Cloud",
+             "120 "+Msolar+" Star,\n Dense Cloud"),compare=True,secondfuncs=(windmomemitted,))
+        run(func,(allnames,
+                  ["NOFB_DENSE","UV_120_DENSE","UVWIND_120_DENSE","UVWINDPRESS_120_DENSE"]),
+            ("Diffuse Cloud","Dense Cloud"),compare=False)
+    for func in [momentumatstarpos]:
+        run(func,(["UV_30","UVWIND_30"],
+                  ["UV_60","UVWIND_60"],
+                  ["UV_120","UVWIND_120"],
+                  ["UV_120_DENSE","UVWIND_120_DENSE"]),
+            ("30 "+Msolar+" Star,\n Diffuse Cloud",
+             "60 "+Msolar+" Star,\n Diffuse Cloud",
+             "120 "+Msolar+" Star,\n Diffuse Cloud",
+             "120 "+Msolar+" Star,\n Dense Cloud"),compare=True,secondfuncs=(windmomemitted,))
+        run(func,(["UV_30","UVWIND_30"],
+                  ["UV_60","UVWIND_60"],
+                  ["UV_120","UVWIND_120"],
+                  ["UV_120_DENSE","UVWIND_120_DENSE"]),
+            ("30 "+Msolar+" Star,\n Diffuse Cloud",
+             "60 "+Msolar+" Star,\n Diffuse Cloud",
+             "120 "+Msolar+" Star,\n Diffuse Cloud",
+             "120 "+Msolar+" Star,\n Dense Cloud"),compare=True,secondfuncs=(windmomemitted,),gradient=True)
+        # Same but split up
+        run(func,(["UV_30","UVWIND_30"],
+                  ["UV_60","UVWIND_60"]),
+            ("30 "+Msolar+" Star,\n Diffuse Cloud",
+             "60 "+Msolar+" Star,\n Diffuse Cloud"),
+            compare=True,secondfuncs=(windmomemitted,),gradient=True,suffix="1of2")
+        run(func,(["UV_120","UVWIND_120"],
+                  ["UV_120_DENSE","UVWIND_120_DENSE"]),
+            ("120 "+Msolar+" Star,\n Diffuse Cloud",
+             "120 "+Msolar+" Star,\n Dense Cloud"),
+            compare=True,secondfuncs=(windmomemitted,),gradient=True,suffix="2of2")
+                
+    for func in [maxBfield]:
+        run(func,(["NOFB"],["NOFB_DENSE"]),
+            ("Diffuse Cloud","Dense Cloud"),compare=False)
+        
     for func in [windradiusratio]:
         run(func,(allwindpressnames,["UVWINDPRESS_120_DENSE"]),
             ("Diffuse Cloud","Dense Cloud"),compare=False,secondfuncs=(windradiusratio_analytic,))
@@ -563,10 +655,6 @@ def runall():
         run(func,(allfbnames,
                   ["UV_120_DENSE","UVWIND_120_DENSE","UVWINDPRESS_120_DENSE"]),
             ("Diffuse Cloud","Dense Cloud"),compare=False,secondfuncs=sfuncs)
-    for func in [momentumatstarpos]:
-        run(func,(allnames,
-                  ["NOFB_DENSE","UV_120_DENSE","UVWIND_120_DENSE","UVWINDPRESS_120_DENSE"]),
-            ("Diffuse Cloud","Dense Cloud"),compare=False)
         '''
     for func in [maxdensity,tsfe]:
         run(func,(allnames,

@@ -86,6 +86,22 @@ def _findLwinds(snap,dtins=1.0):
     return energy_mass
 findLwinds = Hamu.Algorithm(_findLwinds)
 
+def _findcumulmomwinds(snap):
+    # Output: cumul momentum
+    stellar = stellars.FindStellar(snap)
+    mom = 0.0
+    time = stellar.time
+    dtins = 0.002 * Myrins  # Try 0.002 Myr
+    for tcreated, mass in zip(stellar.tcreated, stellar.mass):
+        age = time - tcreated
+        ageins = age * Myrins
+        ts = np.linspace(0,ageins,ageins/dtins)
+        for i in range(0,len(ts)):
+            energy, ml = singlestar.star_winds(mass,ts[i],dtins)
+            mom += np.sqrt(2.0*energy*ml)
+    return mom
+findcumulmomwinds = Hamu.Algorithm(_findcumulmomwinds)
+
 def _findcumulwinds(snap):
     # Output: (energy,mass loss)
     # Note: we want cumulative wind energy, not luminosity as above
