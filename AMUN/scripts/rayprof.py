@@ -259,7 +259,7 @@ def plot(simname,hydro,centre):
         plt.yscale(hydrofuncs.yscale(hydro))
         plt.xlabel("Radius / pc")
         plt.ylabel(hydrofuncs.hydro_label(hydro))
-        plt.savefig(path+"/profile_"+str(snap.OutputNumber()).zfill(5)+".png")
+        plt.savefig(path+"/profile_"+str(snap.OutputNumber()).zfill(5)+".pdf",rasterized=True,dpi=200)
 
 def plotgradient(simname,hydro,time,centre,label=None,xlims=None,powfile=None,suffix=None):
     '''
@@ -390,6 +390,7 @@ if __name__ == "__main__":
     # Make figure
     powfile = open("../plots/powerlaws.txt","w")
     labels = OrderedDict()
+    labels["NOFB_DENSE"] = "No star, Dense"
     labels["NOFB"] = "No star"
     labels["UV_30"] = "UV only, 30 Msun star"
     labels["UVWIND_30"] = "UV+Winds, 30 Msun star"
@@ -399,11 +400,11 @@ if __name__ == "__main__":
         time = None
         #import pdb; pdb.set_trace()
         starpos = None
+        plotgradient(simname,"nH",time,starpos,labels[simname],
+                     xlims=[0.03,25.0],powfile=powfile,suffix="starpos")
         plotgradient(simname,"T",time,starpos,labels[simname],
                      xlims=[0.03,25.0],powfile=powfile,suffix="starpos")
         plotgradient(simname,"xHII",time,starpos,labels[simname],
-                     xlims=[0.03,25.0],powfile=powfile,suffix="starpos")
-        plotgradient(simname,"nH",time,starpos,labels[simname],
                      xlims=[0.03,25.0],powfile=powfile,suffix="starpos")
         #plotgradient(simname,"nH",time,np.array([0.5,0.5,0.5]),"Geometric Centre",
         #             xlims=[0.03,25.0],powfile=powfile,suffix="centre")
