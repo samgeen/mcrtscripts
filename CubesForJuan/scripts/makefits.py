@@ -110,5 +110,5 @@ def runforsim(simname):
 
 if __name__=="__main__":
     # Use IMF2, winds + UV
-    for simname in ["FID_FIXED48","FID_FIXED48_HIB","FID_FIXED48_NOB"]:
+    for simname in ["FID_FIXED48_HIB","FID_FIXED48_NOB"]:
         runforsim(simname)
