@@ -552,11 +552,29 @@ def maxBfieldinsnap(snap):
     cells = cell_source.flatten()
     b = 0.5*(cells["B-left"]+cells["B-right"])  
     ud = snap.info["unit_density"].express(C.g_cc)
-    ul = snap.info["unit_length"].express(C.cm)
+    ul = snap.info["unit_length"].express(C.cm) / snap.info["boxlen"]
     ut = snap.info["unit_time"].express(C.s)
     unit = np.sqrt(4.0*np.pi*ud*(ul/ut)**2)*1e6 # microGauss
     Bmag = np.sqrt((b**2).sum(axis=1))*unit
     return np.max(Bmag)
+
+# Renamed, bug in version 1
+def Bfieldenergyinsnap2(snap):
+    amr = snap.amr_source(["rho","B-left","B-right"])
+    cell_source = CellsToPoints(amr)
+    cells = cell_source.flatten()
+    vols = (cells.get_sizes()*snap.info["unit_length"].express(C.cm))**3.0
+    b = 0.5*(cells["B-left"]+cells["B-right"])  
+    ud = snap.info["unit_density"].express(C.g_cc)
+    ul = snap.info["unit_length"].express(C.cm) / snap.info["boxlen"]
+    ut = snap.info["unit_time"].express(C.s)
+    unit = np.sqrt(4.0*np.pi*ud*(ul/ut)**2) # Gauss
+    # Mask on density to exclude background
+    mask = cells["rho"]*snap.info["unit_density"].express(C.H_cc) > 3.0
+    Bmag2 = (b**2).sum(axis=1)*unit**2
+    # Benergy per volume = 0.5 * B^2
+    Benergy = np.sum(0.5 * Bmag2[mask] * vols[mask])
+    return Benergy
     
 def run(func,simnames,plotname):
     name = func.__name__

@@ -99,7 +99,7 @@ def rgb(r,g,b):
     return (float(r) / 255.0, float(g) / 255.0, float(b)/255.0)
 
 def MakeImage(datas,hydros,snap,wsink,ax,dolengthscale,cmap,plottime=False,timeL=None,label=None,
-                  starsink=None,rdm=None,contours=[],zoombox=-1,starC=False,zoom=1.0):
+                  starsink=None,rdm=None,contours=[],zoombox=-1,starC=False,zoom=1.0,Slice=False):
 
     ims = []
     for data, hydro in zip(datas, hydros):
@@ -241,13 +241,17 @@ def MakeImage(datas,hydros,snap,wsink,ax,dolengthscale,cmap,plottime=False,timeL
         textx = x2 - 0.02 * boxlen
         textalign = "right"
         # HACK
-        if not label:
+        if not label or Slice:
             x1 = 0.02 * boxlen
             x2 = x1 + lscale
             textx = x2 + 0.02 * boxlen
             textalign = "left"
-        y1 = 0.90 * boxlen
-        y2 = y1
+        if not Slice:
+            y1 = 0.90 * boxlen
+            y2 = y1
+        else:
+            y1 = 0.1 * boxlen
+            y2 = y1
         ax.plot([x1,x2],[y1,y2],scalecol)
         ax.text(textx,y2, "  "+str(lscale)+" pc",color=scalecol,
                 horizontalalignment=textalign,
@@ -411,7 +415,7 @@ def MakeFigure(simnames,times,name,los=None,hydro="rho",Slice=False,wsink=False,
             starsink = np.where(sink.id == starsinkid)[0]
             im    = MakeImage(datas,hydros,snap,wsink,ax,dolengthscale,cmap,
                               plottime, timeL[ii],label = label,starsink=starsink,rdm=rdm,
-                              contours=contours,zoombox=zoombox/zoom,starC=starC,zoom=zoom)
+                              contours=contours,zoombox=zoombox/zoom,starC=starC,zoom=zoom,Slice=Slice)
             plottime      = False
             dolengthscale = False
 

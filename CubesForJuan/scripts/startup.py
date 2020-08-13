@@ -67,10 +67,12 @@ plotfolder = "../plots/"
 
 # Simulation names
 #mainsimfolder = "/home/hd/hd_hd/hd_mp149/MCRT/runs/"
-mainsimfolder = "/home/samgeen/amun/runs/"
+mainsimfolder = "/home/stgeen0/MCRT/runs/"
 amunfolder = mainsimfolder+"69_AMUN_onestar/"
 simfolders = {}
 simfolders["FID_FIXED48"] = amunfolder+"Z3_oldfiducial"
+simfolders["FID_FIXED48_HIB"] = amunfolder+"Z4_oldfiducial_highB"
+simfolders["FID_FIXED48_NOB"] = amunfolder+"Z5_oldfiducial_noB"
 simfolders["NOFB"] = amunfolder+"01_nostar"
 simfolders["UV_120"] = amunfolder+"02_uvonly_120"
 simfolders["UVWIND_120"] = amunfolder+"03_uv+winds_120"

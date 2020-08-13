@@ -79,6 +79,19 @@ def radius(simname):
     #t -= tcreated
     return t, r
 
+energyinsnap = Hamu.Algorithm(findproperties.energyinsnap)
+def energy(simname,kinonly=False,thermonly=False):
+    print "Running for simulation", simname
+    sim = hamusims[simname]
+    tcreated, sfe = starrelations.runforsim(simname,"firsttime")
+    t,e = timefuncs.timefunc(sim,energyinsnap,processes=1) # doesn't like tuples in the pool map
+    #t -= tcreated
+    therm = e[:,0]
+    kin = e[:,1]
+    tot = e[:,2]
+    eout = np.array([tot, therm, kin]).T
+    return t, eout
+
 def windradiusratio(simname):
     print "Running for simulation", simname
     sim = hamusims[simname]
@@ -285,6 +298,26 @@ def photodens(simname):
     t,pdens = timefuncs.timefunc(sim,photodensinsnap,verbose=True,processes=nprocs)
     return t, pdens
 
+Bfieldenergyinsnap = Hamu.Algorithm(findproperties.Bfieldenergyinsnap2)
+def Bfieldenergy(simname):
+    print "Running for simulation", simname
+    sim = hamusims[simname]
+    t, BE = timefuncs.timefunc(sim,Bfieldenergyinsnap,processes=nprocs)
+    # Correct BE since we use microGauss as internal units, not Gauss
+    return t, BE
+
+def energyplusB(simname):
+    print "Running for simulation", simname
+    sim = hamusims[simname]
+    tcreated, sfe = starrelations.runforsim(simname,"firsttime")
+    t,e = timefuncs.timefunc(sim,energyinsnap,processes=1) # doesn't like tuples in the pool map
+    t,BE = timefuncs.timefunc(sim,Bfieldenergyinsnap,processes=1) # doesn't like tuples in the pool map
+    #t -= tcreated
+    therm = e[:,0]
+    kin = e[:,1]
+    eout = np.array([BE, therm, kin]).T
+    return t, eout
+
 def plotpowerlaw(ax,w,y0,linestyle,t0=0.3):
     '''
     Plot a power law fit fit ( p = c * t^w )
@@ -329,6 +362,8 @@ def run(simfunc,simnamesets,plotlabels,compare=False,secondfuncs=None,gradient=F
             #ax.set_xlim([1.5,12.0])
             ax.set_ylim([7e46,7e50])
             #xticks = [2,3,4,5,6,7,8,9,10]
+        if funcname == "momentumatstarpos" and not gradient:
+            textloc = 0.1    
         if funcname == "radius" or funcname == "radius2":
             #tlim = 1e-6
             if not compare:
@@ -342,6 +377,10 @@ def run(simfunc,simnamesets,plotlabels,compare=False,secondfuncs=None,gradient=F
             #tlim = 1e-6
             ax.set_ylim([1e44,1e50])
             linenames = ["Total","Thermal","Kinetic"]
+        if funcname == "energy":
+            linenames = ["Total","Thermal","Kinetic"]
+            if funcname == "energyplusB":
+                linenames = ["Magnetic","Thermal","Kinetic"]
         if funcname == "windLemittedvscool":
             linenames = ["Emitted","Cooling","Cooling $> 10^{6}$ K"]
             ax.set_ylim([1e31,1e39])
@@ -527,7 +566,7 @@ def run(simfunc,simnamesets,plotlabels,compare=False,secondfuncs=None,gradient=F
                 ax.set_ylabel("Momentum / g cm s$^{-1}$")
             if funcname == "momentumatstarpos":
                 if gradient:
-                    ax.set_ylabel("$\mathrm{d}\Delta p / \mathrm{dt}$ / g cm s$^{-2}$")
+                    ax.set_ylabel("$\mathrm{d}\Delta p_{(\mathrm{UVWIND-UV})} / \mathrm{dt}$ / g cm s$^{-2}$")
                 else:
                     ax.set_ylabel("Outflow Momentum / g cm s$^{-1}$")
                     ncollegend = 2
@@ -600,6 +639,17 @@ def runall():
     allfbnames = alluvnames+allwindnames+allwindpressnames
     allnames = ["NOFB"]+allfbnames
     windpressnames = ["UVWIND_120_DENSE"]
+
+    for func in [energyplusB]:
+        run(func,(["UVWINDPRESS_120"],["UVWINDPRESS_120"]), # ,"UVWINDPRESS_120_DENSE"]),
+            ("Diffuse Cloud","Diffuse Cloud"),compare=False)
+
+
+    for func in [Bfieldenergy]:
+        run(func,(["NOFB"]+allwindpressnames,["NOFB_DENSE"]), # ,"UVWINDPRESS_120_DENSE"]),
+            ("Diffuse Cloud","Dense Cloud"),compare=False)
+
+    
     for func in [momentumatstarpos]:
         run(func,(["UV_30","UVWIND_30"],
                   ["UV_60","UVWIND_60"],
@@ -609,8 +659,11 @@ def runall():
              "60 "+Msolar+" Star,\n Diffuse Cloud",
              "120 "+Msolar+" Star,\n Diffuse Cloud",
              "120 "+Msolar+" Star,\n Dense Cloud"),compare=True,secondfuncs=(windmomemitted,))
-        run(func,(allnames,
-                  ["NOFB_DENSE","UV_120_DENSE","UVWIND_120_DENSE","UVWINDPRESS_120_DENSE"]),
+        run(func,(["UVWINDPRESS_120","UVWIND_120","UV_120",
+                   "UVWINDPRESS_60","UVWIND_60","UV_60",
+                   "UVWINDPRESS_30","UVWIND_30","UV_30",
+                   "NOFB"],
+                  ["NOFB_DENSE","UV_120_DENSE","UVWIND_120_DENSE","UVWINDPRESS_120_DENSE"][::-1]),
             ("Diffuse Cloud","Dense Cloud"),compare=False)
     for func in [momentumatstarpos]:
         run(func,(["UV_30","UVWIND_30"],
@@ -644,7 +697,7 @@ def runall():
     for func in [maxBfield]:
         run(func,(["NOFB"],["NOFB_DENSE"]),
             ("Diffuse Cloud","Dense Cloud"),compare=False)
-        
+
     for func in [windradiusratio]:
         run(func,(allwindpressnames,["UVWINDPRESS_120_DENSE"]),
             ("Diffuse Cloud","Dense Cloud"),compare=False,secondfuncs=(windradiusratio_analytic,))
