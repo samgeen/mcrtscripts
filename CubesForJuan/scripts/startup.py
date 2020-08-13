@@ -67,7 +67,8 @@ plotfolder = "../plots/"
 
 # Simulation names
 #mainsimfolder = "/home/hd/hd_hd/hd_mp149/MCRT/runs/"
-mainsimfolder = "/home/stgeen0/MCRT/runs/"
+#mainsimfolder = "/home/stgeen0/MCRT/runs/"
+mainsimfolder = "/home/samgeen/amun/runs/"
 amunfolder = mainsimfolder+"69_AMUN_onestar/"
 simfolders = {}
 simfolders["FID_FIXED48"] = amunfolder+"Z3_oldfiducial"
