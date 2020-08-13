@@ -58,7 +58,7 @@ def makedir(folder):
     except:
         pass
 
-def runforsim(sim,nouts=None,times=None,pos=None,radius=None):
+def makecubesforsim(sim,nouts=None,times=None,pos=None,radius=None):
     hydros = ["vx","vy","vz","rho","T","xHII","xHeII","xHeIII","Bx","By","Bz","Bmag","NpHII","NpHeII","NpHeIII"]
     simname = sim.Name()
     simfolder = "../cubes/fits/"+simname
@@ -84,10 +84,8 @@ def runforsim(sim,nouts=None,times=None,pos=None,radius=None):
             snap = sim.FindAtTime(time)
             run(snap,folder=simfolder,hydrosin=hydros,pos=pos,radius=radius)
 
-
-if __name__=="__main__":
-    # Use IMF2, winds + UV
-    sim = hamusims["FID_FIXED48"]
+def runforsim(simname):
+    sim = hamusims[simname]
     # Pick the last output - TODO, CHANGE TO SPECIFIC OUTPUT!!!
     #nout = snap.OutputNumber()
     #nouts = [nout]
@@ -106,5 +104,11 @@ if __name__=="__main__":
     pos = np.zeros(3)+0.5
     radius = 0.4
     # Run one first
-    runforsim(sim,times=[times[-5]],pos=pos,radius=radius)
-    runforsim(sim,times=times,pos=pos,radius=radius)
+    makecubesforsim(sim,times=[times[-5]],pos=pos,radius=radius)
+    makecubesforsim(sim,times=times,pos=pos,radius=radius)
+
+
+if __name__=="__main__":
+    # Use IMF2, winds + UV
+    for simname in ["FID_FIXED48","FID_FIXED48_HIB","FID_FIXED48_NOB"]:
+        runforsim(simname)

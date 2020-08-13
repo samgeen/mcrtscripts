@@ -71,5 +71,5 @@ def plot(simnames):
     plt.savefig("../plots/maxradiusvstime.pdf")
 
 if __name__=="__main__":
-    simnames = ["UVWINDPRESS_30","UVWINDPRESS_60","UVWINDPRESS_120","UVWIND_120_DENSE"]
+    simnames = ["UVWINDPRESS_30"]#,"UVWINDPRESS_60","UVWINDPRESS_120","UVWIND_120_DENSE"]
     plot(simnames)
