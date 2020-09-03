@@ -174,17 +174,18 @@ class AllHydros(object):
         def bfuncforsnap(axis):
             def howmanylayersareyouonmydude(ro):
                 ud = ro.info["unit_density"].express(C.g_cc)
-                ul = ro.info["unit_length"].express(C.cm)
+                ul = ro.info["unit_length"].express(C.cm) / ro.info["boxlen"]
                 ut = ro.info["unit_time"].express(C.s)
                 unit = np.sqrt(4.0*np.pi*ud*(ul/ut)**2)*1e6 # microGauss
                 def bfunc(dset):
                     b = 0.5*(dset["B-left"]+dset["B-right"])
                     if axis == "all":
-                        return np.sqrt((b**2).sum(axis=1))*unit
+                        Bout = np.sqrt((b**2).sum(axis=1))*unit
+                        return Bout
                     return b[:,axis]*unit
                 return bfunc
             return howmanylayersareyouonmydude
-        h["Bmag"] = Hydro("|B| / $\mu G$",bfuncforsnap("all"),["B-left","B-right"],"PuBuGn","log",(None, None))
+        h["Bmag"] = Hydro("|B| / $\mu G$",bfuncforsnap("all"),["B-left","B-right"],"PuOr","log",(None, None))
         # B-field vector (x)
         h["Bx"] = Hydro("B.$x$ / $\mu G$",bfuncforsnap(0),["B-left","B-right"],"PuBuGn","log",(None, None))
         # B-field vector (y)

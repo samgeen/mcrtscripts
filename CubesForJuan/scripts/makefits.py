@@ -17,7 +17,7 @@ def run(snap,folder,hydrosin,pos,radius):
     amr = hydrofuncs.amr_source(ro,hydros)
     # Make grid
     lmin = ro.info["levelmin"]
-    lsize = 256
+    lsize = 512
     boxlen = ro.info["boxlen"]
     pos = np.array(pos)
     coords = np.linspace(-0.5,0.5,lsize)*2.0*radius
@@ -102,13 +102,13 @@ def runforsim(simname):
     #pos = [stars.x[0],stars.y[0],stars.z[0]]
     #radius = 25.0
     pos = np.zeros(3)+0.5
-    radius = 0.4
+    radius = 0.25
     # Run one first
-    makecubesforsim(sim,times=[times[-5]],pos=pos,radius=radius)
-    makecubesforsim(sim,times=times,pos=pos,radius=radius)
+    makecubesforsim(sim,nouts=[25],pos=pos,radius=radius)
+    #makecubesforsim(sim,times=times,pos=pos,radius=radius)
 
 
 if __name__=="__main__":
     # Use IMF2, winds + UV
-    for simname in ["FID_FIXED48_HIB","FID_FIXED48_NOB"]:
+    for simname in ["FID_FIXED48","FID_FIXED48_HIB","FID_FIXED48_NOB"]:
         runforsim(simname)
