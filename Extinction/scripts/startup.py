@@ -13,6 +13,7 @@ import customplot
 import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
 import hydrofuncs
+print "Import"
 import snaptime
 
 import linestyles
@@ -27,6 +28,10 @@ import singlestar
 
 from collections import OrderedDict
 
+verbose = True
+
+if verbose:
+    print "Imports done..."
 #Hamu.Workspace("HIISFE")
 
 # Physical conversions
@@ -57,19 +62,21 @@ Msolar = "M$_{\odot}$"
 plotfolder = "../plots/"
 
 # Simulation names
-allsims = ["18_LEGO","23_LEGO","26_LEGO"]
+allsims = {"128_LEGO":"128_LEGO_HM6Z002SNLT",}
 
 # Simulation locations
 #mainsimfolder = "/home/hd/hd_hd/hd_mp149/MCRT/runs/"
 #mainsimfolder = "/home/sgeen/MC_RT/runs_anais/"
-mainsimfolder = "/home/lego/geen/LEGO/"
+mainsimfolder = "/greenwhale/LEGO/"
 
+if verbose:
+    print "Making sims..."
 
-Hamu.CACHEPATH = "/cral3/geen/cache/"
+Hamu.CACHEPATH = "/greenwhale/samgeen/cache/"
 hamusims = OrderedDict()
-for simname in allsims:
+for simname, folder in allsims.iteritems():
     label = simname
-    sim = Hamu.MakeSimulation(simname,mainsimfolder+simname,label)
+    sim = Hamu.MakeSimulation(simname,mainsimfolder+folder,label)
     hamusims[simname] = sim
 
 # Set up simulation arrays
@@ -100,14 +107,25 @@ def _MakeSim(name):
 
 
 # Set up single star module
-startableloc = "/home/lego/geen/StellarSources/Compressed/singlestar_z0.014"
+if verbose:
+    print "Singlestar Setup..."
+startableloc = "/greenwhale/samgeen/StellarSources/Compressed/singlestar_z0.002"
 singlestar.star_setup(startableloc)
 
 # Useful functions
-# N_H to/from A_k (from Lombardi+ 2010)
-akconst = 1.75e22
-# N_H to/from A_v (from Savage & Mathis 1979)
-avconst = 1.87e21
+MW = False
+SMC = True
+if MW:
+    # N_H to/from A_k (from Lombardi+ 2010)
+    akconst = 1.75e22
+    # N_H to/from A_v (from Savage & Mathis 1979)
+    avconst = 1.87e21
+elif SMC:
+    # Dobashi et al. 2009 (last two paragraphs of section 5.2)
+    avconst = 1.0/1.5e-22
+    # Hack - just use 10x the avconst for Ak
+    akconst = 10.0*avconst
+
 def AktoNH(Ak):
     return akconst*Ak
 

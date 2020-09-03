@@ -166,14 +166,14 @@ def cumulativeextinction(snap,simname,wholesink,dofraction,ylims=None):
     plt.xscale("log")
     plt.yscale("log")
     plt.ylim(ylims)
-    plt.xlabel(AVtext)
-    plt.ylabel(functext+"($<$"+AVtext+")"+funcunits)
+    #    plt.xlabel(AVtext)
+    #    plt.ylabel(functext+"($<$"+AVtext+")"+funcunits)
     time = snap.Time()*snap.RawData().info["unit_time"].express(C.Myr)
     xtxt = extaxis.min()
     ytxt = cumuldist[cumuldist > 0].min()*1.1
     if ylims is not None:
         ytxt = ylims[0]*1.2
-    plt.text(xtxt,ytxt,("%.2f" % time)+" Myr")
+    #    plt.text(xtxt,ytxt,("%.2f" % time)+" Myr")
     figname = "../plots/extinctions/cumulextinction"+simname+"_"+str(snap.OutputNumber()).zfill(5)+".png"
     print "Plotting", figname
     plt.savefig(figname)
@@ -223,7 +223,7 @@ if __name__=="__main__":
     #sim = hamusims["18_LEGO"]
     #timefunc(sim,extinctionhistogram)
     #snap = hamusims["18_LEGO"].Snapshots()[50]
-    for simname in ["26_LEGO","18_LEGO"]:
+    for simname in ["128_LEGO"]:
         cumulativeextinctionforeachsnap(simname,True,True,[1.0,1e4])
         extinctionattimes(simname,[],False)
         extinctionforeachsnap(simname)
