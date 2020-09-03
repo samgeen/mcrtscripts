@@ -12,6 +12,8 @@ import matplotlib.patheffects as pe
 
 import findproperties, starrelations
 
+import rdmfile
+
 def _tsfeinsnap(snap):
     sink = sinks.FindSinks(snap)
     mgas = 1e4
@@ -94,6 +96,7 @@ def run(simfunc,simnamesets,plotlabels):
     funcname = simfunc.__name__
     fig, axes = plt.subplots(1,2,sharex=True,sharey=True)
     first = True
+    rdm = rdmfile.RDMFile(__file__)
     for ax, simnames, plotlabel in zip(axes,simnamesets,plotlabels):
         # Do func-related stuff for all plots
         ax.set_xscale("log")
@@ -137,6 +140,7 @@ def run(simfunc,simnamesets,plotlabels):
             ax.plot(t,y,color=linestyles.Colour(simname),label=linestyles.Label(simname),
                     linestyle=linestyles.Linestyle(simname),
                     path_effects=[pe.Stroke(linewidth=5, foreground='k'), pe.Normal()])
+            rdm.AddPoints(t,y,label=linestyles.Label(simname))
         # Overplot theoretical fits
         if funcname == "momentum":
             # Flat density profile
@@ -169,7 +173,10 @@ def run(simfunc,simnamesets,plotlabels):
     fig.subplots_adjust(wspace=0)
     fig.set_size_inches(14,6)
     fig.savefig(plotfolder+funcname+"_both.pdf", dpi=80)
-        
+    rdm.Write(plotfolder+funcname+"_both.pdf") 
+    
 if __name__=="__main__":
-    for func in [momentum,nphotonsHII,tsfe,radius,radius2]:
+    for func in [tsfe]:
         run(func,(imfsims,icsims),(linestyles.starsc,linestyles.turbsc))
+#    for func in [momentum,nphotonsHII,tsfe,radius,radius2]:
+#        run(func,(imfsims,icsims),(linestyles.starsc,linestyles.turbsc))

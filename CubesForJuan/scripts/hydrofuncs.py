@@ -161,18 +161,20 @@ class AllHydros(object):
         def bfuncforsnap(axis):
             def howmanylayersareyouonmydude(ro):
                 ud = ro.info["unit_density"].express(C.g_cc)
-                ul = ro.info["unit_length"].express(C.cm)
+                ul = ro.info["unit_length"].express(C.cm)/ro.info["boxlen"]
                 ut = ro.info["unit_time"].express(C.s)
                 unit = np.sqrt(4.0*np.pi*ud*(ul/ut)**2)*1e6 # microGauss
                 def bfunc(dset):
                     b = 0.5*(dset["B-left"]+dset["B-right"])
                     if axis == "all":
+                        # NOTE!!! FOR VISUALISATION, axis=2, FOR OTHER ANALYSIS axis=1
+                        # FIGURE OUT NEAT WAY TO SWITCH THIS
                         return np.sqrt((b**2).sum(axis=1))*unit
                     else:
                         return b[:,axis]*unit
                 return bfunc
             return howmanylayersareyouonmydude
-        h["Bmag"] = Hydro("|B| / $\mu G$",bfuncforsnap("all"),["B-left","B-right"],"PuBuGn","log",(None, None))
+        h["Bmag"] = Hydro("$|\mathrm{B}|~/~\mu G$",bfuncforsnap("all"),["B-left","B-right"],"PuOr","log",(None, None))
         # B-field vector (x)
         h["Bx"] = Hydro("B.$x$ / $\mu G$",bfuncforsnap(0),["B-left","B-right"],"PuBuGn","log",(None, None))
         # B-field vector (y)
@@ -222,14 +224,14 @@ def hydro_label(hydro):
     Returns a label for the given hydro variable in some default units
     '''
     global allhydros
-    return allhydros[hydro].Label()
+    return allhydros[hydro.replace("max","")].Label()
 
 def scale_by_units(ro, hydro):
     '''
     Returns a lambda function that scales a dataset by some default units
     '''
     global allhydros
-    return allhydros[hydro].ScaleByUnits(ro)
+    return allhydros[hydro.replace("max","")].ScaleByUnits(ro)
 
 def amr_source(ro, hydro,extra=[]):
     '''
@@ -240,6 +242,7 @@ def amr_source(ro, hydro,extra=[]):
         hydros = [hydro] # default is just the variable we need
     else:
         hydros = hydro
+    hydros = [h.replace("max","") for h in hydros]
     pymsesvars = []
     # Run through hydro variables
     for hydro in hydros:
@@ -262,25 +265,25 @@ def surface_quantity(hydro):
     Used by pymses - if true, divides each pixel by the pixel surface area
     '''
     global allhydros
-    return allhydros[hydro].SurfaceQuantity()
+    return allhydros[hydro.replace("max","")].SurfaceQuantity()
     
 def cmap(hydro):
     '''
     Returns cmap for this hydro variable 
     '''
     global allhydros
-    return allhydros[hydro].ColourMap()
+    return allhydros[hydro.replace("max","")].ColourMap()
 
 def yscale(hydro):
     '''
     Returns whether this function takes a log scale or not
     '''
     global allhydros
-    return allhydros[hydro].AxisScale()
+    return allhydros[hydro.replace("max","")].AxisScale()
 
 def hydro_range(hydro):
     '''
     Returns the min/max values to plot/show as a tuple
     '''
     global allhydros
-    return allhydros[hydro].AxisRange()
+    return allhydros[hydro.replace("max","")].AxisRange()

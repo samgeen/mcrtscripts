@@ -534,17 +534,6 @@ def run(simfunc,simnamesets,plotlabels,compare=False,secondfuncs=None,gradient=F
                         ax.set_ylim([4e40/Myrins,1.2e44/Myrins])
                     else:
                         ax.set_ylim([1e40,1e42])
-                    if funcname == "momentumatstarpos":
-                            rlabels = ["$\dot{p}_{\mathrm{w}}$"]#,"$V >$ 1000 km/s"]
-                            legelements = [Line2D([0],[0],color=linestyles.Colour(simnames[1]),
-                                                  linestyle=ls,label=n,
-                                                  alpha=0.9) for ls,lw, n in zip([":"]+secondlines,
-                                                                                 [5,3,3],
-                                                                                 rlabels)]
-                            legloc2 = "lower right"
-                            if "30" in simnames[1]:
-                                legloc2 = "center left"
-                            legend2 = ax.legend(handles=legelements, loc=legloc2,framealpha=0.0,fontsize="small")
             # Overplot theoretical fits
         #if funcname == "momentum" and not compare:
             # Flat density profile
