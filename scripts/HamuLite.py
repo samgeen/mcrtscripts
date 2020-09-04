@@ -7,7 +7,13 @@ Created on 18 Feb 2013
 
 # Cache file imports
 import hashlib
-import cPickle as pik
+
+import sys
+if sys.version_info[0] < 3:
+    import cPickle as pik
+else:
+    import pickle as pik
+
 import os, glob
 import pymses
 
@@ -37,12 +43,12 @@ class CacheFile(object):
         # Load the (binary) data file
         if self.Exists():
             pikfile = open(self._Filename("data"),"rb")
-            print "Loading from cache: snap", self._snapshot.OutputNumber(),\
-                self._algorithm.FunctionName(), "..."
+            print("Loading from cache: snap", self._snapshot.OutputNumber(),\
+                self._algorithm.FunctionName(), "...")
             try:
                 output = pik.load(pikfile)
             except:
-                print "Hamu: Error reading cache file", pikfile
+                print("Hamu: Error reading cache file", pikfile)
                 raise ValueError
             pikfile.close()
             return output
@@ -221,8 +227,8 @@ class Simulation(object):
         self._name = name
         if not name in folders:
             if not silent:
-                print "No simulation with this name stored in memory:", name
-                print "Currently available simulations:", folders.keys()
+                print("No simulation with this name stored in memory:", name)
+                print("Currently available simulations:", folders.keys())
             raise KeyError
         self._folder = folders[name]
         self._label  = labels[name]
@@ -264,15 +270,15 @@ class Simulation(object):
             best -= 1
         pdiff = (times[best]-time) / time * 100.0 # Is a percentage, so multiply by 100
         snap = self.Snapshots()[best]
-        print "Found match with output",snap.OutputNumber(),", %diff: ",pdiff, "at time ",snap.Time(),"in",self.Name()
+        print("Found match with output",snap.OutputNumber(),", %diff: ",pdiff, "at time ",snap.Time(),"in",self.Name())
         return snap
     
     def FindOutput(self,output):
         if output in self._snaps:
-            print "Found output number", output
+            print("Found output number", output)
             return self._snaps[output]
         else:
-            print "Found no output number", output
+            print("Found no output number", output)
             return None
 
     def Folder(self):

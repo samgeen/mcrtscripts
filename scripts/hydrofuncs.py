@@ -14,7 +14,7 @@ usecooling = True
 try:
     import rtcooling
 except ImportError:
-    print "rtcooling MODULE FAILED TO IMPORT, USING WITHOUT COOLING IN HYDROFUNCS"
+    print("rtcooling MODULE FAILED TO IMPORT, USING WITHOUT COOLING IN HYDROFUNCS")
     usecooling = False
     
 # Base hydro variable class used to define the interface
@@ -267,7 +267,7 @@ def amr_source(ro, hydro,extra=[]):
             pymsesvars.append(e)
     # Make unique list
     pymsesvars = list(set(pymsesvars))
-    print "Making AMR source with the variables", pymsesvars
+    print("Making AMR source with the variables", pymsesvars)
     # Output pymses AMR source
     return ro.amr_source(pymsesvars)
 

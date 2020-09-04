@@ -64,7 +64,7 @@ def Label(simname,sub=False):
         if sub:
             label += turbsub
         return label
-    print "Oops, something went wrong in linestyles.Labels for simname",simname
+    print("Oops, something went wrong in linestyles.Labels for simname",simname)
     raise ValueError
 
 #def Legend(run,scatter=True):

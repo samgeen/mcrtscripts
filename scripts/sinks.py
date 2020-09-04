@@ -101,9 +101,9 @@ if __name__=="__main__":
     outs  = glob.glob("output_?????")
     outs.sort()
     for out in outs:
-        print out
+        print(out)
         ro = pymses.RamsesOutput("./",int(out[-5:]))
         sinks = FindSinks(ro)
-        print np.sum(sinks.mass)
-        print sinks.mass
-        print "---"
+        print(np.sum(sinks.mass))
+        print(sinks.mass)
+        print("---")
