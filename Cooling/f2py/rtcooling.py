@@ -137,4 +137,4 @@ if __name__=="__main__":
     nH = np.zeros(ntest)+1e3
     xion = np.zeros((3,ntest))+0.999
     Zsolar = np.zeros(ntest)+1.0
-    print "Change in temperature in K/s:", run(T2,nH,xion,Zsolar)
+    print("Change in temperature in K/s:", run(T2,nH,xion,Zsolar))

@@ -145,5 +145,5 @@ if __name__=="__main__":
     for out in [outs[-1]]:
         ro = pymses.RamsesOutput("./",int(out[-5:]))
         stellars = FindStellar(ro)
-        print stellars.mass
-        print stellars.sinkid
+        print(stellars.mass)
+        print(stellars.sinkid)

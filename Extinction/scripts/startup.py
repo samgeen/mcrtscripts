@@ -13,7 +13,6 @@ import customplot
 import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
 import hydrofuncs
-print "Import"
 import snaptime
 
 import linestyles
@@ -31,7 +30,7 @@ from collections import OrderedDict
 verbose = True
 
 if verbose:
-    print "Imports done..."
+    print("Imports done...")
 #Hamu.Workspace("HIISFE")
 
 # Physical conversions
@@ -70,11 +69,11 @@ allsims = {"128_LEGO":"128_LEGO_HM6Z002SNLT",}
 mainsimfolder = "/greenwhale/LEGO/"
 
 if verbose:
-    print "Making sims..."
+    print("Making sims...")
 
 Hamu.CACHEPATH = "/greenwhale/samgeen/cache/"
 hamusims = OrderedDict()
-for simname, folder in allsims.iteritems():
+for simname, folder in allsims.items():
     label = simname
     sim = Hamu.MakeSimulation(simname,mainsimfolder+folder,label)
     hamusims[simname] = sim
@@ -93,11 +92,11 @@ def _MakeSim(name):
         elif "IC" in name:
             folder = icsimfolder
         else:
-            print "Not IMF or IC in sim name", name
+            print("Not IMF or IC in sim name", name)
             raise ValueError
         folder += name[-2:]+"_justuv/"
         if not os.path.exists(folder):
-            print "No folder", folder
+            print("No folder", folder)
             raise OSError
         # Return label
         # TODO! FOR NOW, JUST RETURN NAME IMF/IC+NUM
@@ -108,7 +107,7 @@ def _MakeSim(name):
 
 # Set up single star module
 if verbose:
-    print "Singlestar Setup..."
+    print("Singlestar Setup...")
 startableloc = "/greenwhale/samgeen/StellarSources/Compressed/singlestar_z0.002"
 singlestar.star_setup(startableloc)
 
@@ -166,10 +165,10 @@ def NHtoNH2(NH):
 
 def MakeDirs(folder):
     try:
-        print "Making directory", folder
+        print("Making directory", folder)
         os.makedirs(folder)
     except:
-        print "Not making directory", folder, "- it already exists!"
+        print("Not making directory", folder, "- it already exists!")
         pass
 
 def alpha_B_HII(T):
@@ -180,4 +179,4 @@ def alpha_B_HII(T):
     a = 2.753e-14 * l**1.5 / (1. + (l/2.74)**0.407)**2.242
     return a   
 
-print "Imported various project-global modules"
+print("Imported various project-global modules")

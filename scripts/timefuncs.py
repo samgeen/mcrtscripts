@@ -16,7 +16,7 @@ def timefunc(sim,func,noarray=False,verbose=False,processes=1,*args,**kwargs):
             t = snaptime.Myr(snap)
             v = func(snap,*args,**kwargs)
             if verbose:
-                print "t,v:", t, v
+                print("t,v:", t, v)
             times.append(t)
             vals.append(v)
     else:
