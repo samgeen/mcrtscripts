@@ -20,7 +20,7 @@ self.amr_field_descrs_by_file = \
            "rt"    : myrtvars
            }
     }
-print "Read user field descriptors by Sam Geen"
+print("Read user field descriptors by Sam Geen")
 #fields = pymses.sources.ramses.output.RamsesOutput.amr_field_descrs_by_file
 #hs = fields["3D"]["hydro"]
 #for h in hs:
