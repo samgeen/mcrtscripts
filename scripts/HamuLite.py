@@ -31,7 +31,7 @@ class CacheFile(object):
     
     def Save(self, data):
         # Save algorithm settings to a text file (for reference)
-        pikfile = open(self._Filename("info"),"w")
+        pikfile = open(self._Filename("info"),"wb")
         pik.dump(str(self._algorithm),pikfile)
         pikfile.close()
         # Save the output data to a binary file
@@ -158,8 +158,8 @@ class Algorithm(object):
         ext - File extension (used for writing multiple cache files; default is ".data")
         '''
         objName = self._function.__name__
-        hash = hashlib.sha1(str(self._args)).hexdigest()
-        hash += hashlib.sha1(str(self._kwargs)).hexdigest()
+        hash = hashlib.sha1(str(self._args).encode('utf-8')).hexdigest()
+        hash += hashlib.sha1(str(self._kwargs).encode('utf-8')).hexdigest()
         filepre = objName+hash
         return filepre+"."+ext
 

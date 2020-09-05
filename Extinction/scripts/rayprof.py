@@ -112,8 +112,8 @@ def makecolumn(snap,centres,amr):
         columns.append(cols)
         # Debug check to make sure I didn't mess up the index in the sum above
         if len(cols) != nprofs:
-            print len(cols), nprofs
-            print "OOPS NOT NPROFS"
+            print(len(cols), nprofs)
+            print("OOPS NOT NPROFS")
             raise ValueError
     # Return NH
     return columns
@@ -170,7 +170,7 @@ def central_density(snap,dummy=None,rinner=None):
         extent = 10
     else:
         extent = int(len(p)*rextent/boxlen)
-    print "FINDING CENTRAL DENSITY USING ",extent, "CELLS"
+    print("FINDING CENTRAL DENSITY USING ",extent, "CELLS")
     return np.nanmean(p[0:extent])
 
 def mean_density(snap,centre,dummy=None,rinner=None):
@@ -216,7 +216,7 @@ def cloudEdge(snap,nHcut=3.0):
             badcount += 1
             #print prof.min(), prof.max()
             edges[iprof] = 0.0
-    print "Number of edges not found", badcount, "of", nprofs
+    print("Number of edges not found", badcount, "of", nprofs)
     edges = np.sort(edges)
     return edges
 
@@ -244,8 +244,8 @@ def plot(simname,hydro,centre):
         # Plot
         plt.clf()
         # Absolute range and IQR shaded areas
-        print radii.shape
-        print pmax.shape
+        print(radii.shape)
+        print(pmax.shape)
         taba = np.concatenate((radii,radii[::-1])) # there and back again
         minmax = np.concatenate((pmin,pmax[::-1]))
         iqr = np.concatenate((p25p,p75p[::-1]))
@@ -268,7 +268,7 @@ def plotgradient(simname,hydro,time,centre,label=None,xlims=None,powfile=None,su
     global nray, nprofs,rays,rads
     sim = Hamu.Simulation(simname)
     # HACK
-    print "Running for sim", simname, "hydro", hydro
+    print("Running for sim", simname, "hydro", hydro)
     snaps = sim.Snapshots()
     tcode = time * Myrins / unit_t
     if not time is None:
@@ -305,7 +305,7 @@ def plotgradient(simname,hydro,time,centre,label=None,xlims=None,powfile=None,su
         nfit = 1e2
         rsph,psph = profilesphere.profileHamu(snap,hydro,10000000,centre,rcut=0.1)
         power, factor = profilesphere.powerlaw(snap,hydro,10000000,centre,rcut=0.1,nfit=nfit)
-        print "POWER LAW:", power, factor
+        print("POWER LAW:", power, factor)
         outnum = snap.OutputNumber()
         if powfile is not None:
             powfile.write(simname+" "+str(outnum)+" w, r0, nfit:"+str(power)+" "+str(factor)+" "+str(nfit)+"\n ")
@@ -394,7 +394,7 @@ def FindColumnsInSim(simname):
     for snap in sim.Snapshots():
         columns, masses = FindColumnsBySinkInSnap(snap)
         if DEBUG and len(masses) > 0:
-            print columns, masses
+            print(columns, masses)
             return
 
 # TODO: Work out how to plot this for initial tests

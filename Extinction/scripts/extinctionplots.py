@@ -19,8 +19,8 @@ def extinctionbyparticle(simname,wholesink):
     isnaps = {}
     # Hack to get this to run on already processed data
     for snap in sim.Snapshots():
-        print "RUNNING FOR SNAP", snap.OutputNumber()
-        stellar = stellars.FindStellar(snap)
+        print("RUNNING FOR SNAP", snap.OutputNumber())
+        stellar = stellars.FindStellar(snap.RawData())
         if len(stellar.mass) == 0:
             continue
         sink = sinks.FindSinks(snap)
@@ -97,7 +97,7 @@ def extinctionattimes(simname,times,wholesink):
         plt.ylim([mincol,1e3])
         plt.text(100,0.2,("%.2f" % time)+" Myr")
         figname = "../plots/extinctions/extinctionattime_"+simname+"_"+str(itime).zfill(5)+".png"
-        print "Plotting", figname
+        print("Plotting", figname)
         plt.savefig(figname)
 
 def makecolumnsinsinksdict(snap):
@@ -115,7 +115,7 @@ def cumulativeextinction(snap,simname,wholesink,dofraction,ylims=None):
     # If set, do mass visible instead of photon count
     # dofraction : bool - if set, do Nvisible/Ntotal versus just Nvisible
     nrays = rayprof.nprofs # Number of rays cast from each sink
-    stellar = stellars.FindStellar(snap)
+    stellar = stellars.FindStellar(snap.RawData())
     sink = sinks.FindSinks(snap)
     particletocolumns = {}
     if not wholesink:
@@ -141,7 +141,7 @@ def cumulativeextinction(snap,simname,wholesink,dofraction,ylims=None):
         try:
             columns = sinktocolumns[sinkid]
         except KeyError:
-            print sinkid, sink.id, sink.mass, sinktocolumns
+            print(sinkid, sink.id, sink.mass, sinktocolumns)
             raise KeyError
         cols = np.sort(columns)
         exts = NHtoAv(cols)
@@ -175,7 +175,7 @@ def cumulativeextinction(snap,simname,wholesink,dofraction,ylims=None):
         ytxt = ylims[0]*1.2
     #    plt.text(xtxt,ytxt,("%.2f" % time)+" Myr")
     figname = "../plots/extinctions/cumulextinction"+simname+"_"+str(snap.OutputNumber()).zfill(5)+".png"
-    print "Plotting", figname
+    print ("Plotting", figname)
     plt.savefig(figname)
     
 def cumulativeextinctionforeachsnap(simname,wholesink,dofraction,ylims=None):
@@ -213,7 +213,7 @@ def extinctioninsnap(snap, simname):
     plt.xlim([8,120])
     plt.ylim([0.1,1e3])
     figname = "../plots/extinctions/extinctioninsnap_"+simname+"_"+str(snap.OutputNumber()).zfill(5)+".png"
-    print "Plotting", figname
+    print("Plotting", figname)
     plt.savefig(figname)
     
 def extinctionhistogram(simname):
