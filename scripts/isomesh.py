@@ -58,8 +58,8 @@ class Mesh(object):
         #print nbors
         flat = np.sort(nbors.flatten())
         #self._nbors = hull
-        print "Running mesh spacer"
-        print nbors.max()
+        print("Running mesh spacer")
+        print(nbors.max())
         #print self._npoints, nbors.shape
         self._nbors = list()
         for ivert in range(0,self._npoints):
@@ -71,7 +71,7 @@ class Mesh(object):
             
     def MakeHeightmap(self):
         smooth = 0.1
-        print "Making heights"
+        print("Making heights")
         self._heights = np.random.rand(self._npoints)
         for iloop in range(0,10):
             for ivert in range(0,self._npoints):
@@ -79,7 +79,7 @@ class Mesh(object):
                 self._heights[ivert] = self._heights[ivert]*(1-smooth) + \
                     smooth*np.sum(self._heights[nbors])/(1.0+len(nbors))
                 #self._heights[ivert] /= (1.0+len(nbors))
-            print self._heights.max()
+            print(self._heights.max())
         pts = (self._points.T*(4.0*self._heights+0.0)).T
         #print pts
         return pts
@@ -87,7 +87,7 @@ class Mesh(object):
         
         
 def Draw():
-    print "Drawing..."
+    print("Drawing...")
     mesh = Mesh(300)  
     heights = mesh.MakeHeightmap()
     # Import these locally in case user doesn't have matplotlib installed

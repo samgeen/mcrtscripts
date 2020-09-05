@@ -108,7 +108,7 @@ def _MakeSim(name):
 # Set up single star module
 if verbose:
     print("Singlestar Setup...")
-startableloc = "/greenwhale/samgeen/StellarSources/Compressed/singlestar_z0.002"
+startableloc = "/home/samgeen/StellarSources/Compressed/singlestar_z0.002"
 singlestar.star_setup(startableloc)
 
 # Useful functions

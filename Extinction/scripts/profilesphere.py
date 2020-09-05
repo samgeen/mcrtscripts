@@ -98,7 +98,7 @@ def mean_density(snap,dummy=None,rinner=None):
         r = r[0:extent]
 
     else:
-        print "R REXTENT", r, rextent
+        print("R REXTENT", r, rextent)
         p = p[r <= rextent*pcincm]
         r = r[r <= rextent*pcincm]
         #extent = int(len(p)*rextent/(boxlen/2.0)+0.5)
@@ -118,7 +118,7 @@ def plot(simname, hydro, npoints=1000000,firstonly=False):
     sim = Hamu.Simulation(simname)
     for snap in sim.Snapshots():
         r,p = profileHamu(snap,hydro,npoints)
-        print r.shape, p.shape
+        print(r.shape, p.shape)
         mkdir("../plots/profiles")
         mkdir("../plots/profiles/"+simname)
         path = "../plots/profiles/"+simname+"/"+hydro
