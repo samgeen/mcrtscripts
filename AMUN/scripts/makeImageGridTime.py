@@ -462,6 +462,9 @@ def MakeFigure(simnames,times,name,los=None,hydro="rho",Slice=False,wsink=False,
 
 if __name__=="__main__":
 
+    # Should we force some figures to run?
+    forcerun=False
+    
     for dense in [False,True]:
         for mass in [30,60,120][::-1]:
             smass = str(mass)
@@ -503,7 +506,7 @@ if __name__=="__main__":
                         movienum = str(imovie).zfill(3)
                         MakeFigure([simset[-1]],[timein],name=figname+"movie"+movienum,los=los,
                                    hydro=coolhydros,Slice=False,wsink=True,
-                                   timeL=[tmovieL],zoom=zoom,forcerun=True)
+                                   timeL=[tmovieL],zoom=zoom,forcerun=forcerun)
                         #for hydro in ["rho","T","Lcool"]:
                         #    MakeFigure([simset[-1]],[timein],name=figname+"movieslice",los=los,hydro=hydro,
                         #               Slice=True,wsink=True,starC=True,
@@ -541,7 +544,7 @@ if __name__=="__main__":
                             contours = ["Wind","Ionised"]
                             MakeFigure([simset[-1]],timesmergedIn,name=figname+"windpressonly_sequence",
                                        los=los,hydro=hydro,Slice=False,wsink=True,
-                                       timeL=timesmergedL,zoom=zoom,forcerun=True,
+                                       timeL=timesmergedL,zoom=zoom,forcerun=forcerun,
                                        doplottime=True,contours=contours,
                                        plotcolorbar=(mass==30))
 
@@ -550,28 +553,28 @@ if __name__=="__main__":
                     for hydro in ["Lcool","T","rho","xHII","P"]:
                         MakeFigure([simset[-1]],[timesin[-1]],name=figname+"windonly",los=los,hydro=hydro,
                                    Slice=True,wsink=True,starC=True,
-                                   timeL=[timeL[-1]],zoom=zoom,forcerun=True)
+                                   timeL=[timeL[-1]],zoom=zoom,forcerun=forcerun)
                         MakeFigure([simset[-1]],[timesin[-1]],name=figname2+"windonly",los=los,hydro=hydro,
                                    Slice=True,wsink=True,starC=True,
                                    timeL=[timeL[-1]],zoom=zoom2)
                         if DEBUG:
                             MakeFigure(simset,[timesin[-1]],name=figname+"allphysics",los=los,hydro=hydro,
                                        Slice=True,wsink=True,starC=True,
-                                       timeL=[timeL[-1]],zoom=zoom,forcerun=True)
+                                       timeL=[timeL[-1]],zoom=zoom,forcerun=forcerun)
                     for hydro in ["EkinperEtherm"]:
                         #["Ekin","Etherm","EkinperEtherm","xrayemission2"]:
                         for z in [zoom,zoom2]:
                             MakeFigure([simset[-1]],[timesin[-1]],name=figname2+"windonly",los=los,hydro=hydro,
                                        Slice=True,wsink=True,starC=True,
-                                       timeL=[timeL[-1]],zoom=z,forcerun=True,
+                                       timeL=[timeL[-1]],zoom=z,forcerun=forcerun,
                                        contours=["WindSlice","IonisedSlice","FreeStreamSlice"])
 
 
                     if DEBUG:
                         MakeFigure([simwindname],timesmergedIn,name=figname+"windonly_sequence",los=los,hydro=coolhydros,Slice=False,wsink=True,
-                               timeL=timesmergedL,zoom=zoom,forcerun=True,doplottime=True)
+                               timeL=timesmergedL,zoom=zoom,forcerun=forcerun,doplottime=True)
                         MakeFigure([simset[-1]],[timesin[-1]],name=figname+"windonly",los=los,hydro=coolhydros,Slice=False,wsink=True,
-                               timeL=[timeL[-1]],zoom=zoom,forcerun=True)
+                                   timeL=[timeL[-1]],zoom=zoom,forcerun=forcerun)
                     #                     - All physics
                     if DEBUG:
                         MakeFigure(simset,[timesin[-1]],name=figname+"allphysics",los=los,hydro=coolhydros,Slice=False,wsink=True,
@@ -604,5 +607,5 @@ if __name__=="__main__":
                         MakeFigure([simset[-1]],[timesin[-1]],name=figname+"windonly",los=los,hydro=hydro,Slice=False,wsink=True,
                                    timeL=[timeL[-1]],zoom=zoom)
                     # Temperature slice (all sims)
-                    MakeFigure(simset,timesin,name=figname,los=los,hydro='T',Slice=True,wsink=True,timeL=timeL,zoom=zoom,starC=True,forcerun=True)
+                    MakeFigure(simset,timesin,name=figname,los=los,hydro='T',Slice=True,wsink=True,timeL=timeL,zoom=zoom,starC=True,forcerun=forcerun)
         

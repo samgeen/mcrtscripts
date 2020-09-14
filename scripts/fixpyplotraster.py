@@ -5,7 +5,7 @@ Sam Geen, April 2015
 
 import matplotlib
 import matplotlib.tight_bbox
-from matplotlib.tight_bbox import * # eh fuck it
+from matplotlib.tight_bbox import * # why not both?
 
 def process_figure_for_rasterizing(fig, bbox_inches_restore, fixed_dpi=None):
     """
