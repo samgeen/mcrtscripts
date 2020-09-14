@@ -4,9 +4,9 @@ Helps speed up run times of scripts by ignoring non papers
 Sam Geen, November 2019
 '''
 
-filenames = ["figurelist.txt","figurelist2.txt"]
+filenames = ["figurelist.txt"]
 
-def makelist():
+def makelist(wholepath=False):
     fignames = []
     for filename in filenames:
         try:
@@ -15,7 +15,9 @@ def makelist():
             return []
         lines = f.readlines()
         for line in lines:
-            figname = line[line.rfind("/")+1:]
+            figname = line
+            if not wholepath:
+                figname = figname[figname.rfind("/")+1:]
             figname = figname.replace("\n","")
             fignames.append(figname)
     return fignames
