@@ -186,12 +186,12 @@ class AllHydros(object):
                 return bfunc
             return howmanylayersareyouonmydude
         h["Bmag"] = Hydro("|B| / $\mu G$",bfuncforsnap("all"),["B-left","B-right"],"PuOr","log",(None, None))
-        # B-field vector (x)
-        h["Bx"] = Hydro("B.$x$ / $\mu G$",bfuncforsnap(0),["B-left","B-right"],"PuBuGn","log",(None, None))
+        # B-fild vector (x)
+        h["Bx"] = Hydro("B.$x$ / $\mu G$",bfuncforsnap(0),["B-left","B-right"],"PuBuGn","linear",(None, None))
         # B-field vector (y)
-        h["By"] = Hydro("B.$y$ / $\mu G$",bfuncforsnap(1),["B-left","B-right"],"PuBuGn","log",(None, None))
+        h["By"] = Hydro("B.$y$ / $\mu G$",bfuncforsnap(1),["B-left","B-right"],"PuBuGn","linear",(None, None))
         # B-field vector (z)
-        h["Bz"] = Hydro("B.$z$ / $\mu G$",bfuncforsnap(2),["B-left","B-right"],"PuBuGn","log",(None, None))
+        h["Bz"] = Hydro("B.$z$ / $\mu G$",bfuncforsnap(2),["B-left","B-right"],"PuBuGn","linear",(None, None))
         # Radial velocity
         def vradfunc(ro):
             unit = ro.info["unit_velocity"].express(C.km/C.s)
