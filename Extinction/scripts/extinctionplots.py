@@ -42,7 +42,7 @@ def extinctionbyparticle(simname,wholesink):
                 isnaps[particle] = []
             particletracks[particle].append(sinktocolumns[sinkid])
             isnaps[particle].append(snap.OutputNumber()-1)
-    for particle, track in particletracks.iteritems():
+    for particle, track in particletracks.items():
         # Shape will be ntimes x nrays (nrays = 100 by default)
         particletracks[particle] = np.array(track)
     return particletracks, isnaps
@@ -57,7 +57,7 @@ def extinctionattimes(simname,times,wholesink):
         times = np.linspace(0,snaptimesMyr[-1],1000)
     particletracks, isnaps = extinctionbyparticle(simname,wholesink)
     interptracks = {}
-    for particle, track in particletracks.iteritems():
+    for particle, track in particletracks.items():
         interptracks[particle] = []
         nrays = track.shape[1]
         for iray in range(0,nrays):
@@ -67,7 +67,7 @@ def extinctionattimes(simname,times,wholesink):
     for itime, time in enumerate(times):
         plt.clf()
         mincol = 0.1
-        for particle, tracks in interptracks.iteritems():
+        for particle, tracks in interptracks.items():
             columns = []
             if wholesink:
                 sink = sinks.FindSinks(snap)

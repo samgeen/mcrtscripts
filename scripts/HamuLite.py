@@ -240,7 +240,7 @@ class Simulation(object):
             self._snaps[outnum] = PymsesSnapshot(self._folder,outnum,name)
 
     def Snapshots(self):
-        return self._snaps.values()
+        return list(self._snaps.values())
                     
     def Name(self):
         return self._name
