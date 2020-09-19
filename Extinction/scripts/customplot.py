@@ -21,7 +21,7 @@ mpl.rcParams['lines.solid_capstyle'] = "butt" # hehehe
 mpl.rcParams['ps.useafm'] = True
 mpl.rcParams['pdf.use14corefonts'] = True
 mpl.rcParams['text.usetex'] = False
-mpl.rcParams['text.latex.unicode'] = True
+#mpl.rcParams['text.latex.unicode'] = True
 
 import fixpyplotraster
 

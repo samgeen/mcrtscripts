@@ -33,6 +33,9 @@ if verbose:
     print("Imports done...")
 #Hamu.Workspace("HIISFE")
 
+# Which machine are we on?
+myMachine = os.environ["MYMACHINE"]
+
 # Physical conversions
 X = 0.76
 mH = 1.6735326381e-24
@@ -60,18 +63,25 @@ Msolar = "M$_{\odot}$"
 # Plot folder
 plotfolder = "../plots/"
 
-# Simulation names
-allsims = {"128_LEGO":"128_LEGO_HM6Z002SNLT",}
+# Set up simulations
+if verbose:
+    print("Making sims...")
 
 # Simulation locations
 #mainsimfolder = "/home/hd/hd_hd/hd_mp149/MCRT/runs/"
 #mainsimfolder = "/home/sgeen/MC_RT/runs_anais/"
 mainsimfolder = "/greenwhale/LEGO/"
-
-if verbose:
-    print("Making sims...")
-
 Hamu.CACHEPATH = "/greenwhale/samgeen/cache/"
+allsims = {"128_LEGO":"128_LEGO_HM6Z002SNLT",}
+
+if myMachine == "CARTESIUS":
+    print("Setting up for Cartesius")
+    Hamu.CACHEPATH = "/home/samgeen/amun/cache/"
+    mainsimfolder="/home/samgeen/amun/runs/"
+    allsims = {"UVWIND_30":"69_AMUN_onestar/13_uv+winds_30",
+               "UVWIND_60":"69_AMUN_onestar/11_uv+winds_60",
+               "UVWIND_120":"69_AMUN_onestar/03_uv+winds_120"}
+
 hamusims = OrderedDict()
 for simname, folder in allsims.items():
     label = simname
