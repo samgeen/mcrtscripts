@@ -18,3 +18,4 @@ plots/
 RDM/
 archive/
 tables/
+slurm*.out

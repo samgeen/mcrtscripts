@@ -8,10 +8,10 @@ import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
 from collections import OrderedDict
 
-
-import prettyplotlib as ppl
-from prettyplotlib import plt
-from prettyplotlib import brewer2mpl
+import brewer2mpl
+#import prettyplotlib as ppl
+#from prettyplotlib import plt
+#from prettyplotlib import brewer2mpl
 
 icmap = brewer2mpl.get_map('RdPu', 'Sequential', 9,reverse=True).mpl_colormap
 imfmap = brewer2mpl.get_map('OrRd', 'Sequential', 9,reverse=True).mpl_colormap
