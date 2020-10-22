@@ -91,9 +91,9 @@ def plotagevisiblevsstellarmass(simnames,extinctionlimit=1,scalewithlifetime=Fal
 
 if __name__=="__main__":
     luminositylimit = 10**4.5 * 2e33 # (limit / Lsolar) = 4.5 guestimate from Schootemeijer et al 2020
-    for simnames in [imfsims, icsims]:
+    for simnames in ["LEGO_128"]:#[imfsims, icsims]:
         for scalewithlifetime in [True, False]:
-        plotagevisiblevsstellarmass(simnames,luminositylimit=luminositylimit,scalewithlifetime=scalewithlifetime)
-        #plotagevisiblevsstellarmass(simnames,1,False) 
-        #plotagevisiblevsstellarmass(simnames,1,True) 
+            plotagevisiblevsstellarmass(simnames,luminositylimit=luminositylimit,scalewithlifetime=scalewithlifetime)
+            #plotagevisiblevsstellarmass(simnames,1,False) 
+            #plotagevisiblevsstellarmass(simnames,1,True) 
 
