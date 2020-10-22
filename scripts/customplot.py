@@ -21,7 +21,7 @@ mpl.rcParams["savefig.bbox"] = "tight"
 mpl.rcParams['ps.useafm'] = True
 mpl.rcParams['pdf.use14corefonts'] = True
 mpl.rcParams['text.usetex'] = True
-mpl.rcParams['text.latex.unicode'] = True
+#mpl.rcParams['text.latex.unicode'] = True
 
 import fixpyplotraster
 

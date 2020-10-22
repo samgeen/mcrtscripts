@@ -12,7 +12,7 @@ from scipy import interpolate
 
 AVtext = "A$_{\mathrm{V}}$"
 
-def plotagevisiblevsstellarmass(simnames,extinctionlimit=1,scalewithlifetime=False):
+def plotagevisiblevsstellarmass(simnames,extinctionlimit=1,scalewithlifetime=False,luminositylimit=None):
     '''
     Plot the stellar age the star is visible versus its mass
     '''
@@ -43,17 +43,26 @@ def plotagevisiblevsstellarmass(simnames,extinctionlimit=1,scalewithlifetime=Fal
             tcreated = stellar.tcreated[whichstar][0]
             lifetime = stellar.lifetime[whichstar][0]
             ages = np.array([simtimes[num] for num in snapnums]) - tcreated
+            LVbands = np.array([singlestar.star_bandenergies(mass, ageins, 1.0) for ageins in ages*Myrins])
             # Interpolate extinction track
             if len(ages) > 1:
                 #agefunc = interpolate.interp1d(extinctions, ages)
-                if extinctionlimit > extinctions.max():
-                    visibleage = 0.0
-                elif extinctionlimit < extinctions.min():
-                    visibleage = lifetime
-                else:
-                    visibleage = ages[np.where(extinctions < extinctionlimit)].min()
-                    if scalewithlifetime:
-                        visibleage /= lifetime
+                if extinctionlimit is not None:
+                    if extinctionlimit > extinctions.max():
+                        visibleage = 0.0
+                    elif extinctionlimit < extinctions.min():
+                        visibleage = lifetime
+                    else:
+                        visibleage = ages[np.where(extinctions < extinctionlimit)].min()
+                if luminositylimit is not None:
+                    if luminositylimit > LVbands.max():
+                        visibleage = lifetime
+                    elif luminositylimit < LVbands.min():
+                        visibleage = 0.0
+                    else:
+                        visibleage = ages[np.where(LVbands > luminositylimit)]
+                if scalewithlifetime:
+                    visibleage /= lifetime
                 visibleages.append(visibleage)
                 visiblemasses.append(mass)
         plt.scatter(visiblemasses, visibleages)
@@ -64,16 +73,21 @@ def plotagevisiblevsstellarmass(simnames,extinctionlimit=1,scalewithlifetime=Fal
         plt.ylabel("Age star becomes visible / Myr")
     plt.xscale("log")
     plt.yscale("log")
-    if len(visibleages) > 0:
-        plt.ylim([np.array(visibleages).min(),1.0])
+    visibleages = np.array(visibleages)
+    if scalewithlifetime:
+        plt.ylim([visibleages[visibleages > 0.0].min(),1.0])
+    else:
+        plt.ylim([visibleages[visibleages > 0.0].min(),visibleages.max()])
+        #if len(visibleages) > 0:
+    #    plt.ylim([np.array(visibleages).min(),1.0])
     limtxt = "extinctionlimit_"+str(extinctionlimit)
     lifetxt = ""
     if scalewithlifetime:
         lifetxt = "_scaledwithlifetime"
-    plt.savefig("../plots/visibleages_"+limtxt+lifetxt+"_allsims.pdf",pad_inches=0.5)
+    plt.savefig("../plots/visibleages_"+limtxt+lifetxt+"_"+simnames[0]+"_allsims.pdf",bbox_inches='tight')
 
 if __name__=="__main__":
-    simnames = ["UVWIND_30","UVWIND_60","UVWIND_120"]
-    plotagevisiblevsstellarmass(simnames,1,False) 
-    plotagevisiblevsstellarmass(simnames,1,True) 
+    for simnames in [imfsims, icsims]:
+        plotagevisiblevsstellarmass(simnames,1,False) 
+        plotagevisiblevsstellarmass(simnames,1,True) 
 

@@ -72,6 +72,17 @@ def _findNphotons(snap,dtins=1.0):
     return nphotons
 findNphotons = Hamu.Algorithm(_findNphotons)
 
+def _findLbol(snap,dtins=1.0):
+    stellar = stellars.FindStellar(snap)
+    bandenergyes = np.zeros(3)
+    time = stellar.time
+    for tcreated, mass in zip(stellar.tcreated, stellar.mass):
+        age = time - tcreated
+        ageins = age * Myrins
+        bandenergies += singlestar.ssm_bandenergies(mass,ageins,dtins)
+    return bandenergies[2]/dtins
+findLbol = Hamu.Algorithm(_findLbol)
+
 def runforsim(simname,xvalue,yvalue="sfe"):
     print "Running for simulation", simname
     sim = hamusims[simname]

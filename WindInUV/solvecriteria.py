@@ -272,7 +272,7 @@ def RivsRw(t,star,cloud,ri=None,dustfrac=1.0):
     if np.isnan(ri):
         return 0.0
     # Solve the equation
-    print ri
+    print(ri)
     roots = np.roots([ri * const,ri,0.0,0.0,-ri**4])
     if roots is None:
         return 0.0
@@ -456,15 +456,15 @@ def drdt_wind(t,ri,star,cloud,cool,nowind):
 def test():
     starmass = 30.0
     sfe = 0.03
-    print "Reading star mass",starmass,"Msun..."
+    print("Reading star mass",starmass,"Msun...")
     star = stars.Star(starmass,0.014)
     cloud = Cloud(1000.0*Msun,100.0*Msun/pc**2,1e6)
     #print "lifetime/yr", star.Lifetime()/yrins
-    print "Calculating...", 
+    print("Calculating...", )
     Cw = WindCriterion(1e6*yrins,star,cloud)
-    print "Cw", Cw
-    print "Crp", RadiationPressureCriterion(1e6*yrins,star,cloud)
-    print "Cesc", GravCriterion(t,star,cloud)
+    print("Cw", Cw)
+    print("Crp", RadiationPressureCriterion(1e6*yrins,star,cloud))
+    print("Cesc", GravCriterion(t,star,cloud))
 
 def plotvsmass(cool=False):
     Cws = []
@@ -479,8 +479,8 @@ def plotvsmass(cool=False):
         Cws.append(WindCriterion(1e6*yrins,star,cloud,cool=cool))
         Crps.append(RadiationPressureCriterion(1e6*yrins,star,cloud))
         tcools.append(TCool(1e6*yrins,star,cloud))
-    print "Cws", Cws
-    print "Crps", Crps
+    print("Cws", Cws)
+    print("Crps", Crps)
     # Mass test
     plt.clf()
     plt.plot(masses, Cws,"k-")
@@ -585,12 +585,12 @@ def plotsurfaces(surfdens=1e2, metal=0.014, cool=False):
         if cool:
             cooltxt = "_cool"
         plotname = "plots/surface_"+name+"_Sigma"+str(int(surfdens))+cooltxt+"_Z"+metaltxt+".pdf"
-        print "Making figure", plotname
+        print("Making figure", plotname)
         plt.clf()
         X, Y = np.meshgrid(starmasses, np.log10(cloudmasses/Msun))
         Z = data[:,:,0]
         Zbin = data[:,:,1]
-        print Zbin.max(), Z.max()
+        print(Zbin.max(), Z.max())
         #import pdb; pdb.set_trace()
         V = [0.1,1.0,10.0]
         contours = plt.contour(X,Y,Z,V,colors="black", zorder=2)
@@ -670,9 +670,9 @@ def plotvsclustermass(surfdens=1e2, sfe=0.1, metal=0.014, cool=False,legend=Fals
     #Cesc = GravCriterion(t,None,testcloud) # Doesn't use any of the star properties
     #Mesc = 100.0 / Cesc**4
     # Run through cloud masses
-    print "Computing clusters for cloud mass"
+    print("Computing clusters for cloud mass")
     for ic, cloudmass in enumerate(cloudmasses):
-        print cloudmass,"..."
+        print(cloudmass,"...")
         cloud = Cloud(cloudmass*Msun,surfdens*Msun/pc**2,metal)
         Cwmass = []
         Crpmass = []
@@ -864,7 +864,7 @@ def plotsurfaces_radii(metal=0.014, cool=False):
         cloudradius = cloudradii[icloud]
         n0 = 1e4 # Doesn't really affect anything in Cw, Crp
         cloud = CloudFromr0n0(cloudradius,n0,metal,accreting=False,gravityOn=True)
-        print cloud.M0/Msun, cloud.r0/cloudradius
+        print(cloud.M0/Msun, cloud.r0/cloudradius)
         # Iterate over stellar masses
         for istar in range(0,nstarmass):
             starmass = starmasses[istar]
@@ -890,13 +890,13 @@ def plotsurfaces_radii(metal=0.014, cool=False):
         if cool:
             cooltxt = "_cool"
         plotname = "plots/surface_"+name+"_byradius"+cooltxt+"_Z"+metaltxt+".pdf"
-        print "Making figure", plotname
+        print("Making figure", plotname)
         plt.clf()
         X, Y = np.meshgrid(starmasses, np.log10(cloudradii/pc))
         Z = data[:,:,0]
         Zbin = data[:,:,1]
-        print Zbin.min(), Z.min()
-        print Zbin.max(), Z.max()
+        print(Zbin.min(), Z.min())
+        print(Zbin.max(), Z.max())
         V = [0.1,1.0,10.0]
         contours = plt.contour(X,Y,Z,V,colors="black", zorder=2)
         contourbin = plt.contour(X,Y,Zbin,V,colors="black",linestyles="dashed", zorder=10)
@@ -937,18 +937,18 @@ def testvalues(mcloud=1e2, surfdens=1e2, metal=0.014, cool=False):
     Cw = WindCriterion(t,star,cloud,cool=cool)
     Crp = RadiationPressureCriterion(t,star,cloud)
     Cesc = GravCriterion(t,star,cloud)
-    print "Diagnostic test for models"
-    print "Cloud mass:", mcloud
-    print "Surface density:", surfdens
-    print "Stellar mass:", star.mass
-    print "---"
-    print "QH", star.NPhotons(t)
-    print "pw", star.WindMomentumRate(t)
-    print "alphaB", cloud.alphaB(star,t)
-    print "---"
-    print "Cw", Cw
-    print "Crp", Crp
-    print "Cesc", Cesc
+    print("Diagnostic test for models")
+    print("Cloud mass:", mcloud)
+    print("Surface density:", surfdens)
+    print("Stellar mass:", star.mass)
+    print("---")
+    print("QH", star.NPhotons(t))
+    print("pw", star.WindMomentumRate(t))
+    print("alphaB", cloud.alphaB(star,t))
+    print("---")
+    print("Cw", Cw)
+    print("Crp", Crp)
+    print("Cesc", Cesc)
 
 def testcluster(starmasses, mcloud=1e2, surfdens=1e2, metal=0.014, cool=True):
     # Surface density
@@ -966,19 +966,19 @@ def testcluster(starmasses, mcloud=1e2, surfdens=1e2, metal=0.014, cool=True):
     Crp = RadiationPressureCriterion(t,star,cloud)
     Cesc = GravCriterion(t,star,cloud)
     rivsrw = RivsRw(t,star,cloud)
-    print "Diagnostic test for models"
-    print "Cloud mass:", mcloud
-    print "Surface density:", surfdens
-    print "Stellar mass:", star.mass
-    print "---"
-    print "QH", star.NPhotons(t)
-    print "pw", star.WindMomentumRate(t)
-    print "alphaB", cloud.alphaB(star,t)
-    print "---"
-    print "Cw", Cw
-    print "Crp", Crp
-    print "Cesc", Cesc
-    print "ri vs rw", rivsrw
+    print("Diagnostic test for models")
+    print("Cloud mass:", mcloud)
+    print("Surface density:", surfdens)
+    print("Stellar mass:", star.mass)
+    print("---")
+    print("QH", star.NPhotons(t))
+    print("pw", star.WindMomentumRate(t))
+    print("alphaB", cloud.alphaB(star,t))
+    print("---")
+    print("Cw", Cw)
+    print("Crp", Crp)
+    print("Cesc", Cesc)
+    print("ri vs rw", rivsrw)
 
 def testamun(cloudlimit,metal=0.014):
     stars.verbose = False
@@ -993,16 +993,16 @@ def testamun(cloudlimit,metal=0.014):
     surftomass_m4 = {1e2:2832.69, 1e3:348.95,"iso1pc":corem4,"isom5":isom5}
     surftomass_m5 = {1e2:104107.7, 1e3:23291.1,"iso1pc":corem5,"isom5":isom5}
     for name, starstr in stardict.iteritems():
-        print "---"
-        print name
+        print("---")
+        print(name)
         if "M4" in name:
             cloud = surftomass_m4[cloudlimit]
         if "M5" in name:
             cloud = surftomass_m5[cloudlimit]
         # Is cloud limit a surface density or a description?
         if cloudlimit == "iso1pc" or cloudlimit == "isom5":
-            print "Core radius, density, mass, Sigma",
-            print cloud.r0/pc, cloud.n0, cloud.M0 / Msun, cloud.Sigma0 / (Msun/pc**2)
+            print("Core radius, density, mass, Sigma",)
+            print(cloud.r0/pc, cloud.n0, cloud.M0 / Msun, cloud.Sigma0 / (Msun/pc**2))
             mcloud = cloud.M0 / Msun
             surfdensval = cloud.Sigma0  / (Msun/pc**2)
         else:
@@ -1014,7 +1014,7 @@ def testamun(cloudlimit,metal=0.014):
         if cloudlimit == "iso1pc" or cloudlimit == "isom5":
             starlist = [starlist[0]]
         testcluster(starlist,mcloud,surfdensval)
-        print "---"
+        print("---")
 
 def testamun2(metal=0.014):
     t = 1e6*yrins
@@ -1029,7 +1029,7 @@ def testamun2(metal=0.014):
         Cesc = GravCriterion(t,star,cloud)
         CB = BreakoutCriterion(t,star,cloud)
         rivsrw = RivsRw(t,star,cloud)
-        print "rlaunch, Cw, Crp, Cesc, CB, rwvsri, ci", rlaunch, Cw, Crp, Cesc, CB, 1/rivsrw, ci
+        print("rlaunch, Cw, Crp, Cesc, CB, rwvsri, ci", rlaunch, Cw, Crp, Cesc, CB, 1/rivsrw, ci)
 
 
 if __name__=="__main__":

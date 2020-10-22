@@ -37,7 +37,7 @@ def maketrack_intrasnap(sim,sinkids):
                                  delimiter=",")
                 good = False
             except:
-                print "Error in file", sinkfile, ", skipping..."
+                print("Error in file", sinkfile, ", skipping...")
             if good:
                 ids = dat[:,0]
                 ts = dat[:,1]

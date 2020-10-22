@@ -10,8 +10,8 @@ import makeImageGridTime
 if __name__=="__main__":
 
     for dense in [False]:
-        for mass in [30,60,120][::-1]:
-            for outtime in [0.2,0.3,0.4]:
+        for mass in [30]: # [30,60,120][::-1]:
+            for outtime in [0.2,0.25,0.3]:
                 smass = str(mass)
                 if not dense or mass == 120:
                     simset = ["NOFB","UV_"+smass,"UVWINDPRESS_"+smass]

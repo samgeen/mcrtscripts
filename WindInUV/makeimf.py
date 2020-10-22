@@ -6,7 +6,7 @@ Sam Geen, March 2016
 import random
 import numpy as np
 
-import cPickle as pik
+import pickle as pik
 import os, glob
 
 import customplot
@@ -28,7 +28,7 @@ def SampleIMF(Mcluster,seed=None):
             masses = pik.load(f)
             f.close()
             return np.array(masses)
-    print "Making IMF...",
+    print("Making IMF...",)
     mMin = 1.0
     mMax = 120.0
     log_M_Min = np.log(mMin)
@@ -62,7 +62,7 @@ def SampleIMF(Mcluster,seed=None):
         pik.dump(Mcluster,f)
         pik.dump(masses,f)
         f.close()
-    print "Done"
+    print("Done")
     return np.array(masses)
 
 def testplot(mcluster):
@@ -71,7 +71,7 @@ def testplot(mcluster):
     sample = np.arange(0,len(masses),10)
     sample = np.concatenate([sample,[len(masses)-1]])
     
-    print sample
+    print(sample)
     dndm = np.diff(n) / np.diff(masses)
     mcent = 0.5*(masses[1:] + masses[:-1])
     sx = dndm

@@ -123,7 +123,7 @@ def MakeImage(datas,hydros,snap,wsink,ax,dolengthscale,cmap,plottime=False,timeL
     ihydro = -1
     # Make a colourblind-safer RGB map (3-class Dark2 in ColorBrewer2.org)
     threecolour = [rgb(27,158,119),
-                   rgb(217,95,2),
+                    rgb(217,95,2),
                    rgb(117,112,179)]
     for im, hydro in zip(ims, hydros):
         ihydro += 1
@@ -225,11 +225,12 @@ def MakeImage(datas,hydros,snap,wsink,ax,dolengthscale,cmap,plottime=False,timeL
             rdm.AddPoints(sinky,sinkx,label=label+" SINKS")
             # Draw star over main source
             if starsink is not None:
-                starsinky = [sinky[starsink]]
-                starsinkx = [sinkx[starsink]]
+                starsinky = np.atleast_1d(np.array([sinky[starsink]]))
+                starsinkx = np.atleast_1d(np.array([sinkx[starsink]]))
+                stararea = np.atleast_1d(np.array([area[starsink]]))
                 ax.scatter(starsinky,starsinkx,
-                           marker="*",s=7*area,c="r",alpha=0.5,edgecolors="w")
-            rdm.AddPoints(starsinky, starsinkx,label=label+"STAR SINK")
+                           marker="*",s=7*stararea,c="r",alpha=0.5,edgecolors="w")
+            rdm.AddArray(np.array([starsinky, starsinkx, starsinky, starsinkx]).reshape(2,2),label=label+"STAR SINK")
             
     # Add scale axis
     scalecol = "w"
@@ -313,7 +314,7 @@ def MakeFigure(simnames,times,name,los=None,hydro="rho",Slice=False,wsink=False,
     figurelist = listfigures.makelist()
     if len(figurelist) > 0:
         if figname not in figurelist and not forcerun:
-            print "Figure",figname,"not used by paper; returning without making figure"
+            print("Figure",figname,"not used by paper; returning without making figure")
             return
     figname = folder+figname
     # Set up figure
@@ -398,7 +399,11 @@ def MakeFigure(simnames,times,name,los=None,hydro="rho",Slice=False,wsink=False,
             datas = [MakeData(hydro) for hydro in hydros]
                             
             if (simname == simnames[-1] and ii == len(times)-1):
-                dolengthscale = True 
+                dolengthscale = True
+            dolengthscale = True # For referee
+            # Utter hack
+            if simname == "UVWINDPRESS_30" and ii == 0 and hydro == "NH":
+                dolengthscale = False
             if (simname == simnames[0]) and len(axes) > 1:
                 plottime = True
             if not doplottime:
@@ -422,7 +427,7 @@ def MakeFigure(simnames,times,name,los=None,hydro="rho",Slice=False,wsink=False,
             dolengthscale = False
 
     # Add colour bar for hydro variable
-    print "Making colour bar..."
+    print("Making colour bar...")
     # ---- This cax works well with nrow = 1, may need adjusting, could be improved 
     # Colorbar at the bottom of the plots
     #cax  = fig.add_axes([0.2, -0.022, 0.4, 0.02])
@@ -446,7 +451,7 @@ def MakeFigure(simnames,times,name,los=None,hydro="rho",Slice=False,wsink=False,
         plt.setp(plt.getp(cbar.ax.axes, 'yticklabels'), color='w')
 
     # Save figure
-    print "Saving figure "+figname+"..."
+    print("Saving figure "+figname+"...")
     fig.subplots_adjust(hspace=0.0, wspace=0.0, 
                         left=0.20,right=1.0,
                         bottom=0.00,top=1.0)
@@ -458,7 +463,7 @@ def MakeFigure(simnames,times,name,los=None,hydro="rho",Slice=False,wsink=False,
     rdm.Write(figname)
     # Crop out borders
     os.system("pdfcrop "+figname+" "+figname)
-    print "Done!"
+    print("Done!")
 
 if __name__=="__main__":
 

@@ -65,7 +65,7 @@ def pymses_func(ro, hydro):
         #    exit()
         #    TIR_Trap_op = dset["Pnontherm"]
         #    return TIR_Trap_op
-        print 'in HERE [1]'
+        print('in HERE [1]')
         #exit()
         return scop(lambda dset: dset["Pnontherm"])
 
@@ -127,7 +127,7 @@ def _MapSlice(snap,hydro='rho',los='z',zoom=1.0,starC=False):
     def makeslice(snap,hydro):
         hydro_op = scop(hydrofuncs.scale_by_units(snap,hydro))
         slc = pymses.analysis.visualization.SliceMap(amr, cam, hydro_op, z=0.0)
-        print "Made slice (min/max:", slc.min(), slc.max(), ")"
+        print("Made slice (min/max:", slc.min(), slc.max(), ")")
         return slc
 
     slc = makeslice(snap,hydro)

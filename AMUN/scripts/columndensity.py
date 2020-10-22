@@ -44,7 +44,7 @@ def _MapColDens(snap,los='z',zoom=1.0):
         # Note: dosurf gives cumulative (column) values rather than maxima
         hydro_op = NH_op(snap)
         im = rt.process(hydro_op,cam,surf_qty=dosurf)
-        print "Made map with (min/max:", im.min(), im.max(), ")"        
+        print("Made map with (min/max:", im.min(), im.max(), ")")
         return im
     im = makeray(snap,hydro)
     return im
@@ -107,7 +107,7 @@ class DensityMap(object):
         # Apply PSF to image
         if self._PSFsize is not None:
             width = self._PSFsize / self._pixlength
-            print "Convolving with a PSF of length", width, "pixels"
+            print("Convolving with a PSF of length", width, "pixels")
             kernel = conv.Gaussian2DKernel(width)
             oldcoldens = self._coldens
             self._coldens = conv.convolve(oldcoldens,kernel)
@@ -129,7 +129,7 @@ class DensityMap(object):
         # Apply thresholds to image
         # Do this on-the-fly to allow remapping of limits
         if self._NHlow is not None:
-            print "NHlow", self._NHlow
+            print("NHlow", self._NHlow)
             im[im < NHtoColDens(self._NHlow)] = 0.0
         if self._NHhigh is not None:
             coldenshigh = NHtoColDens(self._NHhigh)

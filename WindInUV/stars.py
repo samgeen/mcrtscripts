@@ -10,7 +10,7 @@ sys.path.append("/home/stgeen0/StellarSources/Fortran/f2py")
 import numpy as np
 import scipy.interpolate
 
-import cPickle as pik
+import pickle as pik
 
 from Input import readgeneva, derivedgeneva, readstarburst, readsbwinds
 
@@ -30,7 +30,7 @@ starmetals = [0.002,0.014]
 
 # Set up single star module
 startableloc = "/home/stgeen0/StellarSources/Compressed/singlestar_z0.014"
-print "Reading star tables in", startableloc
+print("Reading star tables in", startableloc)
 singlestar.star_setup(startableloc)  
 
 # Cache folder
@@ -381,13 +381,13 @@ def Star(mass, metal):
         cachename = cachefolder+"/cache/stars/star_M"+str(int(mass))+"_Z"+str(metal)+".pik"
         if os.path.exists(cachename):
             if verbose:
-                print "Loading star, M =", mass, "Z =",metal, "from cache"
+                print("Loading star, M =", mass, "Z =",metal, "from cache")
             f = open(cachename,"rb")
             star = pik.load(f)
             f.close()
         else:
             if verbose:
-                print "Making and saving star, M =", mass, "Z =",metal, "to cache"
+                print("Making and saving star, M =", mass, "Z =",metal, "to cache")
             star = _Star(mass, metal)
             f = open(cachename,"wb")
             pik.dump(star,f)
@@ -411,7 +411,7 @@ def test():
     # Brief test of the caching system
     star = Star(60,0.014)
     star2 = Star(60,0.014)
-    print star2.WindLuminosity(1e6*yrins)
+    print(star2.WindLuminosity(1e6*yrins))
 
 def populate():
     # Run through the parameter space and make cached stars

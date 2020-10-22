@@ -20,7 +20,7 @@ import triaxfinder
 windtemp = 2e4 # Kelvin
 
 def massinsnap(snap,nHthresh=0.0):
-    print "Finding mass in snap", snap.iout
+    print("Finding mass in snap", snap.iout)
     amr = snap.amr_source(["rho","P"])
     cell_source = CellsToPoints(amr)
     cells = cell_source.flatten()
@@ -32,7 +32,7 @@ def massinsnap(snap,nHthresh=0.0):
     return np.sum(mass)
 
 def Pnontherminsnap(snap,nHthresh=0.0):
-    print "Finding Pnontherm in snap", snap.iout
+    print("Finding Pnontherm in snap", snap.iout)
     amr = snap.amr_source(["Pnontherm"])
     cell_source = CellsToPoints(amr)
     cells = cell_source.flatten()
@@ -40,7 +40,7 @@ def Pnontherminsnap(snap,nHthresh=0.0):
     return np.max(cells["Pnontherm"])
 
 def meandensinsnap(snap,nHthresh=0.0):
-    print "Finding mass in snap", snap.iout
+    print("Finding mass in snap", snap.iout)
     amr = snap.amr_source(["rho","P"])
     cell_source = CellsToPoints(amr)
     cells = cell_source.flatten()
@@ -53,7 +53,7 @@ def meandensinsnap(snap,nHthresh=0.0):
     return np.sum(mass)/np.sum(vols)
 
 def maxdensityinsnap(snap,nHthresh=0.0):
-    print "Finding max density in snap", snap.iout
+    print("Finding max density in snap", snap.iout)
     amr = snap.amr_source(["rho"])
     cell_source = CellsToPoints(amr)
     cells = cell_source.flatten()
@@ -71,7 +71,7 @@ def etherminsnap(snap,wind=False):
     Msuning = 1.9891e33
     mHing = 1.66e-24
     Myrins = 3.1556926e13
-    print "Finding max T in snap", snap.iout
+    print("Finding max T in snap", snap.iout)
     amr = snap.amr_source(["rho","P","vel","xHII","xHeII","xHeIII"])
     cell_source = CellsToPoints(amr)
     cells = cell_source.flatten()
@@ -92,7 +92,7 @@ def etherminsnap(snap,wind=False):
     return np.sum(etherm)
 
 def ekininsnap(snap,wind=False):
-    print "Finding kinetic energy in snap", snap.iout
+    print("Finding kinetic energy in snap", snap.iout)
     amr = snap.amr_source(["rho","P","vel","xHII","xHeII","xHeIII"])
     cell_source = CellsToPoints(amr)
     cells = cell_source.flatten()
@@ -113,11 +113,11 @@ def ekininsnap(snap,wind=False):
         ekin = ekin[mask]
     ekin =  np.sum(ekin)*ue
     time = snap.info["time"]*snap.info["unit_time"].express(C.Myr)
-    print "KINETIC ENERGY FOUND @ ",time,"Myr:", ekin
+    print("KINETIC ENERGY FOUND @ ",time,"Myr:", ekin)
     return ekin
 
 def Lcoolinsnap(snap,wind=False,xray=False):
-    print "Finding cooling luminosity in snap", snap.iout
+    print("Finding cooling luminosity in snap", snap.iout)
     import rtcooling
     amr = snap.amr_source(["rho","P","vel","xHII","xHeII","xHeIII","NpHII","NpHeII","NpHeIII"])
     cell_source = CellsToPoints(amr)
@@ -149,7 +149,7 @@ def Lcoolinsnap(snap,wind=False,xray=False):
         Lcool = Lcool[windmask]
     Lcool =  np.sum(Lcool)
     time = snap.info["time"]*snap.info["unit_time"].express(C.Myr)
-    print "COOLING LUMINOSITY IN erg/s FOUND @ ",time,"Myr:", Lcool
+    print("COOLING LUMINOSITY IN erg/s FOUND @ ",time,"Myr:", Lcool)
     return Lcool
 
 # Version 1: ekin only measures fast winds, etherm only hot winds
@@ -176,7 +176,7 @@ def energytotinsnap(snap,wind=False):
     return tot
 
 def maxTinsnap(snap):
-    print "Finding max T in snap", snap.iout
+    print("Finding max T in snap", snap.iout)
     amr = snap.amr_source(["rho","P"])
     cell_source = CellsToPoints(amr)
     cells = cell_source.flatten()
@@ -186,7 +186,7 @@ def maxTinsnap(snap):
     return maxT
 
 def totalmomentuminsnapS(snap,nHlow=0.0,nHhigh=0.0):
-    print "Finding *total* momentum in snap", snap.iout
+    print("Finding *total* momentum in snap", snap.iout)
     amr = snap.amr_source(["rho","vel"])
     cell_source = CellsToPoints(amr)
     cells = cell_source.flatten()
@@ -220,11 +220,11 @@ def totalmomentuminsnapS(snap,nHlow=0.0,nHhigh=0.0):
     momS *= umass*uvel
     momT  =  mom + momS
     time  = snap.info["time"]*snap.info["unit_time"].express(C.Myr)
-    print "MOMENTUM FOUND @ ",time,"Myr:", momT
+    print("MOMENTUM FOUND @ ",time,"Myr:", momT)
     return momT
 
 def momentuminsnap(snap,centre=(0.5,0.5,0.5),nHlow=0.0,nHhigh=0.0):
-    print "Finding momentum in snap", snap.iout
+    print("Finding momentum in snap", snap.iout)
     amr = snap.amr_source(["rho","vel"])
     cell_source = CellsToPoints(amr)
     cells = cell_source.flatten()
@@ -256,7 +256,7 @@ def momentuminsnap(snap,centre=(0.5,0.5,0.5),nHlow=0.0,nHhigh=0.0):
     umass = snap.info["unit_mass"].express(C.g)
     mom *= umass*uvel
     time = snap.info["time"]*snap.info["unit_time"].express(C.Myr)
-    print "MOMENTUM FOUND @ ",time,"Myr:", mom
+    print("MOMENTUM FOUND @ ",time,"Myr:", mom)
     return mom
 
 def radialmomentumatstarinsnap(snap):
@@ -271,7 +271,7 @@ def radialmomentumatstarinsnap(snap):
     return momentuminsnap(snap,starpos)
 
 def totalmomentuminsnap(snap,nHlow=0.0,nHhigh=0.0):
-    print "Finding *total* momentum in snap", snap.iout
+    print("Finding *total* momentum in snap", snap.iout)
     amr = snap.amr_source(["rho","vel"])
     cell_source = CellsToPoints(amr)
     cells = cell_source.flatten()
@@ -292,7 +292,7 @@ def totalmomentuminsnap(snap,nHlow=0.0,nHhigh=0.0):
     umass = snap.info["unit_mass"].express(C.g)
     mom *= umass*uvel
     time = snap.info["time"]*snap.info["unit_time"].express(C.Myr)
-    print "MOMENTUM FOUND @ ",time,"Myr:", mom
+    print("MOMENTUM FOUND @ ",time,"Myr:", mom)
     return mom
 
 def windradiusinsnap(snap):
@@ -302,7 +302,7 @@ def freestreamradiusinsnap(snap):
     return radiusinsnap3(snap,freestream=True)
 
 def densityprofileinsnap(snap):
-    print "Finding density profile in snap", snap.iout
+    print("Finding density profile in snap", snap.iout)
 
     boxlen = snap.info["boxlen"] * 3.086e+16   # m
 
@@ -341,7 +341,7 @@ def densityprofileinsnap(snap):
     
 
 def surfacedensityprofileinsnap(snap):
-    print "Finding surface density profile in snap", snap.iout
+    print("Finding surface density profile in snap", snap.iout)
 
     boxlen = snap.info["boxlen"]      # pc
 
@@ -386,7 +386,7 @@ def surfacedensityprofileinsnap(snap):
     exit() 
     
 def radiusinsnap(snap,wind=False,freestream=False):
-    print "Finding radius of HII region in snap", snap.iout
+    print("Finding radius of HII region in snap", snap.iout)
     boxlen = snap.info["boxlen"]
     amr = snap.amr_source(["rho","P","xHII"])
     cell_source = CellsToPoints(amr)
@@ -428,7 +428,7 @@ def radiusinsnap3(snap,wind=False,freestream=False):
     '''
     2nd implementation: measure volume of ionised gas and sphericise
     '''
-    print "Finding radius of HII region in snap", snap.iout
+    print("Finding radius of HII region in snap", snap.iout)
     boxlen = snap.info["boxlen"]
     amr = snap.amr_source(["rho","xHII","xHeII","xHeIII","P","vel"])
     cell_source = CellsToPoints(amr)
@@ -466,7 +466,7 @@ def maxwindradiusatstarpos(snap):
     return maxradiusatstarpos(snap,wind=True)
 
 def maxradiusatstarpos(snap,wind=False):
-    print "Finding max radius in snap", snap.iout
+    print("Finding max radius in snap", snap.iout)
     # Find star position
     stellar = stellars.FindStellar(snap.hamusnap)
     if len(stellar.mass) == 0:
@@ -505,19 +505,19 @@ def maxradiusatstarpos(snap,wind=False):
     try:
         selectedrads = rads[mask]
     except:
-        print "Oops, mask doesn't contain info, returning 0.0"
+        print("Oops, mask doesn't contain info, returning 0.0")
         return 0.0 # Mask doesn't work
     if len(selectedrads) == 0:
         return 0.0
     maxrad = selectedrads.max()
-    print "MAXRAD AT CENTRE:", maxrad, centre
+    print("MAXRAD AT CENTRE:", maxrad, centre)
     return maxrad*boxlen
 
 def photodensinsnap(snap):
     '''
     Average density of photoionised gas (not including wind-shocked gas)
     '''
-    print "Finding photoionised gas density of HII region in snap", snap.iout
+    print("Finding photoionised gas density of HII region in snap", snap.iout)
     boxlen = snap.info["boxlen"]
     amr = snap.amr_source(["rho","xHII","xHeII","xHeIII","P","vel"])
     cell_source = CellsToPoints(amr)
@@ -582,7 +582,7 @@ def run(func,simnames,plotname):
     hamufunc = Hamu.Algorithm(func)
     # Get and plot lines
     for simname in simnames:
-        print "Running function", name, "for simulation", simname
+        print("Running function", name, "for simulation", simname)
         sim = hamusims[simname]
         times, Ts = timefuncs.timefunc(sim,hamufunc)
         plt.plot(times,Ts,

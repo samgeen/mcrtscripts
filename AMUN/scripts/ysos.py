@@ -49,7 +49,7 @@ def _MassInSnap(snap,los,ysoages,Aklim=0.1,persink=False):
     '''
     global sim
     if sim is None:
-        print "MUST SET sim VARIABLE ON A NAMELIST LEVEL:", sim
+        print("MUST SET sim VARIABLE ON A NAMELIST LEVEL:", sim)
         raise ValueError
     time = snaptime.Myr(snap.hamusnap)
     # Build list of snapshots to compare

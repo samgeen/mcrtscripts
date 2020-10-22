@@ -88,7 +88,7 @@ def Colour(simname):
     for num, mass in enumerate(masses):
         if mass in simname:
             return colours[num]
-    print "No colour for simulation", simname,"found, returning #000000"
+    print("No colour for simulation", simname,"found, returning #000000")
     return "#000000"
 
 def Linestyle(simname):
@@ -99,7 +99,7 @@ def Linestyle(simname):
             return "--"
         if phys in simname:
             return lines[num]
-    print "No linestype for simulation", simname,"found, returning -"
+    print("No linestype for simulation", simname,"found, returning -")
     return "-"
 
 def Label(simname):

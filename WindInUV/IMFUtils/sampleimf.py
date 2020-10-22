@@ -7,7 +7,7 @@ Sam Geen, January 2019
 import matplotlib as mpl
 mpl.use("Agg")
 
-import chabrier
+from . import chabrier
 import numpy as np
 import scipy.interpolate
 import scipy.stats

@@ -23,6 +23,8 @@ from collections import OrderedDict
 
 CACHEPATH = None
 
+GLOBALFORCEREPLACECACHE = False
+
 class CacheFile(object):
     def __init__(self, snapshot, algorithm):
         self._snapshot = snapshot
@@ -96,12 +98,13 @@ class Algorithm(object):
         '''
         Run for a single snapshot
         '''
+        global GLOBALFORCEREPLACECACHE
         self._args = args
         self._kwargs = kwargs
         # First, get the cache filename and compare against existing files
         cache = CacheFile(snap, self)
         # Check to see if a cached dataset exists
-        if cache.Exists() and not self._force_replace_cache:
+        if cache.Exists() and not self._force_replace_cache and not GLOBALFORCEREPLACECACHE:
             try:
                 output = cache.Load()
             except EOFError:

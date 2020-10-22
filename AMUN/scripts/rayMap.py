@@ -32,7 +32,7 @@ class MaxOperator(Operator):
         Operator.__init__(self, d, is_max_alos=True)
 
     def operation(self, int_dict):
-        mapHydro = int_dict.values()[0]
+        mapHydro = int_dict['h']
         mask = (mapHydro <= 0.0)
         mapHydro[mask] = 0.0
         return mapHydro
@@ -122,7 +122,7 @@ def _MapRayTrace(snap,hydro='rho',los='z',zoom=1.0,starC=False):
             else:
                 hydro_op = scop(hydrofuncs.scale_by_units(snap,hydro))
         im = rt.process(hydro_op,cam,surf_qty = hydrofuncs.surface_quantity(hydro))
-        print "Made ray trace map for "+hydro+" (with min/max:", im.min(), im.max(), ")"
+        print("Made ray trace map for "+hydro+" (with min/max:", im.min(), im.max(), ")")
         return im
     im = makeray(snap,hydro)
     return im
