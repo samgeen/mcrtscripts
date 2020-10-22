@@ -43,7 +43,10 @@ def plotagevisiblevsstellarmass(simnames,extinctionlimit=1,scalewithlifetime=Fal
             tcreated = stellar.tcreated[whichstar][0]
             lifetime = stellar.lifetime[whichstar][0]
             ages = np.array([simtimes[num] for num in snapnums]) - tcreated
+            # Get luminosities in the V band
             LVbands = np.array([singlestar.star_bandenergies(mass, ageins, 1.0) for ageins in ages*Myrins])
+            # Get extincted LV values
+            LVextincted = np.array([L * 10.0**(-extinction/2.5) for L, extinction in zip(LVbands, extinctions)])
             # Interpolate extinction track
             if len(ages) > 1:
                 #agefunc = interpolate.interp1d(extinctions, ages)
@@ -55,12 +58,12 @@ def plotagevisiblevsstellarmass(simnames,extinctionlimit=1,scalewithlifetime=Fal
                     else:
                         visibleage = ages[np.where(extinctions < extinctionlimit)].min()
                 if luminositylimit is not None:
-                    if luminositylimit > LVbands.max():
+                    if luminositylimit > LVextincted.max():
                         visibleage = lifetime
-                    elif luminositylimit < LVbands.min():
+                    elif luminositylimit < LVextincted.min():
                         visibleage = 0.0
                     else:
-                        visibleage = ages[np.where(LVbands > luminositylimit)]
+                        visibleage = ages[np.where(LVextincted > luminositylimit)]
                 if scalewithlifetime:
                     visibleage /= lifetime
                 visibleages.append(visibleage)
@@ -87,7 +90,10 @@ def plotagevisiblevsstellarmass(simnames,extinctionlimit=1,scalewithlifetime=Fal
     plt.savefig("../plots/visibleages_"+limtxt+lifetxt+"_"+simnames[0]+"_allsims.pdf",bbox_inches='tight')
 
 if __name__=="__main__":
+    luminositylimit = 10**4.5 * 2e33 # (limit / Lsolar) = 4.5 guestimate from Schootemeijer et al 2020
     for simnames in [imfsims, icsims]:
-        plotagevisiblevsstellarmass(simnames,1,False) 
-        plotagevisiblevsstellarmass(simnames,1,True) 
+        for scalewithlifetime in [True, False]:
+        plotagevisiblevsstellarmass(simnames,luminositylimit=luminositylimit,scalewithlifetime=scalewithlifetime)
+        #plotagevisiblevsstellarmass(simnames,1,False) 
+        #plotagevisiblevsstellarmass(simnames,1,True) 
 
