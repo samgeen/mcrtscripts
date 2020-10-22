@@ -35,7 +35,7 @@ nprocs = 1
 
 def tsfe(simname):
     global mgas
-    print "Running for simulation", simname
+    print("Running for simulation", simname)
     sim = hamusims[simname]
     tcreated, dum = starrelations.runforsim(simname,"firsttime")
     t, sfe = timefuncs.timefunc(sim,tsfeinsnap,processes=nprocs)
@@ -45,7 +45,7 @@ def tsfe(simname):
 
 momentuminsnap = Hamu.Algorithm(findproperties.totalmomentuminsnapS) # with sink momentum
 def momentum(simname):
-    print "Running for simulation", simname
+    print("Running for simulation", simname)
     sim = hamusims[simname]
     tcreated, sfe = starrelations.runforsim(simname,"firsttime")  
     t, p = timefuncs.timefunc(sim,momentuminsnap,processes=nprocs)
@@ -54,7 +54,7 @@ def momentum(simname):
 
 momentumatstarinsnap = Hamu.Algorithm(findproperties.radialmomentumatstarinsnap)
 def momentumatstarpos(simname):
-    print "Running for simulation", simname
+    print("Running for simulation", simname)
     sim = hamusims[simname]
     tcreated, sfe = starrelations.runforsim(simname,"firsttime")  
     t, p = timefuncs.timefunc(sim,momentumatstarinsnap,processes=nprocs)
@@ -62,14 +62,14 @@ def momentumatstarpos(simname):
 
 massinsnap = Hamu.Algorithm(findproperties.massinsnap)
 def mass(simname):
-    print "Running for simulation", simname
+    print("Running for simulation", simname)
     sim = hamusims[simname]
     t, p = timefuncs.timefunc(sim,massinsnap,processes=nprocs)
     return t, p
     
 radiusinsnap = Hamu.Algorithm(findproperties.radiusinsnap3)
 def radius(simname):
-    print "Running for simulation", simname
+    print("Running for simulation", simname)
     sim = hamusims[simname]
     tcreated, sfe = starrelations.runforsim(simname,"firsttime")  
     t,r = timefuncs.timefunc(sim,radiusinsnap,processes=nprocs)
@@ -81,7 +81,7 @@ def radius(simname):
 
 energyinsnap = Hamu.Algorithm(findproperties.energyinsnap)
 def energy(simname,kinonly=False,thermonly=False):
-    print "Running for simulation", simname
+    print("Running for simulation", simname)
     sim = hamusims[simname]
     tcreated, sfe = starrelations.runforsim(simname,"firsttime")
     t,e = timefuncs.timefunc(sim,energyinsnap,processes=1) # doesn't like tuples in the pool map
@@ -93,7 +93,7 @@ def energy(simname,kinonly=False,thermonly=False):
     return t, eout
 
 def windradiusratio(simname):
-    print "Running for simulation", simname
+    print("Running for simulation", simname)
     sim = hamusims[simname]
     tcreated, sfe = starrelations.runforsim(simname,"firsttime")  
     t,ri = timefuncs.timefunc(sim,radiusinsnap,processes=nprocs)
@@ -105,7 +105,7 @@ def windradiusratio(simname):
     return t, rw / ri
 
 def windradiusratio_analytic(simname):
-    print "Running for simulation", simname
+    print("Running for simulation", simname)
     sim = hamusims[simname]
     metal = 0.014
     starmass = float(str.join("",[i for i in simname if i.isdigit()]))
@@ -115,7 +115,7 @@ def windradiusratio_analytic(simname):
     rwvsri = []
     for t, ri in zip(ts, ris):
         ci = solvecriteria.SoundSpeedFromT(1e4) # from sampling simulations, is very close to this
-        print "ci", ci
+        print("ci", ci)
         cloud = solvecriteria.CloudFromr0n0(ri*pcincm,432.0,metal,ci=ci) # density doesn't really matter for this
         tins = (t-tcreated)*Myrins
         rivsrw = solvecriteria.RivsRw(tins,star,cloud)
@@ -127,7 +127,7 @@ def windradiusratio_analytic(simname):
     
 windenergyinsnap = Hamu.Algorithm(findproperties.windenergyinsnap2)
 def windenergy(simname,kinonly=False,thermonly=False):
-    print "Running for simulation", simname
+    print("Running for simulation", simname)
     sim = hamusims[simname]
     tcreated, sfe = starrelations.runforsim(simname,"firsttime")
     t,e = timefuncs.timefunc(sim,windenergyinsnap,processes=1) # doesn't like tuples in the pool map
@@ -140,7 +140,7 @@ def windenergy(simname,kinonly=False,thermonly=False):
 
 def windLemittedvscool(simname):
     fname = inspect.currentframe().f_code.co_name
-    print "Running",fname,"for simulation", simname
+    print("Running",fname,"for simulation", simname)
     sim = hamusims[simname]
     tcreated, sfe = starrelations.runforsim(simname,"firsttime")
     t,Lwe = timefuncs.timefunc(sim,windLemittedHamu)
@@ -151,7 +151,7 @@ def windLemittedvscool(simname):
 
 windradiusinsnap = Hamu.Algorithm(findproperties.windradiusinsnap)
 def windradius(simname):
-    print "Running for simulation", simname
+    print("Running for simulation", simname)
     sim = hamusims[simname]
     if not "WIND" in simname:
         # Run some fast thing just to get zeros for each time
@@ -164,7 +164,7 @@ def windradius(simname):
 
 freestreamradiusinsnap = Hamu.Algorithm(findproperties.freestreamradiusinsnap)
 def freestreamradius(simname):
-    print "Running for simulation", simname
+    print("Running for simulation", simname)
     sim = hamusims[simname]
     if not "WIND" in simname:
         # Run some fast thing just to get zeros for each time
@@ -178,7 +178,7 @@ def freestreamradius(simname):
 windLcoolinsnap = Hamu.Algorithm(findproperties.windLcoolinsnap)
 xrayLcoolinsnap = Hamu.Algorithm(findproperties.xrayLcoolinsnap)
 def windLcool(simname):
-    print "Running for simulation", simname
+    print("Running for simulation", simname)
     sim = hamusims[simname]
     tcreated, sfe = starrelations.runforsim(simname,"firsttime")  
     t,Lwc = timefuncs.timefunc(sim,windLcoolinsnap,processes=nprocs)
@@ -187,7 +187,7 @@ def windLcool(simname):
     
 radiusinsnapDEPRECATED = Hamu.Algorithm(findproperties.radiusinsnap)
 def radiusDEPRECATED(simname):
-    print "Running for simulation", simname
+    print("Running for simulation", simname)
     sim = hamusims[simname]
     tcreated, sfe = starrelations.runforsim(simname,"firsttime")  
     t,r = timefuncs.timefunc(sim,radiusinsnapDEPRECATED)
@@ -199,7 +199,7 @@ def _NphotonsHII(snap):
 NphotonsHII = Hamu.Algorithm(_NphotonsHII)
 
 def nphotonsHII(simname):
-    print "Running for simulation", simname
+    print("Running for simulation", simname)
     sim = hamusims[simname]
     tcreated, sfe = starrelations.runforsim(simname,"firsttime")
     t, nphot = timefuncs.timefunc(sim,NphotonsHII)
@@ -212,7 +212,7 @@ def _windenergyemitted(snap):
 windenergyemittedHamu = Hamu.Algorithm(_windenergyemitted)
 
 def windenergyemitted(simname):
-    print "Running for simulation", simname
+    print("Running for simulation", simname)
     sim = hamusims[simname]
     tcreated, sfe = starrelations.runforsim(simname,"firsttime")
     t, we = timefuncs.timefunc(sim,windenergyemittedHamu)
@@ -223,7 +223,7 @@ def _windLemitted(snap):
 windLemittedHamu = Hamu.Algorithm(_windLemitted)
 
 def windLemitted(simname):
-    print "Running for simulation", simname
+    print("Running for simulation", simname)
     sim = hamusims[simname]
     tcreated, sfe = starrelations.runforsim(simname,"firsttime")
     t, we = timefuncs.timefunc(sim,windLemittedHamu)
@@ -235,7 +235,7 @@ def _windmomemitted(snap):
 windmomemittedHamu = Hamu.Algorithm(_windmomemitted)
 
 def windmomemitted(simname):
-    print "Running for simulation", simname
+    print("Running for simulation", simname)
     sim = hamusims[simname]
     tcreated, sfe = starrelations.runforsim(simname,"firsttime")
     t, wm = timefuncs.timefunc(sim,windmomemittedHamu,processes=nprocs)
@@ -244,7 +244,7 @@ def windmomemitted(simname):
 
 
 def windenergyretained(simname):
-    print "Running for simulation", simname
+    print("Running for simulation", simname)
     sim = hamusims[simname]
     tcreated, sfe = starrelations.runforsim(simname,"firsttime")
     t, wemit = timefuncs.timefunc(sim,windenergyemittedHamu)
@@ -256,7 +256,7 @@ def _windmassemitted(snap):
 windmassemittedHamu = Hamu.Algorithm(_windmassemitted)
 
 def windmassemitted(simname):
-    print "Running for simulation", simname
+    print("Running for simulation", simname)
     sim = hamusims[simname]
     tcreated, sfe = starrelations.runforsim(simname,"firsttime")
     t, wm = timefuncs.timefunc(sim,windmassemittedHamu)
@@ -264,21 +264,21 @@ def windmassemitted(simname):
 
 Pnontherminsnap = Hamu.Algorithm(findproperties.Pnontherminsnap)
 def Pnontherm(simname):
-    print "Running for simulation", simname
+    print("Running for simulation", simname)
     sim = hamusims[simname]
     t,r = timefuncs.timefunc(sim,Pnontherminsnap,verbose=True,processes=nprocs)
     return t, r
 
 maxBfieldinsnap = Hamu.Algorithm(findproperties.maxBfieldinsnap)
 def maxBfield(simname):
-    print "Running for simulation", simname
+    print("Running for simulation", simname)
     sim = hamusims[simname]
     t,B = timefuncs.timefunc(sim,maxBfieldinsnap,verbose=True,processes=nprocs)
     return t, B
 
 maxdensityinsnap = Hamu.Algorithm(findproperties.maxdensityinsnap)
 def maxdensity(simname):
-    print "Running for simulation", simname
+    print("Running for simulation", simname)
     sim = hamusims[simname]
     t,d = timefuncs.timefunc(sim,maxdensityinsnap,verbose=True,processes=nprocs)
     return t, d
@@ -286,28 +286,28 @@ def maxdensity(simname):
 
 FindHIIRegions = findHIIregions.FindHIIRegions
 def numHIIregions(simname):
-    print "Running for simulation", simname
+    print("Running for simulation", simname)
     sim = hamusims[simname]
     t,n = timefuncs.timefunc(sim,FindHIIRegions,verbose=True,processes=nprocs)
     return t, n
 
 photodensinsnap = Hamu.Algorithm(findproperties.photodensinsnap)
 def photodens(simname):
-    print "Running for simulation", simname
+    print("Running for simulation", simname)
     sim = hamusims[simname]
     t,pdens = timefuncs.timefunc(sim,photodensinsnap,verbose=True,processes=nprocs)
     return t, pdens
 
 Bfieldenergyinsnap = Hamu.Algorithm(findproperties.Bfieldenergyinsnap2)
 def Bfieldenergy(simname):
-    print "Running for simulation", simname
+    print("Running for simulation", simname)
     sim = hamusims[simname]
     t, BE = timefuncs.timefunc(sim,Bfieldenergyinsnap,processes=nprocs)
     # Correct BE since we use microGauss as internal units, not Gauss
     return t, BE
 
 def energyplusB(simname):
-    print "Running for simulation", simname
+    print("Running for simulation", simname)
     sim = hamusims[simname]
     tcreated, sfe = starrelations.runforsim(simname,"firsttime")
     t,e = timefuncs.timefunc(sim,energyinsnap,processes=1) # doesn't like tuples in the pool map

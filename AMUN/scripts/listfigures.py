@@ -23,4 +23,4 @@ def makelist(wholepath=False):
     return fignames
 
 if __name__=="__main__":
-    print makelist()
+    print(makelist())

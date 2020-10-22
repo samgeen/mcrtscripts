@@ -117,7 +117,7 @@ def _findcumulwinds(snap):
 findcumulwinds = Hamu.Algorithm(_findcumulwinds)
 
 def runforsim(simname,xvalue,yvalue="sfe"):
-    print "Running for simulation", simname
+    print("Running for simulation", simname)
     sim = hamusims[simname]
     FindStellarHamu = Hamu.Algorithm(stellars.FindStellar)
     xout = 0.0
@@ -170,7 +170,7 @@ def runforsim(simname,xvalue,yvalue="sfe"):
     if yvalue == "sfe":
         snaps = sim.Snapshots()
         if len(snaps) <= 0:
-            print "No snapshots!"
+            print("No snapshots!")
             import pdb; pdb.set_trace()
         snap = snaps[-1]
         yout = plotproperties.tsfeinsnap(snap) * 100 # as a percentage

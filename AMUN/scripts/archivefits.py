@@ -16,7 +16,10 @@ def runfits():
     fignames = listfigures.makelist(wholepath=True)
     for figname in fignames:
         fitsname = figname.replace(".pdf",".fits")
-        os.system("cp "+fitsname+" ../archive/")
+        newfitsname = fitsname.replace("plots/","archive/")
+        foldername = newfitsname[:newfitsname.rfind("/")]
+        makedir(foldername)
+        os.system("cp "+fitsname+" "+newfitsname)
     os.system("zip -r ../plots/archive.zip ../archive/")
 
 def makedir(folder):
@@ -45,4 +48,4 @@ def runsims():
     os.system("cp "+simfolder+"/ramses.data ../RDM")
     
 if __name__=="__main__":
-    runsims()
+    runfits()

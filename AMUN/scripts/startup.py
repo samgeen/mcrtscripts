@@ -141,7 +141,7 @@ if not amunold:
 #        (Might save time if we use 
 hamusims = {}
 def _MakeSims():
-    for simname, folder in simfolders.iteritems():
+    for simname, folder in simfolders.items():
         simexists = True
         try:
             sim = Hamu.Simulation(simname,silent=True)
@@ -202,10 +202,10 @@ def NHtoNH2(NH):
 
 def MakeDirs(folder):
     try:
-        print "Making directory", folder
+        print("Making directory", folder)
         os.makedirs(folder)
     except:
-        print "Not making directory", folder, "- it already exists!"
+        print("Not making directory", folder, "- it already exists!")
         pass
 
 def alpha_B_HII(T):
@@ -289,4 +289,4 @@ hydrofuncs.allhydros["P"].ColourMap("Reds")
 hydrofuncs.allhydros["Lcool"].ColourMap("BuGn")
 # ---
 # Done!
-print "Imported various project-global modules"
+print("Imported various project-global modules")

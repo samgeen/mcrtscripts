@@ -182,7 +182,7 @@ def MakeFigure(simnames,time,name,los,nonamelabel=False,shape=None,dpi=200.0,zoo
     for irest in range(isim,nrows*ncols):
         empty = MakeImage(None,los,ax,dolengthscale,cmap,label="",dpi=dpi)
     # Add colour bar for hydro variable
-    print "Making colour bar..."
+    print("Making colour bar...")
     cax = fig.add_axes([0.43, 0.10, 0.54, 0.03])
     cbar = fig.colorbar(im,cax=cax,orientation="horizontal")
     label = hydrofuncs.hydro_label((hydro))
@@ -199,7 +199,7 @@ def MakeFigure(simnames,time,name,los,nonamelabel=False,shape=None,dpi=200.0,zoo
     folder = "../plots/vis/multiray/"
     MakeDirs(folder)
     figname = folder+"multiray_"+hydro+suffix+".pdf"
-    print "Saving figure "+figname+"..."
+    print("Saving figure "+figname+"...")
     fig.subplots_adjust(hspace=0.02, wspace=0.02, 
                         left=0.20,right=1.0,
                         bottom=0.00,top=1.0)
@@ -209,7 +209,7 @@ def MakeFigure(simnames,time,name,los,nonamelabel=False,shape=None,dpi=200.0,zoo
                 dpi=dpi)
     # Crop out borders
     os.system("pdfcrop "+figname+" "+figname)
-    print "Done!"
+    print("Done!")
 
 if __name__=="__main__":
     time = tffcloud_code

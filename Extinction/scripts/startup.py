@@ -35,6 +35,7 @@ if verbose:
 
 # Which machine are we on?
 myMachine = os.environ["MYMACHINE"]
+print("Running on", myMachine)
 
 # Physical conversions
 X = 0.76
@@ -70,9 +71,10 @@ if verbose:
 # Simulation locations
 #mainsimfolder = "/home/hd/hd_hd/hd_mp149/MCRT/runs/"
 #mainsimfolder = "/home/sgeen/MC_RT/runs_anais/"
-mainsimfolder = "/greenwhale/LEGO/"
-Hamu.CACHEPATH = "/greenwhale/samgeen/cache/"
-allsims = {"128_LEGO":"128_LEGO_HM6Z002SNLT",}
+if myMachine == "MONET":
+    mainsimfolder = "/greenwhale/LEGO/"
+    Hamu.CACHEPATH = "/greenwhale/samgeen/cache/"
+    allsims = {"128_LEGO":"128_LEGO_HM6Z002SNLT",}
 
 if myMachine == "CARTESIUS":
     print("Setting up for Cartesius")
@@ -82,14 +84,10 @@ if myMachine == "CARTESIUS":
                "UVWIND_60":"69_AMUN_onestar/11_uv+winds_60",
                "UVWIND_120":"69_AMUN_onestar/03_uv+winds_120"}
 
-hamusims = OrderedDict()
-for simname, folder in allsims.items():
-    label = simname
-    sim = Hamu.MakeSimulation(simname,mainsimfolder+folder,label)
-    hamusims[simname] = sim
-
 # Set up simulation arrays
-def _MakeSim(name):
+def _MakeYuleSim(name):
+    imfsimfolder = mainsimfolder+"/55_Lcloud_yulelads/"
+    icsimfolder = mainsimfolder+"/57_Lcloud_ictest/"
     simexists = True
     try:
         sim = Hamu.Simulation(name,silent=True)
@@ -115,10 +113,36 @@ def _MakeSim(name):
     return sim
 
 
+imfsims = []
+icsims = []
+allsims = []
+hamusims = {}
+if myMachine == "ISMSIM":
+    print("Setting up for ISMSIM")
+    #Hamu.CACHEPATH = "/home/stgeen0/MCRT/runs/cache/"
+    mainsimfolder="/home/stgeen0/MCRT/runs/"
+    #allsims = {"UVWIND_30":"69_AMUN_onestar/13_uv+winds_30",
+    #           "UVWIND_60":"69_AMUN_onestar/11_uv+winds_60",
+    #           "UVWIND_120":"69_AMUN_onestar/03_uv+winds_120"}
+    imfsims = ["IMF"+str(i).zfill(2) for i in range(1,14)]
+    icsims  = ["IC"+str(i).zfill(2) for i in range(1,14)]
+    allsims = imfsims + icsims 
+    hamusims = {}
+    for simname in allsims:
+        hamusims[simname] = _MakeYuleSim(simname)
+else:
+    hamusims = OrderedDict()
+    for simname, folder in allsims.items():
+        label = simname
+        sim = Hamu.MakeSimulation(simname,mainsimfolder+folder,label)
+        hamusims[simname] = sim
+        
 # Set up single star module
 if verbose:
     print("Singlestar Setup...")
 startableloc = "/home/samgeen/StellarSources/Compressed/singlestar_z0.002"
+if myMachine == "ISMSIM":
+    startableloc = "/home/stgeen0/StellarSources/Compressed/singlestar_z0.002".encode("ascii","strict")
 singlestar.star_setup(startableloc)
 
 # Useful functions

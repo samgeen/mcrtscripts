@@ -20,7 +20,7 @@ def alpha_B_HII(T):
 if __name__=="__main__":
     ci = 1e6
     Ti = ci**2 * (1.0/gamma)*mH/X/kB
-    print "ALPHAB 10 km/s = ", alpha_B_HII(Ti)
+    print("ALPHAB 10 km/s = ", alpha_B_HII(Ti))
     ci = 2e6
     Ti = ci**2 * (1.0/gamma)*mH/X/kB
-    print "ALPHAB 20 km/s = ", alpha_B_HII(Ti)
+    print("ALPHAB 20 km/s = ", alpha_B_HII(Ti))
