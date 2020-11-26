@@ -13,6 +13,8 @@ import weltgeist
 import weltgeist.units as wunits # make this easier to type
 from scipy.interpolate import interp1d
 
+import stellarsource
+
 # Some useful constants
 lsolar = 3.828e33 # Solar luminosity / ergs/s
 rsolar = 6.955e10 # Solar radius in cm
@@ -28,12 +30,12 @@ def run():
     # Make an integrator
     integrator = weltgeist.integrator.Integrator()
     # And the setup
-    ncells = 512
+    ncells = 128
     nanalytic = np.zeros((ncells))
     n0 = 100.0 # cm^-3
     T0 = 10.0 # K
     integrator.Setup(ncells = ncells, # 256 cells
-            rmax = 10.0*wunits.pc, # 20 pc box
+            rmax = 1.0*wunits.pc, # 20 pc box
             n0 = n0, # atoms / cm^-3
             T0 = T0, # K
             gamma = 5.0/3.0) # monatomic gas (close enough...)
@@ -42,9 +44,9 @@ def run():
     # # Use an isothermal profile
     isothermal = True
     if isothermal:
-        r0 = 1.0 * wunits.pc
-        hydro.nH[0:ncells] = n0 * (hydro.x[0:ncells] / r0)**(-2.0)
-        # Get rid of the singularity at r=0
+        r0 = 4.0 * wunits.pc
+        hydro.nH[1:ncells] = n0 * (hydro.x[1:ncells] / r0)**(-2.0)
+        # Prevent a singularity at r=0
         hydro.nH[0] = hydro.nH[1]
         # Reset temperature
         hydro.T[0:ncells] = T0
@@ -57,10 +59,13 @@ def run():
     # These tables are for Solar metallicity (Z = 0.014)
     # There are also tables for sub-Solar (Z = 0.002)
     # Depends if you want to model our Galaxy or the LMC/SMC
-    weltgeist.sources.singlestarLocation = \
-        "../../../StellarSources/Compressed/singlestar_z0.014"
+    #weltgeist.sources.singlestarLocation = \
+    #    "../../../StellarSources/Compressed/singlestar_z0.014"
 
-    star = weltgeist.sources.TableSource(30.0,radiation=True,wind=True)
+    #star = weltgeist.sources.TableSource(30.0,radiation=True,wind=True)
+    for i in [5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100,105,110,115,120]:
+        star = stellarsource.StellarSource(i,0.014,radiation=True,wind=True,rotating=True)
+    star = stellarsource.StellarSource(120,0.014,radiation=True,wind=True,rotating=True)
     weltgeist.sources.Sources().AddSource(star)
 
     # Turn cooling on
@@ -99,6 +104,8 @@ def run():
         ionisedLine.Update(x,xhii)
         steptime = integrator.time/yrins/1e3
         renderer.Text(str.format('{0:.3f}',steptime)+" kyr")
+        # Force the integrator to slow down a bit (to 100 km/s = 1e7 cm/s)
+        integrator.CourantLimiter(1e7)
         # Step the integrator
         integrator.Step()
     
