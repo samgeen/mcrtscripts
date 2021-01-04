@@ -10,6 +10,7 @@ import numpy as np
 sys.path.append("../../scripts")
 
 import customplot
+import matplotlib as mpl 
 import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
 import hydrofuncs
@@ -72,6 +73,7 @@ if verbose:
 #mainsimfolder = "/home/hd/hd_hd/hd_mp149/MCRT/runs/"
 #mainsimfolder = "/home/sgeen/MC_RT/runs_anais/"
 if myMachine == "MONET":
+    mpl.rcParams['text.usetex'] = False
     mainsimfolder = "/greenwhale/LEGO/"
     Hamu.CACHEPATH = "/greenwhale/samgeen/cache/"
     allsims = {"128_LEGO":"128_LEGO_HM6Z002SNLT",}
@@ -115,7 +117,7 @@ def _MakeYuleSim(name):
 
 imfsims = []
 icsims = []
-allsims = []
+#allsims = []
 hamusims = {}
 if myMachine == "ISMSIM":
     print("Setting up for ISMSIM")

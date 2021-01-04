@@ -27,6 +27,7 @@ def plotagevisiblevsstellarmass(simnames,extinctionlimit=1,scalewithlifetime=Fal
         # Get ages each stellar object is visible at
         visibleages = []
         visiblemasses = []
+        tcreateds = []
         # TODO:
         # - Get birth time of each star
         # - Turn each track into an interp1d function of stellar age vs extinction
@@ -43,7 +44,10 @@ def plotagevisiblevsstellarmass(simnames,extinctionlimit=1,scalewithlifetime=Fal
             tcreated = stellar.tcreated[whichstar][0]
             lifetime = stellar.lifetime[whichstar][0]
             ages = np.array([simtimes[num] for num in snapnums]) - tcreated
-            LVbands = np.array([singlestar.star_bandenergies(mass, ageins, 1.0) for ageins in ages*Myrins])
+            # Get luminosities in the V band
+            LVbands = np.array([singlestar.star_bandenergies(mass, ageins, 1.0) for ageins in ages*Myrins]).flatten()
+            # Get extincted LV values
+            LVextincted = np.array([L * 10.0**(-extinction/2.5) for L, extinction in zip(LVbands, extinctions)]).flatten()
             # Interpolate extinction track
             if len(ages) > 1:
                 #agefunc = interpolate.interp1d(extinctions, ages)
@@ -55,17 +59,24 @@ def plotagevisiblevsstellarmass(simnames,extinctionlimit=1,scalewithlifetime=Fal
                     else:
                         visibleage = ages[np.where(extinctions < extinctionlimit)].min()
                 if luminositylimit is not None:
-                    if luminositylimit > LVbands.max():
+                    if luminositylimit > LVextincted.max():
                         visibleage = lifetime
-                    elif luminositylimit < LVbands.min():
+                    elif luminositylimit < LVextincted.min():
                         visibleage = 0.0
                     else:
-                        visibleage = ages[np.where(LVbands > luminositylimit)]
+                        mask = np.where(LVextincted > luminositylimit)
+                        #print(len(LVextincted),len(ages),len(mask),mask)
+                        #import pdb; pdb.set_trace()
+                        visibleage = ages[mask].min()
                 if scalewithlifetime:
                     visibleage /= lifetime
                 visibleages.append(visibleage)
                 visiblemasses.append(mass)
-        plt.scatter(visiblemasses, visibleages)
+                tcreateds.append(tcreated)
+        tcreateds = np.array(tcreateds)
+        tcreateds -= tcreateds.min()
+        tcreateds /= tcreateds.max()
+        plt.scatter(visiblemasses, visibleages,c=tcreateds,cmap="copper")
     plt.xlabel("Stellar Mass / Msun")
     if scalewithlifetime:
         plt.ylabel("Fraction of star's age until it is visible")
@@ -80,14 +91,21 @@ def plotagevisiblevsstellarmass(simnames,extinctionlimit=1,scalewithlifetime=Fal
         plt.ylim([visibleages[visibleages > 0.0].min(),visibleages.max()])
         #if len(visibleages) > 0:
     #    plt.ylim([np.array(visibleages).min(),1.0])
-    limtxt = "extinctionlimit_"+str(extinctionlimit)
+    limtxt = ""
+    if extinctionlimit is not None:
+        limtxt = "extinctionlimit_"+str(extinctionlimit)
+    if luminositylimit is not None:
+        limtxt = "luminositylimit_"+str(luminositylimit)
     lifetxt = ""
     if scalewithlifetime:
         lifetxt = "_scaledwithlifetime"
     plt.savefig("../plots/visibleages_"+limtxt+lifetxt+"_"+simnames[0]+"_allsims.pdf",bbox_inches='tight')
 
 if __name__=="__main__":
-    for simnames in [imfsims, icsims]:
-        plotagevisiblevsstellarmass(simnames,1,False) 
-        plotagevisiblevsstellarmass(simnames,1,True) 
+    luminositylimit = 10**4.5 * 2e33 # (limit / Lsolar) = 4.5 guestimate from Schootemeijer et al 2020
+    for simnames in [["128_LEGO"]]:#[imfsims, icsims]:
+        for scalewithlifetime in [True, False][::-1]:
+            plotagevisiblevsstellarmass(simnames,luminositylimit=luminositylimit,scalewithlifetime=scalewithlifetime)
+            #plotagevisiblevsstellarmass(simnames,1,False) 
+            #plotagevisiblevsstellarmass(simnames,1,True) 
 
