@@ -14,13 +14,13 @@ if __name__=="__main__":
             for outtime in [0.2,0.25,0.3]:
                 smass = str(mass)
                 if not dense or mass == 120:
-                    simset = ["NOFB","UV_"+smass,"UVWINDPRESS_"+smass]
-                    setname = "windset_"+smass+"Msun"
-                    simwindname = "UVWIND_"+smass
-                    if dense:
-                        simset = [x+"_DENSE" for x in simset]
-                        simwindname = "UVWIND_"+smass+"_DENSE"
-                        setname += "_dense"
+                    simset = ["UVCR_"+smass]#["NOFB","UV_"+smass,"UVWINDPRESS_"+smass]
+                    setname = "crset_"+smass+"Msun"
+                    simwindname = "UVCR_"+smass
+                    #if dense:
+                    #    simset = [x+"_DENSE" for x in simset]
+                    #    simwindname = "UVWIND_"+smass+"_DENSE"
+                    #    setname += "_dense"
                     #times = np.array([0.5, 0.75, 1.])
                     times = np.array([outtime]) # np.array([0.9]) # [0.9] # 3.5 Myr = tstarformed + 0.2 Myr 
                     zoom = 0.25
@@ -42,7 +42,8 @@ if __name__=="__main__":
                         timesmergedL = [str(x)+r' Myr' for x in timesmerged]
 
                         # Slices
-                        for hydro in ["Lcool","T","rho","xHII","P","xHeII","xHeIII","Bx","By","Bz","vx","vy","vz"]:
+                        for hydro in ["Lcool","T","rho","xHII","P","xHeII","xHeIII","Bx","By","Bz","vx","vy","vz",
+                                      "shock-mach","shock-Edissipated","shock-Bobliquity","shock-XCR","shock-xi"][::-1]:
                             for sim in simset:
                                 makeImageGridTime.MakeFigure([sim],[timesin[-1]],
                                                              name=figname+"marco"+sim,los=los,hydro=hydro,

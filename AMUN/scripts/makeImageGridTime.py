@@ -555,10 +555,10 @@ if __name__=="__main__":
 
 
                     # Slices
-                    for hydro in ["Lcool","T","rho","xHII","P"]:
+                    for hydro in ["Lcool","T","rho","xHII","xHeII","xHeIII","P"]:
                         MakeFigure([simset[-1]],[timesin[-1]],name=figname+"windonly",los=los,hydro=hydro,
                                    Slice=True,wsink=True,starC=True,
-                                   timeL=[timeL[-1]],zoom=zoom,forcerun=forcerun)
+                                   timeL=[timeL[-1]],zoom=zoom,forcerun=True)
                         MakeFigure([simset[-1]],[timesin[-1]],name=figname2+"windonly",los=los,hydro=hydro,
                                    Slice=True,wsink=True,starC=True,
                                    timeL=[timeL[-1]],zoom=zoom2)
