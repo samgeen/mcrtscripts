@@ -123,7 +123,7 @@ class AllHydros(object):
 
     def __getitem__(self,name):
         if not name in self._hydros:
-            return self._hydros["DEFAULTEMPTY"]
+            return self._hydros["DEFAULTEMPTY"](name)
         return self._hydros[name]
 
     def __contains__(self,name):
@@ -137,7 +137,7 @@ class AllHydros(object):
         #   So we make a first lambda that fills in ro, then we have a lambda dset we can pass
         #   I know, I know...
         # Cell size
-        func = lambda ro: lambda dset: dset.get_sizes()*snap.info["unit_length"].express(C.cm)
+        func = lambda ro: lambda dset: dset.get_sizes()*ro.info["unit_length"].express(C.cm)
         h["dx"] = Hydro("Cell size / cm",func,["rho"],"RdPu_r","linear",(None,None))
         # Mass density
         func = lambda ro: lambda dset: dset["rho"]*ro.info["unit_density"].express(C.g_cc)
@@ -228,7 +228,7 @@ class AllHydros(object):
             func = lambda ro: rtcooling.dedtOnCells(ro)
             h["Lcool"] = Hydro("L$_{cool}$ / erg/s/cm$^{-3}$",func,coolvars,"YlOrRd","log",(None, None))
         # EMPTY DEFAULT HYDRO TO PREVENT ERRORS
-        h["DEFAULTEMPTY"] = Hydro("",lambda dset: dset[hydro],coolvars,"Blues_r","log",(None, None))
+        h["DEFAULTEMPTY"] = lambda hydro: Hydro("",lambda dset: dset[hydro],coolvars,"Blues_r","log",(None, None))
         # Done!
         self._hydros = h
         
