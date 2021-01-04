@@ -38,11 +38,12 @@ def AlphaB(star,t):
     return weltgeist.radiation.alpha_B_HII(Ti)
 
 class Cloud(object):
-    def __init__(self,n0,r0,w,sigmaDust):
+    def __init__(self,n0,r0,w,sigmaDust,Omega=4.0*np.pi):
         self._n0 = n0
         self._r0 = r0
         self._w = w
         self._sigmaDust = sigmaDust
+        self._Omega = Omega
 
     @property
     def n0(self):
@@ -59,6 +60,10 @@ class Cloud(object):
     @property
     def sigmaDust(self):
         return self._sigmaDust
+
+    @property
+    def Omega(self):
+        return self._Omega
 
     def nAtR(self, r):
         return self._n0 * (r / self._r0)**(-self._w)
@@ -114,7 +119,7 @@ ANALYTIC SOLUTIONS
 def WindPressure(star,cloud,r,t,cooled=False):
     if cooled:
         raise NotImplementedError
-    Omega = 4.0 * np.pi
+    Omega = cloud.Omega
     vol = (Omega / 3.0) * r**3
     E = star.WindEnergy(t) * 5.0/11.0 # From Weaver
     #print ("E R VOL", E, r, vol)
@@ -127,7 +132,7 @@ def RadiationPressure(star,cloud,r,t):
 
 def dRdTforw2(star,cloud,radiation=True):
     # Expansion rate of wind bubble for w=2
-    Omega = 4.0 * np.pi
+    Omega = cloud.Omega
     t= 1e5*wunits.year
     Lw = star.WindLuminosity(t)
     Lrad = 0.0
@@ -150,7 +155,7 @@ def GravityPressure(star,cloud,r,t):
     r0 = cloud.r0
     w = cloud.w
     M = cloud.mAtR(r)
-    Omega = 4.0 * np.pi
+    Omega = cloud.Omega
     Pgrav = wunits.G*M*M / Omega / r**4
     return Pgrav
 
@@ -176,7 +181,7 @@ def IonisedShellThickness(star,cloud,r,t):
     w = cloud.w
     niiVSnrms = 1.4
     niavVSnrms = 1.0/1.4
-    Omega = 4.0 * np.pi # solid angle
+    Omega = cloud.Omega # solid angle
     QH = star.NIonising(t)
     ci = SoundSpeed(star,t)
     alphaB = AlphaB(star,t)
@@ -197,7 +202,7 @@ def NeutralShellThickness(star,cloud,r,t):
     n0 = cloud.n0
     r0 = cloud.r0
     w = cloud.w
-    Omega = 4.0 * np.pi # solid angle
+    Omega = cloud.Omega # solid angle
     drdt = ExpansionRate(star,cloud,r,t)
     deltar = (NeutralShellSoundSpeed(star,cloud,r,t) / drdt)**2.0 * r / (3.0 - w)
     return deltar
@@ -259,7 +264,7 @@ def CalculateOutflowRadiusTimew2(star,cloud):
     n0 = cloud.n0
     r0 = cloud.r0
     w = cloud.w
-    Omega = 4.0 * np.pi # solid angle
+    Omega = cloud.Omega # solid angle
     t = 1e5 * wunits.year # fiducial time
     QH = star.NIonising(t)
     ci = SoundSpeed(star,t)
@@ -291,7 +296,7 @@ def MinResolutionNeeded(star,cloud,r,t):
     n0 = cloud.n0
     r0 = cloud.r0
     w = cloud.w
-    Omega = 4.0 * np.pi # solid angle
+    Omega = cloud.Omega # solid angle
     QH = star.NIonising(t)
     alphaB = AlphaB(star,t)
     res = Omega * alphaB * (n0 * r0**w) ** 2 * r**(4 - 2 * w) / (3.0 - w)**2 / QH
@@ -304,7 +309,7 @@ def CoolingRate(star,cloud,r,t):
     # Calculate the core temperature and density
     Lw = star.WindLuminosity(t)
     Zsolar = star.metal/0.014
-    Omega = 4.0 * np.pi # solid angle
+    Omega = cloud.Omega # solid angle
     Cconduct = 6e-7 # erg / s / cm / K^{-7/2} from Mac Low & McCray 1988
     Ccool = 1e-22 # erg cm^3 / s
     Tcut = 1e5 # K
@@ -328,17 +333,118 @@ PLOTTING ROUTINES
 -------------------------------------------------------------------------
 """
 
-def CloudColour(ncloud):
-    nclouds = np.log10(np.array([1e1,3e1,1e2,3e2,1e3]))
+def CloudColour(ncloud,metal):
+    nclouds = np.log10(np.array([3e1,1e2,3e2,1e3,3e3]))
     col = np.log10(ncloud) - nclouds[0]
     col /= (nclouds[-1] - nclouds[0])
     cmap = plt.get_cmap("copper")
+    #if metal == 0.014:
+    #    cmap = plt.get_cmap("copper")
+    #elif metal == 0.002:
+    #    cmap = plt.get_cmap("winter")
+    #else:
+    #    print("Metallicity",metal,"not implemented here")
+    #    raise NotImplementedError
     return cmap(col)
 
-def PlotdRdTforw2():
+def CloudLine(metal):
+    if metal == 0.014:
+        return (8, 0)
+    elif metal == 0.002:
+        return (6, 2)
+    else:
+        print("Metallicity",metal,"not implemented here")
+        raise NotImplementedError
+
+def PlotdRdTforw2(metals=[0.014],rotating=True):
     plt.clf()
-    nclouds = [1e1,3e1,1e2,3e2,1e3]
+    nclouds = [3e1,1e2,3e2,1e3,3e3]
     masses = np.arange(20,121,5)
+    leglines = None
+    for metal in metals:
+        for ncloud in nclouds:
+            cloud = Cloud(ncloud,1.0*wunits.pc,2,1e-21)
+            drdts = []
+            drdtsnp = []
+            print ("NCLOUD",ncloud)
+            print(".......................")
+            for starmass in masses:
+                print("STARMASS",starmass)
+                star = stars.Star(starmass, metal, rotating=rotating)
+                drdt = dRdTforw2(star,cloud)
+                drdts.append(drdt)
+                drdt = dRdTforw2(star,cloud, radiation=False)
+                drdtsnp.append(drdt)
+            col = CloudColour(ncloud,metal)
+            dashes = CloudLine(metal)
+            label = None
+            if metal == metals[0]:
+                label = str(ncloud)+" cm$^{-3}$"
+            l1, = plt.plot(masses,np.array(drdts)/1e5,color=col,label=label,dashes=dashes)
+            l2, = plt.plot(masses,np.array(drdtsnp)/1e5,color=col,linestyle=":")
+            if leglines is None:
+                leglines = [l1,l2]
+    leg1 = plt.legend(ncol=2,fontsize="small",frameon=False,
+                    title="$n_0$, where $n(r) = n_0 (r / 1~\mathrm{pc})^2$",title_fontsize="small")     
+    leg1._legend_box.align = "right"
+    plt.text(120,15,"$Z="+str(metals[0])+"$",fontsize="small",horizontalalignment="right",verticalalignment="top")
+    leg2 = plt.legend(leglines,["Winds + Radiation Pressure","Winds Only"],
+            fontsize="small",frameon=False,loc="upper left")
+    plt.gca().add_artist(leg1)
+    plt.gca().yaxis.set_ticks_position('both')
+    plt.xlabel("Mass / Msun")
+    plt.ylabel("$v_2$ / km/s")
+    plt.yscale("log")
+    plt.ylim([1,400])
+    plt.savefig("../plots/drdtforw2_metals"+str(metals[0])+".pdf")
+
+def PlotMinResolutionNeeded(metals=[0.014],rotating=True):
+    plt.clf()
+    nclouds = [3e1,1e2,3e2,1e3,3e3]
+    masses = np.arange(20,121,5)
+    metal = 0.014
+    # NOTE: As long as w = 2, radius is unimportant
+    r = 0.1*wunits.pc
+    for ncloud in nclouds[::-1]:
+        ls = []
+        for metal in metals:
+            cloud = Cloud(ncloud,1.0*wunits.pc,2,1e-21)
+            minreses = []
+            print ("NCLOUD",ncloud)
+            print(".......................")
+            for starmass in masses:
+                print("STARMASS",starmass)
+                star = stars.Star(starmass, metal, rotating=rotating)
+                ro2, to2, deltar = CalculateOutflowRadiusTimew2(star,cloud)
+                minres = MinResolutionNeeded(star,cloud,ro2,to2)
+                minreses.append(minres)
+            col = CloudColour(ncloud,metal)
+            dashes = CloudLine(metal)
+            label = None
+            if metal == metals[0]:
+                label = str(ncloud)+" cm$^{-3}$"
+            l, = plt.plot(masses,np.array(minreses) / wunits.pc,color=col,label=label,dashes=dashes)
+            ls.append(l)
+    leg1 = plt.legend(ncol=2,fontsize="x-small",frameon=False,
+                    title="$n_0$, where $n(r) = n_0 (r / 1~\mathrm{pc})^2$",title_fontsize="small")     
+    leg1._legend_box.align = "right"
+    leg2 = plt.legend(ls,["$Z="+str(metal)+"$" for metal in metals],
+            fontsize="small",frameon=False,loc="upper right",ncol=2)
+    plt.gca().add_artist(leg1)
+    plt.xlabel("Mass / Msun")
+    plt.ylabel("Minimum Resolution Needed / pc")
+    plt.yscale("log")
+    plt.ylim([1e-6,1e3])
+    plt.savefig("../plots/minimumresolution.pdf")
+
+def PlotThicknessRatiow2(metal=0.014,rotating=True,vsR = False,justthickness=False):
+    plt.clf()
+    nclouds = [3e1,3e2,3e3]
+    #masses = np.arange(20,121,5)
+    masses = [30,60,120]
+    lines = ["-","--",":"]
+    iline = 0
+    leglines = []
     for ncloud in nclouds:
         cloud = Cloud(ncloud,1.0*wunits.pc,2,1e-21)
         drdts = []
@@ -347,147 +453,236 @@ def PlotdRdTforw2():
         print(".......................")
         for starmass in masses:
             print("STARMASS",starmass)
-            star = stars.Star(starmass, 0.014, rotating=True)
+            star = stars.Star(starmass, metal, rotating=rotating)
+            rs = np.logspace(-2,2,100)*wunits.pc
             drdt = dRdTforw2(star,cloud)
-            drdts.append(drdt)
-            drdt = dRdTforw2(star,cloud,radiation=False)
-            drdtsnp.append(drdt)
-        col = CloudColour(ncloud)
-        plt.plot(masses,np.array(drdts)/1e5,color=col,label=str(ncloud)+" cm$^{-3}$")
-        plt.plot(masses,np.array(drdtsnp)/1e5,color=col,linestyle="--")
-    leg = plt.legend(ncol=2,fontsize="small",frameon=False,
+            ts = rs / drdt
+            ro2, to2, deltaro2 = CalculateOutflowRadiusTimew2(star,cloud)
+            overflowed = False
+            if rs[-1] > ro2:
+                overflowed = True
+            rs = rs[rs < ro2]
+            ts = ts[ts < to2]
+            ys = []
+            for r, t in zip(rs, ts):
+                deltar = IonisedShellThickness(star,cloud,r,t)
+                if not justthickness:
+                    ys.append(deltar/r)
+                else:
+                    ys.append(deltar / wunits.pc)
+            col = CloudColour(ncloud, metal)
+            label = None
+            if starmass == masses[0]:
+                label = str(ncloud)+" cm$^{-3}$"
+            line = lines[iline]
+            xs = ts/wunits.year/1e6
+            if vsR:
+                xs = rs / wunits.pc
+            l, = plt.plot(xs,np.array(ys),color=col,linestyle=line,label=label)
+            if overflowed:
+                plt.scatter(xs[-1],ys[-1],color=col)
+            if ncloud == nclouds[0]:
+                leglines += [l]
+            iline = (iline+1) % len(lines)
+    # Line at 0.01, 0.1, 1
+    if not justthickness:
+        plt.plot([0,100],[0.01,0.01],color="k",linestyle="-",alpha=0.2)
+        plt.plot([0,100],[0.1,0.1],color="k",linestyle="-",alpha=0.2)
+        plt.plot([0,100],[1,1],color="k",linestyle="-",alpha=0.2)
+    if justthickness and metal==0.014:
+        leg1 = plt.legend(ncol=1,fontsize="small",frameon=False,
+                        title="$n_0$, where $n(r) = n_0 (r / 1~\mathrm{pc})^2$",title_fontsize="small")     
+        leg1._legend_box.align = "right"
+        loc = "lower right"
+        leg2 = plt.legend(leglines,[str(starmass)+" M$_{\odot}$" for starmass in masses],
+                fontsize="small",frameon=False,loc=loc)
+        plt.gca().add_artist(leg1)
+    plt.xlabel("Time / Myr")
+    if vsR:
+        plt.xlabel("$r_w$ / pc")
+    if not justthickness:
+        plt.ylabel("$\Delta r_i / r_w$")
+    else:
+        plt.ylabel("$\Delta r_i$ / pc")
+    plt.xscale("log")
+    plt.yscale("log")
+    xlims = plt.gca().get_xlim()
+    ylims = plt.gca().get_ylim()
+    plt.gca().yaxis.set_ticks_position('both')
+    if vsR:
+        plt.xlim([1e-2,30.0])
+    plt.ylim([1e-5,ylims[1]])
+    plt.text(20,ylims[1]*0.7,"$Z="+str(metal)+"$",fontsize="small",horizontalalignment="right",verticalalignment="top")
+    suffix = ""
+    if vsR:
+        suffix = "_vsR"
+    suffix += "_Z"+str(metal)
+    if not justthickness:
+        plt.savefig("../plots/shellthicknessratio_w2"+suffix+".pdf")
+    else:
+        plt.savefig("../plots/shellthickness_w2"+suffix+".pdf") 
+
+def PlotOutflowRadii(metals=[0.014],rotating=True):
+    plt.clf()
+    nclouds = [3e1,1e2,3e2,1e3,3e3]
+    masses = np.arange(20,121,5)
+    for ncloud in nclouds[::-1]:
+        ls = []
+        for metal in metals:
+            cloud = Cloud(ncloud,1.0*wunits.pc,2,1e-21)
+            radii = []
+            print ("NCLOUD",ncloud)
+            print(".......................")
+            for starmass in masses:
+                print("STARMASS",starmass)
+                star = stars.Star(starmass, metal, rotating=rotating)
+                #r, t, dr = CalculateOutflowRadiusTime(star,cloud,rcutoff=1000*wunits.pc,tcutoff=1e7*wunits.year)
+                r, t, dr = CalculateOutflowRadiusTimew2(star,cloud)
+                radii.append(r)
+            col = CloudColour(ncloud,metal)
+            dashes = CloudLine(metal)
+            label = None
+            if metal == metals[0]:
+                label=str(ncloud)+" cm$^{-3}$"
+            l, = plt.plot(masses,np.array(radii) / wunits.pc,color=col,label=label,dashes=dashes)
+            ls.append(l)
+    leg1 = plt.legend(ncol=2,fontsize="small",frameon=False,
                     title="$n_0$, where $n(r) = n_0 (r / 1~\mathrm{pc})^2$",title_fontsize="small")     
-    leg._legend_box.align = "right"
+    leg1._legend_box.align = "left"
+    #leg2 = plt.legend(ls,["$Z="+str(metal)+"$" for metal in metals],
+    #        fontsize="small",frameon=False,loc="lower right",ncol=2)
+    plt.gca().add_artist(leg1)
+    plt.gca().yaxis.set_ticks_position('both')
     plt.xlabel("Mass / Msun")
-    plt.ylabel("$v_2$ / km/s")
+    plt.ylabel("Radius of Overflow $r_{o,2}$ / pc")
     plt.yscale("log")
-    plt.savefig("../plots/drdtforw2.pdf")
-
-def PlotMinResolutionNeeded():
-    plt.clf()
-    nclouds = [1e1,3e1,1e2,3e2,1e3]
-    masses = np.arange(20,121,5)
-    # NOTE: As long as w = 2, radius is unimportant
-    r = 0.1*wunits.pc
-    t = 1e3*wunits.year
-    for ncloud in nclouds:
-        cloud = Cloud(ncloud,1.0*wunits.pc,2,1e-21)
-        minreses = []
-        print ("NCLOUD",ncloud)
-        print(".......................")
-        for starmass in masses:
-            print("STARMASS",starmass)
-            star = stars.Star(starmass, 0.014, rotating=True)
-            minres = MinResolutionNeeded(star,cloud,r,t)
-            minreses.append(minres)
-        col = CloudColour(ncloud)
-        plt.plot(masses,np.array(minreses) / wunits.pc,color=col,label=str(ncloud)+" cm$^{-3}$")
-    plt.legend()
-    plt.xlabel("Mass / Msun")
-    plt.ylabel("Minimum Resolution Needed / pc")
-    plt.yscale("log")
-    plt.savefig("../plots/minimumresolution.pdf")
-
-def PlotOutflowRadii():
-    plt.clf()
-    nclouds = [1e1,3e1,1e2,3e2,1e3]
-    masses = np.arange(20,121,5)
-    for ncloud in nclouds:
-        cloud = Cloud(ncloud,1.0*wunits.pc,2,1e-21)
-        radii = []
-        print ("NCLOUD",ncloud)
-        print(".......................")
-        for starmass in masses:
-            print("STARMASS",starmass)
-            star = stars.Star(starmass, 0.014, rotating=True)
-            #r, t, dr = CalculateOutflowRadiusTime(star,cloud,rcutoff=1000*wunits.pc,tcutoff=1e7*wunits.year)
-            r, t, dr = CalculateOutflowRadiusTimew2(star,cloud)
-            radii.append(r)
-        col = CloudColour(ncloud)
-        plt.plot(masses,np.array(radii) / wunits.pc,color=col,label=str(ncloud)+" cm$^{-3}$")
-    plt.legend()
-    plt.xlabel("Mass / Msun")
-    plt.ylabel("Radius of Outflow / pc")
-    plt.yscale("log")
+    plt.ylim([1e-4,100])
     plt.savefig("../plots/outflowradii.pdf")
 
-def PlotOutflowTimes():
+def PlotOutflowTimes(metals=[0.014],rotating=True):
     plt.clf()
-    nclouds = [1e1,3e1,1e2,3e2,1e3]
+    nclouds = [3e1,1e2,3e2,1e3,3e3]
     masses = np.arange(20,121,5)
-    for ncloud in nclouds:
-        cloud = Cloud(ncloud,1.0*wunits.pc,2,1e-21)
-        times = []
-        print ("NCLOUD",ncloud)
-        print(".......................")
-        for starmass in masses:
-            print("STARMASS",starmass)
-            star = stars.Star(starmass, 0.014, rotating=True)
-            #r, t, dr = CalculateOutflowRadiusTime(star,cloud,rcutoff=1000*wunits.pc,tcutoff=1e7*wunits.year)
-            r, t, dr = CalculateOutflowRadiusTimew2(star,cloud)
-            times.append(t)
-        col = CloudColour(ncloud)
-        plt.plot(masses,np.array(times) / wunits.year / 1e6,color=col,label=str(ncloud)+" cm$^{-3}$")
-    plt.legend()
+    for ncloud in nclouds[::-1]:
+        ls = []
+        for metal in metals:
+            cloud = Cloud(ncloud,1.0*wunits.pc,2,1e-21)
+            times = []
+            print ("NCLOUD",ncloud)
+            print(".......................")
+            for starmass in masses:
+                print("STARMASS",starmass)
+                star = stars.Star(starmass, metal, rotating=rotating)
+                #r, t, dr = CalculateOutflowRadiusTime(star,cloud,rcutoff=1000*wunits.pc,tcutoff=1e7*wunits.year)
+                r, t, dr = CalculateOutflowRadiusTimew2(star,cloud)
+                times.append(t)
+            col = CloudColour(ncloud,metal)
+            dashes = CloudLine(metal)
+            label = None
+            if metal == metals[0]:
+                label=str(ncloud)+" cm$^{-3}$"
+            l, = plt.plot(masses,np.array(times) / wunits.year / 1e6,color=col,label=label,dashes=dashes)
+            ls.append(l)
+    #leg1 = plt.legend(ncol=2,fontsize="small",frameon=False,
+    #                title="$n_0$, where $n(r) = n_0 (r / 1~\mathrm{pc})^2$",title_fontsize="small")     
+    #leg1._legend_box.align = "right"
+    leg2 = plt.legend(ls,["$Z="+str(metal)+"$" for metal in metals],
+            fontsize="small",frameon=False,loc="upper right",ncol=2)
+    #plt.gca().add_artist(leg1)
+    plt.gca().yaxis.set_ticks_position('both')
     plt.xlabel("Mass / Msun")
-    plt.ylabel("Time of Outflow / Myr")
+    plt.ylabel("Time of Overflow  $t_{o,2}$ / Myr")
     plt.yscale("log")
-    plt.savefig("../plots/outflowtimes.pdf")
+    plt.ylim([1e-4,30])
+    plt.savefig("../plots/outflowtimes.pdf") 
 
-def PlotGravityVsBubblePressure():
+def PlotGravityVsBubblePressure(metals=[0.014],rotating=True):
     plt.clf()
-    nclouds = [1e1,3e1,1e2,3e2,1e3]
+    nclouds = [3e1,1e2,3e2,1e3,3e3]
     masses = np.arange(20,121,5)
-    for ncloud in nclouds:
-        cloud = Cloud(ncloud,1.0*wunits.pc,2,1e-21)
-        ratios = []
-        print ("NCLOUD",ncloud)
-        print(".......................")
-        for starmass in masses:
-            print("STARMASS",starmass)
-            star = stars.Star(starmass, 0.014, rotating=True)
-            #r, t, dr = CalculateOutflowRadiusTime(star,cloud,rcutoff=1000*wunits.pc,tcutoff=1e7*wunits.year)
-            t = 1e5*wunits.year
-            r = dRdTforw2(star,cloud)*t         
-            ratio = GravityPressure(star,cloud,r,t) / (WindPressure(star,cloud,r,t) + RadiationPressure(star,cloud,r,t))
-            ratios.append(ratio)
-        col = CloudColour(ncloud)
-        plt.plot(masses,np.array(ratios),color=col,label=str(ncloud)+" cm$^{-3}$")
-    plt.legend()
-    plt.xlabel("Mass / Msun")
-    plt.ylabel("$P_{grav} / (P_{w} + P_{rad})$")
-    plt.yscale("log")
-    plt.savefig("../plots/PgravvsPbubble.pdf")
-
-def PlotRadiationVsWindPressure():
-    plt.clf()
-    nclouds = [1e1,3e1,1e2,3e2,1e3]
-    masses = np.arange(20,121,5)
-    for ncloud in nclouds:
-        cloud = Cloud(ncloud,1.0*wunits.pc,2,1e-21)
-        ratios = []
-        print ("NCLOUD",ncloud)
-        print(".......................")
-        for starmass in masses:
-            print("STARMASS",starmass)
-            star = stars.Star(starmass, 0.014, rotating=True)
-            #r, t, dr = CalculateOutflowRadiusTime(star,cloud,rcutoff=1000*wunits.pc,tcutoff=1e7*wunits.year)
-            t = 1e5*wunits.year
-            r = dRdTforw2(star,cloud)*t         
-            Prad = RadiationPressure(star,cloud,r,t)
-            Pwind = WindPressure(star,cloud,r,t)
-            Lwind = star.WindLuminosity(t) # From Weaver
-            Lrad = star.LIonising(t) + star.LNonIonising(t)
-            ci = SoundSpeed(star,t)
-            ratio = Prad / Pwind
-            print (starmass,Prad,Pwind,Lwind,Lrad,ratio, ci)
-            ratios.append(ratio)
-        col = CloudColour(ncloud)
-        plt.plot(masses,np.array(ratios),color=col,label=str(ncloud)+" cm$^{-3}$")
-    plt.legend()
+    for ncloud in nclouds[::-1]:
+        ls = []
+        for metal in metals:
+            cloud = Cloud(ncloud,1.0*wunits.pc,2,1e-21)
+            ratios = []
+            print ("NCLOUD",ncloud)
+            print(".......................")
+            for starmass in masses:
+                print("STARMASS",starmass)
+                star = stars.Star(starmass, metal, rotating=rotating)
+                #r, t, dr = CalculateOutflowRadiusTime(star,cloud,rcutoff=1000*wunits.pc,tcutoff=1e7*wunits.year)
+                t = 1e5*wunits.year
+                r = dRdTforw2(star,cloud)*t         
+                Prad = RadiationPressure(star,cloud,r,t)
+                Pwind = WindPressure(star,cloud,r,t)
+                Lwind = star.WindLuminosity(t) # From Weaver
+                Lrad = star.LIonising(t) + star.LNonIonising(t)
+                ci = SoundSpeed(star,t)
+                ratio = GravityPressure(star,cloud,r,t) / (WindPressure(star,cloud,r,t) + RadiationPressure(star,cloud,r,t))
+                ratios.append(ratio)
+            col = CloudColour(ncloud,metal)
+            dashes = CloudLine(metal)
+            label = None
+            if metal == metals[0]:
+                label=str(ncloud)+" cm$^{-3}$"
+            l, = plt.plot(masses,np.array(ratios),color=col,label=label,dashes=dashes)
+            ls.append(l)
+    #leg1 = plt.legend(ncol=2,fontsize="small",frameon=False,
+    #                title="$n_0$, where $n(r) = n_0 (r / 1~\mathrm{pc})^2$",title_fontsize="small")     
+    #leg1._legend_box.align = "right"
+    leg2 = plt.legend(ls,["$Z="+str(metal)+"$" for metal in metals],
+            fontsize="small",frameon=False,loc="upper right",ncol=2)
+    #plt.gca().add_artist(leg1)
+    plt.gca().yaxis.set_ticks_position('both')
     plt.xlabel("Mass / Msun")
     plt.ylabel("$P_{rad} / P_{w} $")
     plt.yscale("log")
+    plt.ylim([1e-6,1.0])
+    plt.ylabel("$P_{grav} / (P_{w} + P_{rad})$")
+    plt.savefig("../plots/PgravvsPbubble.pdf")
+
+def PlotRadiationVsWindPressure(metals=[0.014],rotating=True):
+    plt.clf()
+    nclouds = [3e1,1e2,3e2,1e3,3e3]
+    masses = np.arange(20,121,5)
+    for ncloud in nclouds[::-1]:
+        ls = []
+        for metal in metals:
+            cloud = Cloud(ncloud,1.0*wunits.pc,2,1e-21)
+            ratios = []
+            print ("NCLOUD",ncloud)
+            print(".......................")
+            for starmass in masses:
+                print("STARMASS",starmass)
+                star = stars.Star(starmass, metal, rotating=rotating)
+                #r, t, dr = CalculateOutflowRadiusTime(star,cloud,rcutoff=1000*wunits.pc,tcutoff=1e7*wunits.year)
+                t = 1e5*wunits.year
+                r = dRdTforw2(star,cloud)*t         
+                Prad = RadiationPressure(star,cloud,r,t)
+                Pwind = WindPressure(star,cloud,r,t)
+                Lwind = star.WindLuminosity(t) # From Weaver
+                Lrad = star.LIonising(t) + star.LNonIonising(t)
+                ci = SoundSpeed(star,t)
+                ratio = Prad / Pwind
+                ratios.append(ratio)
+            col = CloudColour(ncloud,metal)
+            dashes = CloudLine(metal)
+            label = None
+            if metal == metals[0]:
+                label=str(ncloud)+" cm$^{-3}$"
+            l, = plt.plot(masses,np.array(ratios),color=col,label=label,dashes=dashes)
+            ls.append(l)
+    leg1 = plt.legend(ncol=2,fontsize="small",frameon=False,
+                    title="$n_0$, where $n(r) = n_0 (r / 1~\mathrm{pc})^2$",title_fontsize="small")     
+    leg1._legend_box.align = "right"
+    leg2 = plt.legend(ls,["$Z="+str(metal)+"$" for metal in metals],
+            fontsize="small",frameon=False,loc="upper left",ncol=2)
+    plt.gca().add_artist(leg1)
+    plt.gca().yaxis.set_ticks_position('both')
+    plt.xlabel("Mass / Msun")
+    plt.ylabel("$P_{rad} / P_{w} $")
+    plt.yscale("log")
+    plt.ylim([0.001,1.0])
     plt.savefig("../plots/PradvsPwind.pdf")
 
 def PlotShellThickness(ncloud,plotneutral=False):
@@ -576,7 +771,7 @@ def PlotShellThicknessRatio():
     plt.yscale("log")
     plt.savefig("../plots/shellthicknessratio.pdf")
 
-def PlotCoolingRate():
+def PlotCoolingRate(metal=0.014,rotating=True):
     plt.clf()
     nclouds = [1e1,1e2,1e3]
     #masses = np.arange(20,121,5)
@@ -593,7 +788,7 @@ def PlotCoolingRate():
         print(".......................")
         for starmass in masses:
             print("STARMASS",starmass)
-            star = stars.Star(starmass, 0.014, rotating=True)
+            star = stars.Star(starmass, metal, rotating=rotating)
             drdt = dRdTforw2(star,cloud)
             ts = rs / drdt
             ys = []
@@ -602,7 +797,7 @@ def PlotCoolingRate():
                 print(Eb, dEdt)
                 Lw = star.WindLuminosity(t)
                 ys.append(dEdt / Lw)
-            col = CloudColour(ncloud)
+            col = CloudColour(ncloud,metal)
             label = None
             if starmass == masses[0]:
                 label = str(ncloud)+" cm$^{-3}$"
@@ -612,11 +807,12 @@ def PlotCoolingRate():
                 leglines += [l]
             iline = (iline+1) % len(lines)
     leg1 = plt.legend(ncol=1,fontsize="small",frameon=False,
-                    title="$n_0$, where $n(r) = n_0 (r / 1~\mathrm{pc})^2$",title_fontsize="small")     
+                    title="$n_0$, where $n(r) = n_0 (r / 1~\mathrm{pc})^2$",title_fontsize="small",loc="upper right")     
     leg1._legend_box.align = "right"
     leg2 = plt.legend(leglines,[str(starmass)+" M$_{\odot}$" for starmass in masses],
-            fontsize="small",frameon=False,loc="lower left")
+            fontsize="small",frameon=False,loc="upper left")
     plt.gca().add_artist(leg1)
+    
     plt.xlabel("Time / Myr")
     plt.ylabel("$dE_{cool}/dt~/~L_{w}$")
     plt.xscale("log")
@@ -624,9 +820,46 @@ def PlotCoolingRate():
     xlims = plt.gca().get_xlim()
     ylims = plt.gca().get_ylim()
     plt.xlim([xlims[0],20.0])
-    plt.ylim([ylims[0],3e-2])
-    plt.savefig("../plots/coolingplot.pdf")
+    plt.ylim([2e-7,3e-1])
+    plt.text(xlims[0]*1.5,1e-6,"$Z="+str(metal)+"$",fontsize="small",horizontalalignment="left",verticalalignment="top")
+    plt.savefig("../plots/coolingplot_Z"+str(metal)+".pdf")
 
+def PlotdRdTforw2forMetals(rotating=True):
+    plt.clf()
+    nclouds = [1e1,3e1,1e2,3e2,1e3]
+    masses = np.arange(20,121,5)
+    for ncloud in nclouds:
+        windratios = []
+        drdts = []
+        drdtslowZ = []
+        print ("NCLOUD",ncloud)
+        print(".......................")
+        for starmass in masses:
+            print("STARMASS",starmass)
+            cloud = Cloud(ncloud,1.0*wunits.pc,2,1e-21)
+            star = stars.Star(starmass, 0.014, rotating=rotating)
+            wlHiZ = star.WindLuminosity(1e5 * wunits.year)
+            drdt = dRdTforw2(star,cloud)
+            drdts.append(drdt)
+            cloud = Cloud(ncloud,1.0*wunits.pc,2,1e-21*0.002/0.014)
+            star = stars.Star(starmass, 0.002, rotating=rotating)
+            wlLowZ = star.WindLuminosity(1e5 * wunits.year)
+            windratios.append(wlHiZ / wlLowZ)
+            drdt = dRdTforw2(star,cloud)
+            drdtslowZ.append(drdt)
+        col = CloudColour(ncloud,0.014)
+        plt.plot(masses,np.array(drdts)/1e5,color=col,label=str(ncloud)+" cm$^{-3}$")
+        col = CloudColour(ncloud,0.002)
+        plt.plot(masses,np.array(drdtslowZ)/1e5,color=col)
+        print(np.array(drdts) / np.array(drdtslowZ))
+        print(windratios)
+    leg = plt.legend(ncol=2,fontsize="small",frameon=False,
+                    title="$n_0$, where $n(r) = n_0 (r / 1~\mathrm{pc})^2$",title_fontsize="small")     
+    leg._legend_box.align = "right"
+    plt.xlabel("Mass / Msun")
+    plt.ylabel("$v_2$ / km/s")
+    plt.yscale("log")
+    plt.savefig("../plots/drdtforw2Metal.pdf")
 
 
 """
@@ -634,6 +867,54 @@ def PlotCoolingRate():
 TEST FUNCTIONS
 -------------------------------------------------------------------------
 """
+
+def OrionTest():
+    # Parameters for Orion
+    Mave = 1600.0*wunits.Msun
+    Mmin = 600.0*wunits.Msun
+    Mmax = 2600.0*wunits.Msun
+    mstar = 30
+    rotating = False
+    def zerodp(input):
+        return "{:.0f}".format(input)
+    def onedp(input):
+        return "{:.1f}".format(input)
+    def threedp(input):
+        return "{:.3f}".format(input)
+    def plusminus(arr,formfunc):
+        vav = arr[1]
+        minus = vav - np.min(arr)
+        plus = np.max(arr) - vav
+        return "$"+formfunc(vav)+"^{+"+formfunc(plus)+"}_{-"+formfunc(minus)+"}$"
+    for mstar in [30,35]:
+        print("MSTAR:", mstar)
+        for rw, Omega in zip([2*wunits.pc,4.0*wunits.pc],[4.0*np.pi,1.0*np.pi]):
+            vs = []
+            ages = []
+            ros = []
+            n0s = []
+            for M in [Mmin,Mave,Mmax]:
+                #print("M:",M/wunits.Msun,"Msun")
+                #n0 = 6244.0 # From Pabst+ 2019's mass of 2600 Msun
+                #n0 = 4083.0 # From Pabst+ 2019's mass of 1400 Msun
+                Mref = Omega*rw*(wunits.pc)**2*(wunits.mH / wunits.X)
+                n0 = M / Mref
+                n0s.append(n0)
+                #print(n0,"cm^-3")
+                cloud = Cloud(n0,1.0*wunits.pc,2,1e-21,Omega)
+                star = stars.Star(mstar, 0.014, rotating=rotating)
+                drdt = dRdTforw2(star,cloud)
+                ro, to, dro = CalculateOutflowRadiusTimew2(star,cloud)
+                age = rw / drdt / wunits.year/1e6
+                vs.append(drdt/1e5)
+                ages.append(age)
+                ros.append(ro/wunits.pc)
+            print(onedp(rw/wunits.pc)+" pc & $"+str(int(Omega/np.pi))+" \pi$ & "+plusminus(vs,onedp)+" km/s & "+
+            plusminus(ages,threedp)+" Myr & "+plusminus(ros,onedp)+" pc & "+plusminus(n0s,zerodp)+"//")
+            #print(onedp(rw/wunits.pc),"&",
+            #onedp(drdt/1e5),"km/s &",
+            #threedp(age), "Myr &", 
+            #onedp(ro/wunits.pc),"pc")
 
 def test():
     '''
@@ -654,15 +935,27 @@ def test():
 
 if __name__=="__main__":
     #PlotShellThickness(10)
-    test()
-    PlotCoolingRate()
-    #PlotdRdTforw2()
+    PlotMinResolutionNeeded(metals=[0.014,0.002],rotating=True)
+    PlotThicknessRatiow2(metal=0.014,rotating=True,vsR = True)
+    PlotThicknessRatiow2(metal=0.002,rotating=True,vsR = True)
+    PlotThicknessRatiow2(metal=0.014,rotating=True,vsR = True, justthickness=True)
+    PlotThicknessRatiow2(metal=0.002,rotating=True,vsR = True, justthickness=True)
+    PlotThicknessRatiow2(rotating=True)
+    PlotCoolingRate(metal=0.014,rotating=True)
+    PlotCoolingRate(metal=0.002,rotating=True)
+    PlotOutflowTimes(metals=[0.014,0.002],rotating=True)
+    PlotOutflowRadii(metals=[0.014,0.002],rotating=True)
+    PlotGravityVsBubblePressure(metals=[0.014,0.002],rotating=True)
+    PlotRadiationVsWindPressure(metals=[0.014,0.002],rotating=True)
+    PlotdRdTforw2(metals=[0.014],rotating=True)
+    PlotdRdTforw2(metals=[0.002],rotating=True)
+    PlotCoolingRate(rotating=True)
+    PlotdRdTforw2forMetals(rotating=True)
+    OrionTest()
     '''
-    PlotRadiationVsWindPressure()
     PlotOutflowTimes()
     PlotOutflowRadii()
     PlotdRdTforw2()
-    PlotGravityVsBubblePressure()
     PlotMinResolutionNeeded()
     '''
     #for neutral in [False]:
