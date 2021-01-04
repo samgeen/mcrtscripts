@@ -136,6 +136,9 @@ class AllHydros(object):
         # About the lambda lambdas: pymses needs a function that takes dset. But we also need ro for units.
         #   So we make a first lambda that fills in ro, then we have a lambda dset we can pass
         #   I know, I know...
+        # Cell size
+        func = lambda ro: lambda dset: dset.get_sizes()*snap.info["unit_length"].express(C.cm)
+        h["dx"] = Hydro("Cell size / cm",func,["rho"],"RdPu_r","linear",(None,None))
         # Mass density
         func = lambda ro: lambda dset: dset["rho"]*ro.info["unit_density"].express(C.g_cc)
         h["rho"] = Hydro("Density / g/cm$^{3}$",func,["rho"],"RdPu_r","log",(-25, -17))
