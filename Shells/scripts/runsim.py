@@ -13,6 +13,8 @@ import weltgeist
 import weltgeist.units as wunits # make this easier to type
 from scipy.interpolate import interp1d
 
+from weltgeist import graphics
+
 import stellarsource
 
 # Some useful constants
@@ -32,10 +34,10 @@ def run():
     # And the setup
     ncells = 128
     nanalytic = np.zeros((ncells))
-    n0 = 100.0 # cm^-3
+    n0 = 3000.0 # cm^-3
     T0 = 10.0 # K
     integrator.Setup(ncells = ncells, # 256 cells
-            rmax = 1.0*wunits.pc, # 20 pc box
+            rmax = 30.0*wunits.pc, # 20 pc box
             n0 = n0, # atoms / cm^-3
             T0 = T0, # K
             gamma = 5.0/3.0) # monatomic gas (close enough...)
@@ -44,7 +46,7 @@ def run():
     # # Use an isothermal profile
     isothermal = True
     if isothermal:
-        r0 = 4.0 * wunits.pc
+        r0 = 1.0 * wunits.pc
         hydro.nH[1:ncells] = n0 * (hydro.x[1:ncells] / r0)**(-2.0)
         # Prevent a singularity at r=0
         hydro.nH[0] = hydro.nH[1]
@@ -65,7 +67,7 @@ def run():
     #star = weltgeist.sources.TableSource(30.0,radiation=True,wind=True)
     #for i in [5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100,105,110,115,120]:
     #    star = stellarsource.StellarSource(i,0.014,radiation=True,wind=True,rotating=True)
-    star = stellarsource.StellarSource(120,0.014,radiation=True,wind=True,rotating=True)
+    star = stellarsource.StellarSource(30,0.014,radiation=True,wind=True,rotating=True)
     weltgeist.sources.Sources().AddSource(star)
 
     # Turn cooling on
