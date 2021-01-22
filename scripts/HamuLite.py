@@ -15,7 +15,17 @@ else:
     import pickle as pik
 
 import os, glob
-import pymses
+
+try:
+    import pymses
+except:
+    print("HamuLite: pymses not found, not importing")
+
+try:
+    sys.path.append("/home/samgeen/Programming/Astro/Weltgeist")
+    import weltgeist
+except:
+    print("HamuLite: Weltgeist not found, not importing")
 
 import numpy as np
 
@@ -220,7 +230,86 @@ class PymsesSnapshot(object):
         '''
         return CacheTime(self) #self._snapshot.info["time"] 
 
-# Singleton pattern to store 
+class WeltgeistSnapshot(object):
+    def __init__(self,folder,filename,name=None):
+        self._snap = None
+        self._filename = filename
+        self._folder = folder
+        self._outnum = int(filename[-10:-5])
+        self._name = name
+        self._time = None
+
+    def _Setup(self):
+        if self._time is None:
+            integrator = weltgeist.integrator.Integrator()
+            integrator.Load(self._filename)
+            self._time = integrator.time
+
+    def RawData(self):
+        integrator = weltgeist.integrator.Integrator()
+        integrator.Load(self._filename)
+        return integrator.hydro
+
+    def Name(self):
+        return self._name
+
+    def CachePath(self):
+        #if self._name is None:
+        #    pathname = self._snap.output_repos
+        #else:
+        #    pathname = self._name
+        #pathname = pathname.replace("/","__").replace("~","TILDE")
+        #path = "./cache/"+pathname+"/output_"+str(self.OutputNumber()).zfill(5)+"/"
+        if CACHEPATH is not None:
+            pathname = CACHEPATH+"/"+self._folder
+        else:
+            pathname = self._folder
+        # Put the cache files in the simulation folder itself
+        path = pathname+"/cache/output_"+str(self.OutputNumber()).zfill(5)+"/"
+        if not os.path.exists(path):
+            try:
+                os.makedirs(path)
+            except:
+                pass # Probably fine. Probably.
+        return path
+
+    def OutputNumber(self):
+        return self._outnum
+
+    def Time(self):
+        '''
+        Return the output time (for comparing outputs)
+        TODO: Make this concept more concrete (i.e. make sure units/measurement methods match)
+        '''
+        self._Setup()
+        return self._time
+
+
+class _CodeFactory(object):
+    """
+    Code-specific factory class for making outputs
+    """
+    def __init__(self,folder,name):
+        self._folder = folder
+        self._name = name
+
+    def Outputs(self):
+        outputs = OrderedDict()
+        pymseslist = glob.glob(self._folder+"/output_?????")
+        weltlist = glob.glob(self._folder+"/*.hdf5")
+        if len(pymseslist) > 0:
+            pymseslist.sort()
+            for out in pymseslist:
+                outnum = int(out[-5:])
+                outputs[outnum] = PymsesSnapshot(folder,outnum,name)
+        elif len(weltlist) > 0:
+            weltlist.sort()
+            for out in weltlist:
+                outnum = int(out[-10:-5])
+                outputs[outnum] = WeltgeistSnapshot(self._folder,out,self._name)
+        return outputs
+
+# Singleton pattern to store simulations
 folders = {}
 labels  = {}
 
@@ -235,12 +324,7 @@ class Simulation(object):
             raise KeyError
         self._folder = folders[name]
         self._label  = labels[name]
-        self._outs   = glob.glob(self._folder+"/output_?????")
-        self._outs.sort()
-        self._snaps = OrderedDict()
-        for out in self._outs:
-            outnum = int(out[-5:])
-            self._snaps[outnum] = PymsesSnapshot(self._folder,outnum,name)
+        self._snaps   = _CodeFactory(self._folder,name).Outputs()
 
     def Snapshots(self):
         return list(self._snaps.values())

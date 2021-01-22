@@ -18,4 +18,6 @@ plots/
 RDM/
 archive/
 tables/
+cache/
+outputs/
 slurm*.out
