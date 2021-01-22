@@ -32,12 +32,12 @@ def run():
     # Make an integrator
     integrator = weltgeist.integrator.Integrator()
     # And the setup
-    ncells = 128
+    ncells = 512
     nanalytic = np.zeros((ncells))
     n0 = 3000.0 # cm^-3
     T0 = 10.0 # K
-    integrator.Setup(ncells = ncells, # 256 cells
-            rmax = 30.0*wunits.pc, # 20 pc box
+    integrator.Setup(ncells = ncells, # Number of cells in the grid
+            rmax = 2.0*wunits.pc, # maximum radius of simulation volume
             n0 = n0, # atoms / cm^-3
             T0 = T0, # K
             gamma = 5.0/3.0) # monatomic gas (close enough...)
@@ -81,6 +81,18 @@ def run():
     ionisedLine = weltgeist.graphics.Line(weltgeist.graphics.black,width=3.0)
     # And make a rendering object again as in Exercise 3
     renderer = weltgeist.graphics.Renderer([temperatureLine,densityLine,ionisedLine])
+
+    # Output every 0.01 Myr
+    folder = "../outputs/test/"
+    try:
+        os.mkdir(folder)    
+    except:
+        pass
+    dtout = 1e4*yrins
+    saver = weltgeist.integrator.Saver(folder,dtout)
+    integrator.AddSaver(saver)
+    # Save at t=0
+    saver.Save()
 
     # Because of the way the rendering module pyglet works, it has to
     #  control the stepping. So let's make a function to give it
