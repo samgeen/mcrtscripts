@@ -19,6 +19,8 @@ import equilibriumtemperature
 
 gamma = equilibriumtemperature.gamma
 
+Msun = "M$_{\odot}$"
+
 """
 -------------------------------------------------------------------------
 GAS STUFF
@@ -116,14 +118,18 @@ ANALYTIC SOLUTIONS
 -------------------------------------------------------------------------
 """
 
-def WindPressure(star,cloud,r,t,cooled=False):
+def WindPressure(star,cloud,r,t,cooled=False,tref=None):
     if cooled:
         raise NotImplementedError
     Omega = cloud.Omega
     vol = (Omega / 3.0) * r**3
-    E = star.WindEnergy(t) * 5.0/11.0 # From Weaver
+    if tref is not None:
+        Eemitted = star.WindLuminosity(t)*t
+    else:
+        Eemitted = star.WindEnergy(t)
+    E = Eemitted * 5.0/11.0 # From Weaver
     #print ("E R VOL", E, r, vol)
-    return E / vol
+    return E / vol / 1.5 # Factor of 3/2 for 3 degrees of freedom, i.e. E = 3/2 N kB T = 3/2 P V
 
 def RadiationPressure(star,cloud,r,t):
     L = star.LIonising(t) + star.LNonIonising(t)
@@ -141,7 +147,7 @@ def dRdTforw2(star,cloud,radiation=True):
     rho0 = cloud.n0 * wunits.mH /  wunits.X
     r0 = cloud.r0
     # Solve Av^3 + Bv^2 + Cv + D = 0
-    A = 0.6 * Omega * rho0 * r0*r0
+    A = Omega * rho0 * r0*r0
     B = 0.0
     C = -Omega / (4.0 * np.pi * wunits.c)*Lrad
     D = -10.0/11.0 * Lw
@@ -175,20 +181,54 @@ def OverflowParameter(star,cloud,r,t):
     #print("OVERFLOWPARAMS", LHS, RHS, QH, ci, r, alphaB, Pw, Prad)
     return RHS / LHS # if > 1, outflow happens
     
-def IonisedShellThickness(star,cloud,r,t):
+def IonisedShellThickness(star,cloud,r,t,thickshell=False,uniform=False):
+    if thickshell:
+        ri, rw = IonisedRadiusThickShell_w2(star,cloud,r,t)
+        deltar = ri - rw
+    else:
+        n0 = cloud.n0
+        r0 = cloud.r0
+        w = cloud.w
+        tref = 1e5*wunits.year
+        if uniform:
+            niiVSnrms = 1.0
+            niavVSnrms = 1.0
+            Prad = 0.0
+        else:
+            # Estimate from Draine+ 2011
+            niiVSnrms = 1.4
+            niavVSnrms = 1.0/1.4
+            Prad = RadiationPressure(star,cloud,r,tref)
+        Omega = cloud.Omega # solid angle
+        QH = star.NIonising(t)
+        ci = SoundSpeed(star,t)
+        alphaB = AlphaB(star,t)
+        Pw = WindPressure(star,cloud,r,t,tref=tref)
+        deltar = QH / (alphaB * Omega) * niiVSnrms**2.0 * (wunits.mH / wunits.X)**2.0 * ci**4.0 * (r * (Pw + Prad))**(-2.0)
+    return deltar
+    
+def IonisedRadiusThickShell_w2(star,cloud,r,t):
+    '''
+    Ionised radius assuming a uniform photoionised shell
+    '''
+    Lw = star.WindLuminosity(t)
     n0 = cloud.n0
     r0 = cloud.r0
     w = cloud.w
-    niiVSnrms = 1.4
-    niavVSnrms = 1.0/1.4
     Omega = cloud.Omega # solid angle
+    # Ionising stuff
     QH = star.NIonising(t)
     ci = SoundSpeed(star,t)
     alphaB = AlphaB(star,t)
+    # Wind stuff
     Pw = WindPressure(star,cloud,r,t)
-    Prad = RadiationPressure(star,cloud,r,t)
-    deltar = QH / (alphaB * Omega) * niiVSnrms**2.0 * (wunits.mH / wunits.X)**2.0 * ci**4.0 * (r * (Pw + Prad))**(-2.0)
-    return deltar
+    Lw = star.WindLuminosity(t)
+    v2 = dRdTforw2(star,cloud)
+    # Calculate radii
+    rw = v2*t
+    A = 3.63 * (Omega**2 / 4.0 / np.pi) * (QH/alphaB) * (ci**2 * wunits.mH * v2 / Lw / wunits.X)**2
+    ri = rw * (1 + A * rw)**(1.0/3.0)
+    return ri, rw
 
 def NeutralShellSoundSpeed(star,cloud,r,t):
     Pw = WindPressure(star,cloud,r,t)
@@ -319,6 +359,7 @@ def CoolingRate(star,cloud,r,t):
     nc = pc / (wunits.kB * Tc)
     xcut = 1 - (Tcut / Tc)**2.5
     # Calculate the integral for the interior of the bubble
+    # (Requires some integration solving, I used Wolfram Alpha)
     structureIntegral = -23 * xcut*xcut - 50 * xcut + 625
     structureIntegral /= (1-xcut)**(2.0/25.0)
     structureIntegral -= 625.0
@@ -385,14 +426,14 @@ def PlotdRdTforw2(metals=[0.014],rotating=True):
             if leglines is None:
                 leglines = [l1,l2]
     leg1 = plt.legend(ncol=2,fontsize="small",frameon=False,
-                    title="$n_0$, where $n(r) = n_0 (r / 1~\mathrm{pc})^2$",title_fontsize="small")     
+                    title="$n_0$, where $n(r) = n_0 (r / 1~\mathrm{pc})^{-2}$",title_fontsize="small")     
     leg1._legend_box.align = "right"
     plt.text(120,15,"$Z="+str(metals[0])+"$",fontsize="small",horizontalalignment="right",verticalalignment="top")
     leg2 = plt.legend(leglines,["Winds + Radiation Pressure","Winds Only"],
             fontsize="small",frameon=False,loc="upper left")
     plt.gca().add_artist(leg1)
     plt.gca().yaxis.set_ticks_position('both')
-    plt.xlabel("Mass / Msun")
+    plt.xlabel("Initial Stellar Mass / "+Msun)
     plt.ylabel("$v_2$ / km/s")
     plt.yscale("log")
     plt.ylim([1,400])
@@ -426,18 +467,18 @@ def PlotMinResolutionNeeded(metals=[0.014],rotating=True):
             l, = plt.plot(masses,np.array(minreses) / wunits.pc,color=col,label=label,dashes=dashes)
             ls.append(l)
     leg1 = plt.legend(ncol=2,fontsize="x-small",frameon=False,
-                    title="$n_0$, where $n(r) = n_0 (r / 1~\mathrm{pc})^2$",title_fontsize="small")     
+                    title="$n_0$, where $n(r) = n_0 (r / 1~\mathrm{pc})^{-2}$",title_fontsize="small")     
     leg1._legend_box.align = "right"
     leg2 = plt.legend(ls,["$Z="+str(metal)+"$" for metal in metals],
             fontsize="small",frameon=False,loc="upper right",ncol=2)
     plt.gca().add_artist(leg1)
-    plt.xlabel("Mass / Msun")
+    plt.xlabel("Initial Stellar Mass / "+Msun)
     plt.ylabel("Minimum Resolution Needed / pc")
     plt.yscale("log")
     plt.ylim([1e-6,1e3])
     plt.savefig("../plots/minimumresolution.pdf")
 
-def PlotThicknessRatiow2(metal=0.014,rotating=True,vsR = False,justthickness=False):
+def PlotThicknessRatiow2(metal=0.014,rotating=True,vsR = False,justthickness=False,thickshell=False):
     plt.clf()
     nclouds = [3e1,3e2,3e3]
     #masses = np.arange(20,121,5)
@@ -465,7 +506,11 @@ def PlotThicknessRatiow2(metal=0.014,rotating=True,vsR = False,justthickness=Fal
             ts = ts[ts < to2]
             ys = []
             for r, t in zip(rs, ts):
-                deltar = IonisedShellThickness(star,cloud,r,t)
+                rthick = IonisedShellThickness(star,cloud,r,t,True)
+                rthin = IonisedShellThickness(star,cloud,r,t,False)
+                # VALUES INDICATE A MAX +/- 20% CORRECTION TO THE THIN SHELL APPROXIMATION
+                #print ("THICKNESS CORRECTION:", rthick / rthin)
+                deltar = IonisedShellThickness(star,cloud,r,t,thickshell)
                 if not justthickness:
                     ys.append(deltar/r)
                 else:
@@ -491,7 +536,7 @@ def PlotThicknessRatiow2(metal=0.014,rotating=True,vsR = False,justthickness=Fal
         plt.plot([0,100],[1,1],color="k",linestyle="-",alpha=0.2)
     if justthickness and metal==0.014:
         leg1 = plt.legend(ncol=1,fontsize="small",frameon=False,
-                        title="$n_0$, where $n(r) = n_0 (r / 1~\mathrm{pc})^2$",title_fontsize="small")     
+                        title="$n_0$, where $n(r) = n_0 (r / 1~\mathrm{pc})^{-2}$",title_fontsize="small")     
         leg1._legend_box.align = "right"
         loc = "lower right"
         leg2 = plt.legend(leglines,[str(starmass)+" M$_{\odot}$" for starmass in masses],
@@ -511,16 +556,202 @@ def PlotThicknessRatiow2(metal=0.014,rotating=True,vsR = False,justthickness=Fal
     plt.gca().yaxis.set_ticks_position('both')
     if vsR:
         plt.xlim([1e-2,30.0])
-    plt.ylim([1e-5,ylims[1]])
-    plt.text(20,ylims[1]*0.7,"$Z="+str(metal)+"$",fontsize="small",horizontalalignment="right",verticalalignment="top")
+    #plt.ylim([1e-5,ylims[1]])
+    ymax = 1e1
+    plt.ylim([1e-5,ymax])
+    plt.text(20,ymax*0.7,"$Z="+str(metal)+"$",fontsize="small",horizontalalignment="right",verticalalignment="top")
     suffix = ""
     if vsR:
         suffix = "_vsR"
     suffix += "_Z"+str(metal)
+    if thickshell:
+        suffix += "_thickshell"
     if not justthickness:
         plt.savefig("../plots/shellthicknessratio_w2"+suffix+".pdf")
     else:
         plt.savefig("../plots/shellthickness_w2"+suffix+".pdf") 
+
+def PlotThicknessCorrection(metal=0.014,rotating=True,vsR = False,uniform=False):
+    plt.clf()
+    nclouds = [3e1,3e2,3e3]
+    #masses = np.arange(20,121,5)
+    masses = [30,60,120]
+    lines = ["-","--",":"]
+    iline = 0
+    leglines = []
+    for ncloud in nclouds:
+        cloud = Cloud(ncloud,1.0*wunits.pc,2,1e-21)
+        drdts = []
+        drdtsnp = []
+        print ("NCLOUD",ncloud)
+        print(".......................")
+        for starmass in masses:
+            print("STARMASS",starmass)
+            star = stars.Star(starmass, metal, rotating=rotating)
+            rs = np.logspace(-2,2,100)*wunits.pc
+            drdt = dRdTforw2(star,cloud)
+            ts = rs / drdt
+            ro2, to2, deltaro2 = CalculateOutflowRadiusTimew2(star,cloud)
+            overflowed = False
+            if rs[-1] > ro2:
+                overflowed = True
+            rs = rs[rs < ro2]
+            ts = ts[ts < to2]
+            ys = []
+            for r, t in zip(rs, ts):
+                rthick = IonisedShellThickness(star,cloud,r,t,True)
+                rthin = IonisedShellThickness(star,cloud,r,t,False,uniform=uniform)
+                ys.append(rthin / rthick)
+            col = CloudColour(ncloud, metal)
+            label = None
+            if starmass == masses[0]:
+                label = str(ncloud)+" cm$^{-3}$"
+            line = lines[iline]
+            xs = ts/wunits.year/1e6
+            if vsR:
+                xs = rs / wunits.pc
+            l, = plt.plot(xs,np.array(ys),color=col,linestyle=line,label=label)
+            if overflowed:
+                plt.scatter(xs[-1],ys[-1],color=col)
+            if ncloud == nclouds[0]:
+                leglines += [l]
+            iline = (iline+1) % len(lines)
+    # Line at 0.01, 0.1, 1
+    #plt.plot([0,100],[0.01,0.01],color="k",linestyle="-",alpha=0.2)
+    #plt.plot([0,100],[0.1,0.1],color="k",linestyle="-",alpha=0.2)
+    plt.plot([0,100],[1,1],color="k",linestyle="-",alpha=0.2)
+    if metal==0.014:
+        leg1 = plt.legend(ncol=1,fontsize="small",frameon=False,
+                        title="$n_0$, where $n(r) = n_0 (r / 1~\mathrm{pc})^{-2}$",title_fontsize="small")     
+        leg1._legend_box.align = "right"
+        loc = "lower right"
+        leg2 = plt.legend(leglines,[str(starmass)+" M$_{\odot}$" for starmass in masses],
+                fontsize="small",frameon=False,loc=loc)
+        plt.gca().add_artist(leg1)
+    plt.xlabel("Time / Myr")
+    if vsR:
+        plt.xlabel("$r_w$ / pc")
+    unitxt = "radiation-shaped $n_i(r)$"
+    if uniform:
+        unitxt = "uniform $n_i(r)$"
+    plt.ylabel("$\Delta r_i / \Delta r_{i,thick}$ ("+unitxt+")")
+    plt.xscale("log")
+    plt.yscale("log")
+    xlims = plt.gca().get_xlim()
+    ylims = plt.gca().get_ylim()
+    plt.gca().yaxis.set_ticks_position('both')
+    if vsR:
+        plt.xlim([1e-2,30.0])
+    #plt.ylim([1e-5,ylims[1]])
+    ymax = 4.0
+    plt.ylim([0.25,ymax])
+    plt.text(0.02,ymax*0.7,"$Z="+str(metal)+"$",fontsize="small",horizontalalignment="left",verticalalignment="top")
+    suffix = ""
+    if vsR:
+        suffix = "_vsR"
+    if uniform:
+        suffix += "_uniformthinsoln"
+    suffix += "_Z"+str(metal)
+    plt.savefig("../plots/shellthickness_correction_w2"+suffix+".pdf") 
+
+def PlotShellExpansionCorrection(metal=0.014,rotating=True,vsR = False,ratio=False):
+    plt.clf()
+    nclouds = [3e1,3e2,3e3]
+    #masses = np.arange(20,121,5)
+    masses = [30,60,120]
+    lines = ["-","--",":"]
+    iline = 0
+    leglines = []
+    for ncloud in nclouds:
+        cloud = Cloud(ncloud,1.0*wunits.pc,2,1e-21)
+        drdts = []
+        drdtsnp = []
+        print ("NCLOUD",ncloud)
+        print(".......................")
+        for starmass in masses:
+            print("STARMASS",starmass)
+            star = stars.Star(starmass, metal, rotating=rotating)
+            rs = np.logspace(-2,2,100)*wunits.pc
+            drdt = dRdTforw2(star,cloud)
+            ts = rs / drdt
+            ro2, to2, deltaro2 = CalculateOutflowRadiusTimew2(star,cloud)
+            overflowed = False
+            if rs[-1] > ro2:
+                overflowed = True
+            rs = rs[rs < ro2]
+            ts = ts[ts < to2]
+            ys = []
+            for r, t in zip(rs, ts):
+                rthick, rw = IonisedRadiusThickShell_w2(star,cloud,r,t)
+                ys.append(rthick)
+            drdtthick = np.diff(ys)/np.diff(ts) / 1e5 # in km/s
+            drdtthin = np.diff(rs)/np.diff(ts) / 1e5 # in km/s
+             # To match positions of differenced velocities
+            rnews = 0.5*(rs[1:] + rs[:-1])
+            tnews = 0.5*(ts[1:] + ts[:-1])
+            col = CloudColour(ncloud, metal)
+            label = None
+            if starmass == masses[0]:
+                label = str(ncloud)+" cm$^{-3}$"
+            line = lines[iline]
+            xs = tnews/wunits.year/1e6
+            if vsR:
+                xs = rnews / wunits.pc
+            if not ratio:  
+                l, = plt.plot(xs,np.array(drdtthick),color=col,linestyle=line,label=label)
+                plt.plot(xs,np.array(drdtthin),color=col,linestyle=line,label=label,alpha=0.5)
+                if overflowed:
+                    plt.scatter(xs[-1],(drdtthick)[-1],color=col)
+                    plt.scatter(xs[-1],(drdtthin)[-1],color=col,alpha=0.5)
+            else:
+                l, = plt.plot(xs,np.array(drdtthick/drdtthin),color=col,linestyle=line,label=label)
+                if overflowed:
+                    plt.scatter(xs[-1],(drdtthick/drdtthin)[-1],color=col)
+            if ncloud == nclouds[0]:
+                leglines += [l]
+            iline = (iline+1) % len(lines)
+    # Line at 0.01, 0.1, 1
+    #plt.plot([0,100],[0.01,0.01],color="k",linestyle="-",alpha=0.2)
+    #plt.plot([0,100],[0.1,0.1],color="k",linestyle="-",alpha=0.2)
+    if ratio:
+        plt.plot([0,100],[1,1],color="k",linestyle="-",alpha=0.2)
+    if metal==0.014:
+        leg1 = plt.legend(ncol=1,fontsize="small",frameon=False,
+                        title="$n_0$, where $n(r) = n_0 (r / 1~\mathrm{pc})^{-2}$",title_fontsize="small")     
+        leg1._legend_box.align = "right"
+        loc = "lower right"
+        leg2 = plt.legend(leglines,[str(starmass)+" M$_{\odot}$" for starmass in masses],
+                fontsize="small",frameon=False,loc=loc)
+        plt.gca().add_artist(leg1)
+    plt.xlabel("Time / Myr")
+    if vsR:
+        plt.xlabel("$r_w$ / pc")
+    if ratio:
+        plt.ylabel("d$r$/d$t_{thick}$ / d$r$/d$t_{thin}$")    
+    else:
+        plt.ylabel("d$r$/d$t$")
+    plt.xscale("log")
+    #plt.yscale("log")
+    xlims = plt.gca().get_xlim()
+    ylims = plt.gca().get_ylim()
+    plt.gca().yaxis.set_ticks_position('both')
+    if vsR:
+        plt.xlim([1e-2,30.0])
+    #plt.ylim([1e-5,ylims[1]])
+    ymax = ylims[1]
+    if ratio:
+        ymin = 0.4
+    else:
+        ymin = ylims[0]
+    plt.ylim([ymin,ymax])
+    plt.text(0.02,ymax*0.7,"$Z="+str(metal)+"$",fontsize="small",horizontalalignment="left",verticalalignment="top")
+    suffix = ""
+    if vsR:
+        suffix += "_vsR"
+    if ratio:
+        suffix += "_ratio"
+    suffix += "_Z"+str(metal)
+    plt.savefig("../plots/shellexpansion_correction_w2"+suffix+".pdf") 
 
 def PlotOutflowRadii(metals=[0.014],rotating=True):
     plt.clf()
@@ -547,13 +778,13 @@ def PlotOutflowRadii(metals=[0.014],rotating=True):
             l, = plt.plot(masses,np.array(radii) / wunits.pc,color=col,label=label,dashes=dashes)
             ls.append(l)
     leg1 = plt.legend(ncol=2,fontsize="small",frameon=False,
-                    title="$n_0$, where $n(r) = n_0 (r / 1~\mathrm{pc})^2$",title_fontsize="small")     
+                    title="$n_0$, where $n(r) = n_0 (r / 1~\mathrm{pc})^{-2}$",title_fontsize="small")     
     leg1._legend_box.align = "left"
     #leg2 = plt.legend(ls,["$Z="+str(metal)+"$" for metal in metals],
     #        fontsize="small",frameon=False,loc="lower right",ncol=2)
     plt.gca().add_artist(leg1)
     plt.gca().yaxis.set_ticks_position('both')
-    plt.xlabel("Mass / Msun")
+    plt.xlabel("Initial Stellar Mass / "+Msun)
     plt.ylabel("Radius of Overflow $r_{o,2}$ / pc")
     plt.yscale("log")
     plt.ylim([1e-4,100])
@@ -590,7 +821,7 @@ def PlotOutflowTimes(metals=[0.014],rotating=True):
             fontsize="small",frameon=False,loc="upper right",ncol=2)
     #plt.gca().add_artist(leg1)
     plt.gca().yaxis.set_ticks_position('both')
-    plt.xlabel("Mass / Msun")
+    plt.xlabel("Initial Stellar Mass / "+Msun)
     plt.ylabel("Time of Overflow  $t_{o,2}$ / Myr")
     plt.yscale("log")
     plt.ylim([1e-4,30])
@@ -634,7 +865,7 @@ def PlotGravityVsBubblePressure(metals=[0.014],rotating=True):
             fontsize="small",frameon=False,loc="upper right",ncol=2)
     #plt.gca().add_artist(leg1)
     plt.gca().yaxis.set_ticks_position('both')
-    plt.xlabel("Mass / Msun")
+    plt.xlabel("Initial Stellar Mass / "+Msun)
     plt.ylabel("$P_{rad} / P_{w} $")
     plt.yscale("log")
     plt.ylim([1e-6,1.0])
@@ -673,13 +904,13 @@ def PlotRadiationVsWindPressure(metals=[0.014],rotating=True):
             l, = plt.plot(masses,np.array(ratios),color=col,label=label,dashes=dashes)
             ls.append(l)
     leg1 = plt.legend(ncol=2,fontsize="small",frameon=False,
-                    title="$n_0$, where $n(r) = n_0 (r / 1~\mathrm{pc})^2$",title_fontsize="small")     
+                    title="$n_0$, where $n(r) = n_0 (r / 1~\mathrm{pc})^{-2}$",title_fontsize="small")     
     leg1._legend_box.align = "right"
     leg2 = plt.legend(ls,["$Z="+str(metal)+"$" for metal in metals],
             fontsize="small",frameon=False,loc="upper left",ncol=2)
     plt.gca().add_artist(leg1)
     plt.gca().yaxis.set_ticks_position('both')
-    plt.xlabel("Mass / Msun")
+    plt.xlabel("Initial Stellar Mass / "+Msun)
     plt.ylabel("$P_{rad} / P_{w} $")
     plt.yscale("log")
     plt.ylim([0.001,1.0])
@@ -773,7 +1004,8 @@ def PlotShellThicknessRatio():
 
 def PlotCoolingRate(metal=0.014,rotating=True):
     plt.clf()
-    nclouds = [1e1,1e2,1e3]
+    #nclouds = [1e1,1e2,1e3]
+    nclouds = [3e1,3e2,3e3]
     #masses = np.arange(20,121,5)
     masses = [30,60,120]
     rs = np.logspace(-2,2,100)*wunits.pc
@@ -807,7 +1039,7 @@ def PlotCoolingRate(metal=0.014,rotating=True):
                 leglines += [l]
             iline = (iline+1) % len(lines)
     leg1 = plt.legend(ncol=1,fontsize="small",frameon=False,
-                    title="$n_0$, where $n(r) = n_0 (r / 1~\mathrm{pc})^2$",title_fontsize="small",loc="upper right")     
+                    title="$n_0$, where $n(r) = n_0 (r / 1~\mathrm{pc})^{-2}$",title_fontsize="small",loc="upper right")     
     leg1._legend_box.align = "right"
     leg2 = plt.legend(leglines,[str(starmass)+" M$_{\odot}$" for starmass in masses],
             fontsize="small",frameon=False,loc="upper left")
@@ -820,8 +1052,8 @@ def PlotCoolingRate(metal=0.014,rotating=True):
     xlims = plt.gca().get_xlim()
     ylims = plt.gca().get_ylim()
     plt.xlim([xlims[0],20.0])
-    plt.ylim([2e-7,3e-1])
-    plt.text(xlims[0]*1.5,1e-6,"$Z="+str(metal)+"$",fontsize="small",horizontalalignment="left",verticalalignment="top")
+    plt.ylim([1e-6,6e-1])
+    plt.text(xlims[0]*1.5,3e-6,"$Z="+str(metal)+"$",fontsize="small",horizontalalignment="left",verticalalignment="top")
     plt.savefig("../plots/coolingplot_Z"+str(metal)+".pdf")
 
 def PlotdRdTforw2forMetals(rotating=True):
@@ -854,9 +1086,9 @@ def PlotdRdTforw2forMetals(rotating=True):
         print(np.array(drdts) / np.array(drdtslowZ))
         print(windratios)
     leg = plt.legend(ncol=2,fontsize="small",frameon=False,
-                    title="$n_0$, where $n(r) = n_0 (r / 1~\mathrm{pc})^2$",title_fontsize="small")     
+                    title="$n_0$, where $n(r) = n_0 (r / 1~\mathrm{pc})^{-2}$",title_fontsize="small")     
     leg._legend_box.align = "right"
-    plt.xlabel("Mass / Msun")
+    plt.xlabel("Initial Stellar Mass / "+Msun)
     plt.ylabel("$v_2$ / km/s")
     plt.yscale("log")
     plt.savefig("../plots/drdtforw2Metal.pdf")
@@ -935,11 +1167,21 @@ def test():
 
 if __name__=="__main__":
     #PlotShellThickness(10)
+    PlotCoolingRate(rotating=True)
     PlotMinResolutionNeeded(metals=[0.014,0.002],rotating=True)
-    PlotThicknessRatiow2(metal=0.014,rotating=True,vsR = True)
-    PlotThicknessRatiow2(metal=0.002,rotating=True,vsR = True)
-    PlotThicknessRatiow2(metal=0.014,rotating=True,vsR = True, justthickness=True)
-    PlotThicknessRatiow2(metal=0.002,rotating=True,vsR = True, justthickness=True)
+    for metal in [0.014,0.002]:
+        PlotShellExpansionCorrection(metal=metal,rotating=True,vsR=True)
+        PlotShellExpansionCorrection(metal=metal,rotating=True,vsR=True,ratio=True)
+        PlotThicknessCorrection(metal=metal,rotating=True,vsR=True)
+        PlotThicknessCorrection(metal=metal,rotating=True,vsR=True,uniform=True)
+        for thickshell in [True, False]:
+            for justthickness in [True, False]:
+                PlotThicknessRatiow2(metal=metal,rotating=True,vsR = True, justthickness=justthickness,
+                    thickshell=thickshell)
+    #PlotThicknessRatiow2(metal=0.014,rotating=True,vsR = True)
+    #PlotThicknessRatiow2(metal=0.002,rotating=True,vsR = True)
+    #PlotThicknessRatiow2(metal=0.014,rotating=True,vsR = True, justthickness=True)
+    #PlotThicknessRatiow2(metal=0.002,rotating=True,vsR = True, justthickness=True)
     PlotThicknessRatiow2(rotating=True)
     PlotCoolingRate(metal=0.014,rotating=True)
     PlotCoolingRate(metal=0.002,rotating=True)
@@ -949,7 +1191,6 @@ if __name__=="__main__":
     PlotRadiationVsWindPressure(metals=[0.014,0.002],rotating=True)
     PlotdRdTforw2(metals=[0.014],rotating=True)
     PlotdRdTforw2(metals=[0.002],rotating=True)
-    PlotCoolingRate(rotating=True)
     PlotdRdTforw2forMetals(rotating=True)
     OrionTest()
     '''

@@ -13,7 +13,6 @@ import weltgeist
 import weltgeist.units as wunits # make this easier to type
 from scipy.interpolate import interp1d
 
-from weltgeist import graphics
 
 import stellarsource
 
@@ -28,13 +27,18 @@ c = 2.99792458e10
 
 yrins = 3.154e+7
 
+# Turn graphics off?
+NOGRAPHICS = True
+if not NOGRAPHICS:
+    from weltgeist import graphics
+
 def run():
     # Make an integrator
     integrator = weltgeist.integrator.Integrator()
     # And the setup
-    ncells = 512
+    ncells = 256
     nanalytic = np.zeros((ncells))
-    n0 = 3000.0 # cm^-3
+    n0 = 1000.0 # cm^-3
     T0 = 10.0 # K
     integrator.Setup(ncells = ncells, # Number of cells in the grid
             rmax = 2.0*wunits.pc, # maximum radius of simulation volume
@@ -67,28 +71,47 @@ def run():
     #star = weltgeist.sources.TableSource(30.0,radiation=True,wind=True)
     #for i in [5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100,105,110,115,120]:
     #    star = stellarsource.StellarSource(i,0.014,radiation=True,wind=True,rotating=True)
-    star = stellarsource.StellarSource(30,0.014,radiation=True,wind=True,rotating=True)
+    mstar = 35
+    radiation = True
+    wind = True
+    star = stellarsource.StellarSource(mstar,0.014,radiation=radiation,wind=wind,rotating=True)
     weltgeist.sources.Sources().AddSource(star)
+
+    fbname = "nofb"
+    if wind and not radiation:
+        fbname = "windonly"
+    elif wind and radiation:
+        fbname = "uvwind"
 
     # Turn cooling on
     weltgeist.cooling.cooling_on = True
+    # Mask the contact discontinuity
+    maskCD = False
+    weltgeist.cooling.maskContactDiscontinuity = maskCD
 
-    # Now let's render the temperature in red
-    temperatureLine = weltgeist.graphics.Line(weltgeist.graphics.red,width=3.0)
-    # And a blue line for an analytic fit
-    densityLine = weltgeist.graphics.Line(weltgeist.graphics.blue,width=3.0)
-    # And a black line for photoionisation
-    ionisedLine = weltgeist.graphics.Line(weltgeist.graphics.black,width=3.0)
-    # And make a rendering object again as in Exercise 3
-    renderer = weltgeist.graphics.Renderer([temperatureLine,densityLine,ionisedLine])
+    if not NOGRAPHICS:
+        # Now let's render the temperature in red
+        temperatureLine = weltgeist.graphics.Line(weltgeist.graphics.red,width=3.0)
+        # And a blue line for an analytic fit
+        densityLine = weltgeist.graphics.Line(weltgeist.graphics.blue,width=3.0)
+        # And a black line for photoionisation
+        ionisedLine = weltgeist.graphics.Line(weltgeist.graphics.black,width=3.0)
+        # And make a rendering object again as in Exercise 3
+        renderer = weltgeist.graphics.Renderer([temperatureLine,densityLine,ionisedLine])
 
-    # Output every 0.01 Myr
-    folder = "../outputs/test/"
+    # Set up folder to write to
+    extra = ""
+    if maskCD:
+        extra += "maskCD"
+    folder = "../outputs/"+str(mstar)+"Msun_n"+str(int(n0))+"_w2_N"+str(ncells)+"_"+fbname+"_coolingfix2"+extra+"/"
+    print("Writing sim to",folder)
     try:
         os.mkdir(folder)    
     except:
         pass
+    # Output every 0.01 Myr
     dtout = 1e4*yrins
+    endtime = 0.5 * 1e6*yrins
     saver = weltgeist.integrator.Saver(folder,dtout)
     integrator.AddSaver(saver)
     # Save at t=0
@@ -123,10 +146,26 @@ def run():
         # Step the integrator
         integrator.Step()
     
-    # Now run the renderer and the simulation will evolve!
-    # Press Escape or click the cross to exit
-    # Note that this doesn't have axis labels, it's super simple so far
-    renderer.Start(MyStep)
+    if NOGRAPHICS:
+        # Just do it the boring way, without pictures
+        tcounter = 0.0
+        itcount = 0
+        print(itcount,"|",integrator.time/yrins,"yr","...")
+        while integrator.time < endtime:
+            # Force the integrator to slow down a bit (to 100 km/s = 1e7 cm/s)
+            integrator.CourantLimiter(1e7)
+            # Step the integrator
+            integrator.Step()
+            tcounter += integrator.dt
+            if tcounter > dtout:
+                itcount += 1
+                print(itcount,integrator.time/yrins,"...")
+                tcounter = 0.0
+    else:
+        # Now run the renderer and the simulation will evolve!
+        # Press Escape or click the cross to exit
+        # Note that this doesn't have axis labels, it's super simple so far
+        renderer.Start(MyStep)
 
     # A few things to notice
     # 1) Winds are a giant pain. They're super fast (up to a few 
