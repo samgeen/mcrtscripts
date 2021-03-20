@@ -11,19 +11,19 @@ if __name__=="__main__":
 
     for dense in [False]:
         for mass in [30]: # [30,60,120][::-1]:
-            for outtime in [0.2]: #[0.1,0.15,0.2]:
+            for outtime in [0.1,0.15,0.2]:
                 smass = str(mass)
                 if not dense or mass == 120:
-                    simset = ["UVCR_"+smass+"_ZOOM"]#["NOFB","UV_"+smass,"UVWINDPRESS_"+smass]
-                    setname = "crset_"+smass+"Msun_zoom"
-                    simwindname = "UVCR_"+smass+"_ZOOM"
+                    simset = ["UVWINDPRESS_30_ZOOM_NOGRAD","UVWINDPRESS_30_ZOOM_11GRAD","UVWINDPRESS_30_ZOOM_11GRAD_SHELL"] 
+                    setname = "crset_"+smass+"Msun"
+                    simwindname = "UVCR_"+smass
                     #if dense:
                     #    simset = [x+"_DENSE" for x in simset]
                     #    simwindname = "UVWIND_"+smass+"_DENSE"
                     #    setname += "_dense"
                     #times = np.array([0.5, 0.75, 1.])
                     times = np.array([outtime]) # np.array([0.9]) # [0.9] # 3.5 Myr = tstarformed + 0.2 Myr 
-                    zoom = 0.5
+                    zoom = 0.25
                     setname = setname+str(times[-1])+"Myr_"+"zoom"+str(zoom)+"_"
                     setname = setname.replace(".","p") # the extra dot confuses latex
                     #timeL = [str(x)+r' t$_{ff}$' for x in times]
@@ -42,11 +42,10 @@ if __name__=="__main__":
                         timesmergedL = [str(x)+r' Myr' for x in timesmerged]
 
                         # Slices
-                        for hydro in ["Lcool","T","rho","xHII","P","xHeII","xHeIII","Bx","By","Bz","vx","vy","vz",
-                                      "shock-mach","shock-Edissipated","shock-Bobliquity","shock-XCR","shock-xi"][::-1]:
+                        for hydro in ["Lcool","T","rho","xHII","P","xHeII","xHeIII","Bx","By","Bz","vx","vy","vz"][::-1]:
                             for sim in simset:
                                 makeImageGridTime.MakeFigure([sim],[timesin[-1]],
-                                                             name=figname+"marco"+sim,los=los,hydro=hydro,
+                                                             name=figname+"windshell"+sim,los=los,hydro=hydro,
                                                              Slice=True,wsink=True,starC=True,
                                                              timeL=[timeL[-1]],zoom=zoom,forcerun=True)
 
