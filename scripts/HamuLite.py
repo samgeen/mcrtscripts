@@ -248,7 +248,7 @@ class WeltgeistSnapshot(object):
     def RawData(self):
         integrator = weltgeist.integrator.Integrator()
         integrator.Load(self._filename)
-        return integrator.hydro
+        return integrator
 
     def Name(self):
         return self._name
@@ -283,6 +283,12 @@ class WeltgeistSnapshot(object):
         '''
         self._Setup()
         return self._time
+
+    def Folder(self):
+        '''
+        Return the simulation folder
+        '''
+        return self._folder
 
 
 class _CodeFactory(object):

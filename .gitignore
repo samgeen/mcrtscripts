@@ -20,4 +20,5 @@ archive/
 tables/
 cache/
 outputs/
+rdmfiles/
 slurm*.out
