@@ -32,16 +32,28 @@ NOGRAPHICS = True
 if not NOGRAPHICS:
     from weltgeist import graphics
 
+def Bfield(nH):
+    # Get the B field to use
+    # Crutcher relation from Figure 6, Crutcher+ 2012
+    # See also discussion in Pellegrini+ 2007
+    B0 = 1e-5 # 10 microGauss
+    gammaB = 4.0/3.0
+    n0 = 300.0 # cm^-3
+    B = nH * 0.0
+    B[nH < n0] = B0
+    B[nH >= n0] = B0 * (nH[nH >= n0]/n0)**(gammaB/2.0)
+    return B
+
 def run():
     # Make an integrator
     integrator = weltgeist.integrator.Integrator()
     # And the setup
-    ncells = 256
+    ncells = 2048
     nanalytic = np.zeros((ncells))
     n0 = 1000.0 # cm^-3
     T0 = 10.0 # K
     integrator.Setup(ncells = ncells, # Number of cells in the grid
-            rmax = 2.0*wunits.pc, # maximum radius of simulation volume
+            rmax = 4.0*wunits.pc, # maximum radius of simulation volume
             n0 = n0, # atoms / cm^-3
             T0 = T0, # K
             gamma = 5.0/3.0) # monatomic gas (close enough...)
@@ -85,8 +97,10 @@ def run():
 
     # Turn cooling on
     weltgeist.cooling.cooling_on = True
+    # B field?
+    magnetic = True
     # Mask the contact discontinuity
-    maskCD = False
+    maskCD = True
     weltgeist.cooling.maskContactDiscontinuity = maskCD
 
     if not NOGRAPHICS:
@@ -102,7 +116,9 @@ def run():
     # Set up folder to write to
     extra = ""
     if maskCD:
-        extra += "maskCD"
+        extra += "maskCD_v2"
+    if magnetic:
+        extra += "_Bfield"
     folder = "../outputs/"+str(mstar)+"Msun_n"+str(int(n0))+"_w2_N"+str(ncells)+"_"+fbname+"_coolingfix2"+extra+"/"
     print("Writing sim to",folder)
     try:
@@ -143,6 +159,9 @@ def run():
         renderer.Text(str.format('{0:.3f}',steptime)+" kyr")
         # Force the integrator to slow down a bit (to 100 km/s = 1e7 cm/s)
         integrator.CourantLimiter(1e7)
+        # Set the B field if needed
+        if magnetic:
+            hydro.Bfield[0:ncells] = Bfield(nH)
         # Step the integrator
         integrator.Step()
     
@@ -154,6 +173,10 @@ def run():
         while integrator.time < endtime:
             # Force the integrator to slow down a bit (to 100 km/s = 1e7 cm/s)
             integrator.CourantLimiter(1e7)
+            # Set the B field if needed
+            if magnetic:
+                nH = hydro.nH[0:ncells]
+                hydro.Bfield[0:ncells] = Bfield(nH)
             # Step the integrator
             integrator.Step()
             tcounter += integrator.dt

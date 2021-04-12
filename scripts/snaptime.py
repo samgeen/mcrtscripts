@@ -5,13 +5,21 @@ Sam Geen, October 2016
 
 import HamuLite as Hamu
 
-from pymses.utils import constants as C
+nopymses = False
+try:
+    from pymses.utils import constants as C
+except:
+    nopymses = True
+    print("No pymses available, skipping Myr conversion")
 
 def _Myr(snap):
     '''
     Returns snapshot time (in Myr)
     '''
-    t = snap.info["time"] * snap.info["unit_time"].express(C.Myr)
+    if nopymses:
+        t = snap.Time()
+    else:
+        t = snap.info["time"] * snap.info["unit_time"].express(C.Myr)
     return t
 
 # TODO: Include other units as a wrapper around this function

@@ -12,6 +12,8 @@ def timefunc(sim,func,noarray=False,verbose=False,processes=1,*args,**kwargs):
     times = []
     vals = []
     if processes == 1:
+        if verbose:
+            print(sim.Name())
         for snap in sim.Snapshots():
             t = snaptime.Myr(snap)
             v = func(snap,*args,**kwargs)
@@ -26,4 +28,6 @@ def timefunc(sim,func,noarray=False,verbose=False,processes=1,*args,**kwargs):
     times = np.array(times)
     if not noarray:
         vals = np.array(vals)
+    if verbose:
+        print(times,vals)
     return times, vals

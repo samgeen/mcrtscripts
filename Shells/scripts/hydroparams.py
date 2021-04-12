@@ -4,6 +4,7 @@ Sam Geen, January 2021
 '''
 
 import os, sys
+from importlib import reload  
 
 import numpy as np
 
@@ -22,7 +23,9 @@ import matplotlib.pyplot as plt
 
 hydrofuncs = {}
 hydrolabels = {}
+hydrolabelsdiff = {}
 hydrounits = {}
+hydrounitsdiff = {}
 def findshellradius(snap):
     """
     Find the radius of the shell
@@ -36,7 +39,9 @@ def findshellradius(snap):
     return radius
 hydrofuncs["shellradius"] = findshellradius
 hydrolabels["shellradius"] = "Shell Radius / pc"
+hydrolabelsdiff["shellradius"] = "Shell Velocity / km/s"
 hydrounits["shellradius"] = wunits.pc
+hydrounitsdiff["shellradius"] = 1e5 # km/s in cgs
 
 def findenergy(snap):
     """
@@ -51,12 +56,32 @@ hydrofuncs["energy"] = findenergy
 hydrolabels["energy"] = "Total Energy / erg"
 hydrounits["energy"] = 1.0 # cgs already
 
+def findentropy(snap,donotsum=False):
+    """
+    Find the kinetic energy in the simulation
+    """
+    hydro = snap.RawData().hydro
+    nx = hydro.ncells
+    temperature = hydro.T[0:nx]
+    nH = hydro.nH[0:nx]
+    #entropy = 3.0 * wunits.kB * temperature * (rho)**(-2.0/3.0) * (wunits.X / wunits.mH)
+    entropy = temperature * (nH)**(-2.0/3.0)
+    if not donotsum:
+        entropy = np.sum(entropy)
+    return entropy
+hydrofuncs["entropy"] = findentropy
+hydrolabels["entropy"] = "Total Entropy / K cm$^{2}$"
+hydrounits["entropy"] = 1.0 # cgs already
+
 def findcooling(snap,maskon=True):
     hydro = snap.RawData().hydro
     nx = hydro.ncells
     dTdt = weltgeist.cooling.TemperatureChange(1.0)
     if maskon and "maskCD" in snap.Folder():
-        dTdt = weltgeist.cooling.MaskContactDiscontinuity(dTdt)
+        if "v2" in snap.Folder():
+            dTdt = weltgeist.cooling.MaskContactDiscontinuityV2(dTdt)
+        else:
+            dTdt = weltgeist.cooling.MaskContactDiscontinuityV1(dTdt)
     # Find Cooling (so -ve temperature change)
     dEdt = - 1.5 * hydro.nH[0:nx] * hydro.vol[0:nx] * wunits.kB * dTdt
     # Remove heating
@@ -66,13 +91,15 @@ hydrofuncs["cooling"] = findcooling
 hydrolabels["cooling"] = "Cooling rate / erg / s"
 hydrounits["cooling"] = 1.0 # cgs already
 
-
 def findhotgascooling(snap,maskon=True):
     hydro = snap.RawData().hydro
     nx = hydro.ncells
     dTdt = weltgeist.cooling.TemperatureChange(1.0)
     if maskon and "maskCD" in snap.Folder():
-        dTdt = weltgeist.cooling.MaskContactDiscontinuity(dTdt)
+        if "v2" in snap.Folder():
+            dTdt = weltgeist.cooling.MaskContactDiscontinuityV2(dTdt)
+        else:
+            dTdt = weltgeist.cooling.MaskContactDiscontinuityV1(dTdt)
     # Find Cooling (so -ve temperature change)
     dEdt = - 1.5 * hydro.nH[0:nx] * hydro.vol[0:nx] * wunits.kB * dTdt
     mask = hydro.T[0:nx] < 1e5
@@ -90,10 +117,9 @@ def findCDcooling(snap,maskon=True):
     # Find Cooling (so -ve temperature change)
     dTdt = -weltgeist.cooling.TemperatureChange(1.0)
     # Find cooling minus the CD part
-    dTdt2 = weltgeist.cooling.MaskContactDiscontinuity(dTdt)
+    dTdt2 = weltgeist.cooling.MaskContactDiscontinuityV2(dTdt)
     # Recover the CD part
     CDcooling = dTdt - dTdt2
-    import pdb; pdb.set_trace()
     dEdt = 1.5 * hydro.nH[0:nx] * hydro.vol[0:nx] * wunits.kB * CDcooling
     # Remove heating
     dEdt[dEdt < 0.0] = 0.0
@@ -102,18 +128,28 @@ hydrofuncs["CDcooling"] = findCDcooling
 hydrolabels["CDcooling"] = "Cooling rate in the CD / erg / s"
 hydrounits["CDcooling"] = 1.0 # cgs already
 
-def plottimefuncs(sims,hydro):
+def plottimefuncs(sims,hydro,diff=False,yscale="log"):
     plt.clf()
-    tunit = wunits.year/1e3
+    tunit = wunits.year*1e3
     yunit = hydrounits[hydro]
+    label = hydrolabels[hydro]
+    difftxt = ""
     for simname, sim in sims.items():
+        reload(weltgeist)
         time, yvals = timefuncs.timefunc(sim,hydrofuncs[hydro])
+        if diff:
+            yvals = np.diff(yvals) / np.diff(time)
+            time = 0.5*(time[1:]+time[:-1])
+            yunit = hydrounitsdiff[hydro]
+            label = hydrolabelsdiff[hydro]
+            difftxt = "_diff"
         plt.plot(time/tunit,yvals/yunit,label=simname)
     plt.xlabel("Time / kyr")
-    plt.ylabel(hydrolabels[hydro])
+    plt.ylabel(label)
     plt.legend(fontsize="x-small",frameon=False)
-    plt.yscale("log")
-    plt.savefig("../plots/oned/timefunc_"+hydro+".pdf")
+    plt.xscale("log")
+    plt.yscale(yscale)
+    plt.savefig("../plots/oned/timefunc_"+hydro+difftxt+".pdf")
 
 def plotprofiles(snap):
     plt.clf()
@@ -121,28 +157,24 @@ def plotprofiles(snap):
     hydro = snap.RawData().hydro
     nx = hydro.ncells
     r = hydro.x[0:nx] / wunits.pc
+    vol = hydro.vol[0:nx]
+    # Density
     plt.plot(r,hydro.nH[0:nx],label="$n_\mathrm{H}$ / cm$^{-3}$")
+    # Temperature
     plt.plot(r,hydro.T[0:nx],label="T / K")
+    # Cooling
     dTdt = weltgeist.cooling.TemperatureChange(1.0)
     dEdt = 1.5 * hydro.nH[0:nx] * wunits.kB * dTdt
     plt.plot(r,-dEdt[0:nx]*1e24,label="Cooling x1e24 / erg/s/cm$^3$")
+    # Entropy
+    entropy = findentropy(snap,donotsum=True)
+    plt.plot(r,entropy,label="Entropy / K cm$^{2}$")
+    # Finish plotting
     plt.legend(fontsize="x-small",frameon=False)
     plt.xlabel("Radius / pc")
     plt.yscale("log")
-    try:
-        os.mkdir("../plots/")
-    except:
-        pass
-    try:
-        os.mkdir("../plots/oned/")
-    except:
-        pass
-    try:
-        os.mkdir("../plots/oned/"+simname)
-    except:
-        pass
+    os.makedirs("../plots/oned/"+simname, exist_ok=True)
     plt.savefig("../plots/oned/"+simname+"/1Dhydrotest_"+str(snap.OutputNumber())+".pdf")
-
         
 
 def CompareSims(sims):
@@ -156,24 +188,34 @@ def CompareSims(sims):
     for hydro in hydrofuncs.keys():
         print (hydro)
         plottimefuncs(sims,hydro)
+    plottimefuncs(sims,"shellradius",diff=True,yscale="linear")
     # Plot profiles
     print("---")
     print("PROFILES")
     print("---")
     for simname, sim in sims.items():
         print(simname)
+        reload(weltgeist)
         for snap in sim.Snapshots():
             print (snap.OutputNumber())
             plotprofiles(snap)
 
 
-
-filenames = ["../outputs/35Msun_n1000_w2_N256_uvwind_coolingfix2maskCD/","../outputs/35Msun_n1000_w2_N256_uvwind_coolingfix2/"][::-1]
-simnames = ["No CD Cooling","CD Cooling"][::-1]
-sims = {}
-for simname, filename in zip(simnames, filenames):
-    sims[simname] = Hamu.MakeSimulation(simname,filename)
-CompareSims(sims)
+if __name__=="__main__":
+    filenames = ["../outputs/35Msun_n1000_w2_N256_uvwind_coolingfix2/",
+                 "../outputs/35Msun_n1000_w2_N256_uvwind_coolingfix2maskCD/",
+                 "../outputs/35Msun_n1000_w2_N256_uvwind_coolingfix2maskCD_v2",
+                 "../outputs/35Msun_n1000_w2_N256_uvwind_coolingfix2maskCD_v2_Bfield",
+                 "../outputs/35Msun_n1000_w2_N1024_uvwind_coolingfix2maskCD_v2_Bfield",
+                 "../outputs/35Msun_n1000_w2_N2048_uvwind_coolingfix2maskCD_v2_Bfield"][::-1]
+    simnames = ["Full CD Cooling","CD Cooling Mask","CD Cooling Mask v2",
+                "CD Cooling Mask v2 B-field",
+                "CD Cooling Mask v2 B-field 1024 Res",
+                "CD Cooling Mask v2 B-field 2048 Res"][::-1]
+    sims = {}
+    for simname, filename in zip(simnames, filenames):
+        sims[simname] = Hamu.MakeSimulation(simname,filename)
+    CompareSims(sims)
 
 '''
 #simname = "../outputs/30Msun_n3000_w2_N128_windonly_coolingfix/"
