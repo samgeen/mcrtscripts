@@ -6,8 +6,10 @@
 *.eps
 *.ps
 *.fits
+*.zip
 *~
-*.pyc
+*.pik
+fits/
 StellarSources/
 runs_anais/
 cubes/
