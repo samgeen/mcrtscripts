@@ -307,7 +307,7 @@ class _CodeFactory(object):
             pymseslist.sort()
             for out in pymseslist:
                 outnum = int(out[-5:])
-                outputs[outnum] = PymsesSnapshot(folder,outnum,name)
+                outputs[outnum] = PymsesSnapshot(self._folder,outnum,self._name)
         elif len(weltlist) > 0:
             weltlist.sort()
             for out in weltlist:

@@ -14,11 +14,11 @@ from pymses.utils import constants as C
 def run(snap,folder,hydros,pos,radius):
     # Open snapshot
     ro = snap.RawData()
-    print "Sampling grid ...",
+    print("Sampling grid ...",)
     amr = hydrofuncs.amr_source(ro,hydros)
     # Make grid
     lmin = ro.info["levelmin"]
-    lsize = 256
+    lsize = 512
     boxlen = ro.info["boxlen"]
     pos = np.array(pos)
     coords = np.linspace(-0.5,0.5,lsize)*2.0*radius
@@ -32,7 +32,7 @@ def run(snap,folder,hydros,pos,radius):
         filename = folder+"/"+hydro+\
                    "/cube_"+hydro+"_"+str(snap.OutputNumber()).zfill(5)+".fits"
         if not os.path.exists(filename):
-            print "Making", filename,"...",
+            print("Making", filename,"...",)
             if hydro not in "xyz":
                 scale = hydrofuncs.scale_by_units(ro,hydro)
                 hydrocube = scale(samples)
@@ -50,8 +50,8 @@ def run(snap,folder,hydros,pos,radius):
             hdul = fits.HDUList([hdu])
             hdul.writeto(filename)
         else:
-            print filename, "exists, ignoring"
-    print "Done!"
+            print(filename, "exists, ignoring")
+    print("Done!")
 
 def makedir(folder):
     try:
@@ -60,7 +60,8 @@ def makedir(folder):
         pass
 
 def runforsim(sim,nouts=None,times=None,pos=None,radius=None):
-    hydros = ["vx","vy","vz","rho","T","xHII","Bx","By","Bz","Bmag"]
+    #hydros = ["vx","vy","vz","rho","T","xHII","Bx","By","Bz","Bmag"]
+    hydros = ["Lcool","T","rho","xHII","P","xHeII","xHeIII","Bx","By","Bz","vx","vy","vz",                                            "shock-mach","shock-Edissipated","shock-Bobliquity","shock-XCR","shock-xi"]
     simname = sim.Name()
     simfolder = "../cubes/fits/"+simname
     makedir(simfolder)
@@ -88,18 +89,27 @@ def runforsim(sim,nouts=None,times=None,pos=None,radius=None):
 
 if __name__=="__main__":
     # Use IMF2, winds + UV
-    sim = hamusims["UV_120_NOTURB"]
+    sim = hamusims["UVCR_30_ZOOM"]
     # Pick the last output - TODO, CHANGE TO SPECIFIC OUTPUT!!!
     #nout = snap.OutputNumber()
     #nouts = [nout]
-    snap = sim.Snapshots()[-1]
+    #snaps = sim.Snapshots()
+    #outnums = [snap.OutputNumber() for snap in snaps]
+    #print(outnums)
+    #snap = snaps[np.where(np.array(outnums) == 53)]
+    snap = sim.Snapshots()[-7]
     myr = snap.RawData().info["unit_time"].express(C.Myr)
-    times = [snap.Time()*myr for snap in sim.Snapshots()] # np.linspace(0.0,1.0,11)+3.2 # Myr
+    #times = [snap.Time()*myr for snap in sim.Snapshots()] # np.linspace(0.0,1.0,11)+3.2 # Myr
+    times = [snap.Time()*myr] # np.linspace(0.0,1.0,11)+3.2 # Myr
+    print(snap.OutputNumber())
     #snap = sim.FindAtTime(times[0]/myr)
+    boxlen = snap.RawData().info["boxlen"]
     # Pick the first star
-    #stars = stellars.FindStellar(snap)
-    #pos = [stars.x[0],stars.y[0],stars.z[0]]
+    stars = stellars.FindStellar(snap)
+    pos = [stars.x[0],stars.y[0],stars.z[0]]
+    pos = np.array(pos)/boxlen
+    print(pos)
     #radius = 25.0
-    pos = np.zeros(3)+0.5
-    radius = 0.25
+    #pos = np.zeros(3)+0.5
+    radius = 0.125
     runforsim(sim,times=times,pos=pos,radius=radius)
