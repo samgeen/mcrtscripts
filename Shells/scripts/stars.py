@@ -52,7 +52,7 @@ def IMF_OLD(clustermass,seed=None):
     if seed is not None:
         mstr = str(int(clustermass)).zfill(7)
         cachestr = str(seed).zfill(5)
-        cachename = "/home/samgeen/Programming/Astro/WindInUV/cache/imfs_massiveonly/imfmo_"+mstr+"_"+cachestr+".dat"
+        cachename = "../cache/imfs_massiveonly/imfmo_"+mstr+"_"+cachestr+".dat"
         if os.path.exists(cachename):
             f = open(cachename,"rb")
             masses = pik.load(f)
@@ -86,6 +86,7 @@ class _Star(object):
         self._mass = mass
         self._metal = metal
         self._iscluster = False
+        self._forceAge = None
         # Wind stuff
         windtrack = windtracks.FindTrack(mass,metal,rotating=rotating)
         self._windtimes = windtrack["Time"]*yrins
@@ -112,6 +113,14 @@ class _Star(object):
         self._LnonionisingFunc = None
         self._windenergyFunc = None
 
+    def ForceAge(self,forceAge):
+        '''
+        Force the age of the star to forceAge (in s)
+        A value of None resets it
+        NOTE!!! THIS WILL IGNORE THE VALUE t PASSED TO FUNCTIONS
+        '''
+        self._forceAge = forceAge
+
     @property
     def mass(self):
         return self._mass
@@ -132,6 +141,8 @@ class _Star(object):
         return Star(self._mass, self._metal)
 
     def WindMassLoss(self, t):
+        if self._forceAge is not None:
+            t = self._forceAge
         if self._windmlFunc is None:
             f = self._windml[0:]
             wt = self._windtimes[0:]
@@ -139,6 +150,8 @@ class _Star(object):
         return self._windmlFunc(t)
 
     def WindLuminosity(self, t):
+        if self._forceAge is not None:
+            t = self._forceAge
         if self._windlumFunc is None:
             f = self._windlum[0:]
             wt = self._windtimes[0:]
@@ -146,6 +159,8 @@ class _Star(object):
         return self._windlumFunc(t)
 
     def WindMomentumRate(self, t):
+        if self._forceAge is not None:
+            t = self._forceAge
         if self._windmomFunc is None:
             f = self._windmom[0:]
             wt = self._windtimes[0:]
@@ -153,6 +168,10 @@ class _Star(object):
         return self._windmomFunc(t)
 
     def WindEnergy(self, t):
+        if self._forceAge is not None:
+            tf = self._forceAge
+            # Do this by hand since energy is cumulative
+            return WindLuminosity(tf) * t
         if self._windenergyFunc is None:
             wt = self._windtimes[0:]
             wl = self._windlum[0:]
@@ -166,6 +185,8 @@ class _Star(object):
         return self._windenergyFunc(t)
     
     def Teff(self,t):
+        if self._forceAge is not None:
+            t = self._forceAge
         if self._TeffFunc is None:
             wt = self._windtimes[0:]
             f = self._Teff[0:]
@@ -173,6 +194,8 @@ class _Star(object):
         return self._TeffFunc(t)
 
     def EPhoton(self, t):
+        if self._forceAge is not None:
+            t = self._forceAge
         if self._eionisingFunc is None:
             st = self._spectimes[1:]
             f = self._eionising[1:]/self._nionising[1:]
@@ -180,6 +203,8 @@ class _Star(object):
         return self._eionisingFunc(t)
 
     def NPhotons(self, t):
+        if self._forceAge is not None:
+            t = self._forceAge
         if self._nionisingFunc is None:   
             st = self._spectimes[1:]     
             f = self._nionising[1:]
@@ -188,12 +213,18 @@ class _Star(object):
 
     # Keep old interface working, add new name for easier reading
     def NIonising(self, t):
+        if self._forceAge is not None:
+            t = self._forceAge
         return self.NPhotons(t)
 
     def LIonising(self, t):
+        if self._forceAge is not None:
+            t = self._forceAge
         return self.EPhoton(t) * self.NPhotons(t)
 
     def LNonIonising(self, t):
+        if self._forceAge is not None:
+            t = self._forceAge
         if self._LnonionisingFunc is None:     
             st = self._spectimes[1:]
             f = self._Lnonionising[1:]
@@ -443,7 +474,7 @@ def Star(mass, metal, rotating=True):
         rotatingtxt = ""
         if not rotating:
             rotatingtxt = "_nonrotating"
-        cachename = "/home/samgeen/Programming/Astro/WindInUV/cache/stars/star_M"+str(int(mass))+"_Z"+str(metal)+rotatingtxt+".pik"
+        cachename = "../cache/stars/star_M"+str(int(mass))+"_Z"+str(metal)+rotatingtxt+".pik"
         if os.path.exists(cachename):
             if verbose:
                 print("Loading star, M =", mass, "Z =",metal, "from cache")

@@ -15,6 +15,8 @@ import matplotlib.pyplot as plt
 import equilibriumtemperature
 import ionisedtemperatures
 
+import solvehiiprofile
+
 import rdmfile
 
 gamma = equilibriumtemperature.gamma
@@ -49,6 +51,9 @@ def alpha_B_HII(temperature):
     a = 2.753e-14 * l**1.5 / (1. + (l/2.74)**0.407)**2.242
     return a   
 
+# Use a reference time to set stars' ages?
+REFERENCETIME = 1e5*units.year
+
 """
 -------------------------------------------------------------------------
 GAS STUFF
@@ -61,6 +66,11 @@ def SoundSpeed(star,t):
     # 2.0 factor is because of free electrons
     ci = np.sqrt(2.0 * gamma * units.kB * Ti * units.X / units.mH)
     return ci
+
+def Tion(star,t):
+    #HACK - ignore change in Ti due to ionised gas density
+    Ti = ionisedtemperatures.FindTemperature(star.Teff(t),star.metal)
+    return Ti
 
 def AlphaB(star,t):
     #HACK - ignore change in Ti due to ionised gas density
@@ -150,7 +160,7 @@ def WindPressure(star,cloud,r,t,cooled=False,tref=None):
     Omega = cloud.Omega
     vol = (Omega / 3.0) * r**3
     if tref is not None:
-        Eemitted = star.WindLuminosity(t)*t
+        Eemitted = star.WindLuminosity(tref)*tref
     else:
         Eemitted = star.WindEnergy(t)
     E = Eemitted * 5.0/11.0 # From Weaver
@@ -618,6 +628,109 @@ def PlotThicknessRatiow2(metal=0.014,rotating=True,vsR = False,justthickness=Fal
         filename = "../plots/shellthicknessratio_w2"+suffix+".pdf"
     else:
         filename = "../plots/shellthickness_w2"+suffix+".pdf"
+    plt.savefig(filename)
+    rdm.Write(filename)
+
+def PlotMeanShellDensity(metal=0.014,rotating=True,vsR = False,plotnrmsvsnmean=False):
+    plt.clf()
+    nclouds = [3e1,3e2,3e3]
+    #masses = np.arange(20,121,5)
+    masses = [30,60,120]
+    lines = ["-","--","-."]
+    iline = 0
+    leglines = []
+    rdm = rdmfile.RDMFile(__file__)
+    for ncloud in nclouds:
+        cloud = Cloud(ncloud,1.0*units.pc,2,1e-21)
+        drdts = []
+        drdtsnp = []
+        print ("NCLOUD",ncloud)
+        print(".......................")
+        for starmass in masses:
+            print("STARMASS",starmass)
+            star = stars.Star(starmass, metal, rotating=rotating)
+            rs = np.logspace(-2,2,100)*units.pc
+            drdt = dRdTforw2(star,cloud)
+            ts = rs / drdt
+            ro2, to2, deltaro2 = CalculateOutflowRadiusTimew2(star,cloud)
+            overflowed = False
+            if rs[-1] > ro2:
+                overflowed = True
+            rs = rs[rs < ro2]
+            ts = ts[ts < to2]
+            ys = []
+            for r, t in zip(rs, ts):
+                shellrs,shellns,nmean,nrms = solvehiiprofile.findprofile(star,cloud,r,t)
+                if plotnrmsvsnmean:
+                    ys.append(nrms/nmean)
+                else:
+                    ys.append(shellns[-1]/nrms)
+            col = CloudColour(ncloud, metal)
+            label = None
+            if starmass == masses[0]:
+                label = str(ncloud)+" cm$^{-3}$"
+            line = lines[iline]
+            xs = ts/units.year/1e6
+            if vsR:
+                xs = rs / units.pc
+            l, = plt.plot(xs,np.array(ys),color=col,linestyle=line,label=label)
+            rdm.AddPoints(xs,np.array(ys),label=label)
+            if overflowed:
+                plt.scatter(xs[-1],ys[-1],color=col)
+            if ncloud == nclouds[0]:
+                leglines += [l]
+            iline = (iline+1) % len(lines)
+    # Line at 0.01, 0.1, 1
+    # if not justthickness:
+    #     plt.plot([0,100],[0.01,0.01],color="k",linestyle="-",alpha=0.2)
+    #     plt.plot([0,100],[0.1,0.1],color="k",linestyle="-",alpha=0.2)
+    #     plt.plot([0,100],[1,1],color="k",linestyle="-",alpha=0.2)
+    # else:
+    #     plt.plot([1e-2,1e2],[1e-2,1e2],color="k",alpha=0.2,linestyle=":")
+    #     plt.plot([1e-2,1e2],[1e-3,1e1],color="k",alpha=0.2,linestyle=":")
+    #     plt.plot([1e-2,1e2],[1e-4,1e0],color="k",alpha=0.2,linestyle=":")
+    if plotnrmsvsnmean and metal==0.002:
+        loc = "lower right"
+        leg1 = plt.legend(ncol=1,fontsize="small",frameon=False,
+                        title="$n_0$, where $n(r) = n_0 (r / 1~\mathrm{pc})^{-2}$",title_fontsize="small",loc=loc)     
+        leg1._legend_box.align = "right"
+    if plotnrmsvsnmean and metal==0.014:
+        loc = "lower right"
+        leg2 = plt.legend(leglines,[str(starmass)+" M$_{\odot}$" for starmass in masses],
+                fontsize="small",frameon=False,loc=loc)
+        #plt.gca().add_artist(leg1)
+    plt.xlabel("Time / Myr")
+    if vsR:
+        plt.xlabel("$r_w$ / pc")
+    if plotnrmsvsnmean:
+        plt.ylabel("$n_{i,rms} / \\bar{n_i}$")
+    else:
+        plt.ylabel("$n_{i}(r_i) / n_{i,rms}$")
+    plt.xscale("log")
+    plt.yscale("log")
+    xlims = plt.gca().get_xlim()
+    ylims = plt.gca().get_ylim()
+    plt.gca().yaxis.set_ticks_position('both')
+    if vsR:
+        plt.xlim([1e-2,30.0])
+    #plt.ylim([1e-5,ylims[1]])
+    #ymax = 1e1
+    #plt.ylim([1e-5,ymax])
+    xtxtloc = 20
+    xtxtal = "right"
+    #if plotnrmsvsnmean:
+    #    xtxtloc = 0.011
+    #    xtxtal = "left"
+    #plt.text(xtxtloc,ymax*0.7,"$Z="+str(metal)+"$",fontsize="small",horizontalalignment=xtxtal,verticalalignment="top")
+    suffix = ""
+    if vsR:
+        suffix = "_vsR"
+    suffix += "_Z"+str(metal)
+    if plotnrmsvsnmean:
+        suffix += "_nrmsvsnmean"
+    else:
+        suffix += "_nedgevsnrms"
+    filename = "../plots/shellmeandensity_w2"+suffix+".pdf"
     plt.savefig(filename)
     rdm.Write(filename)
 
@@ -1258,10 +1371,9 @@ def test():
 
 
 if __name__=="__main__":
-    #PlotShellThickness(10)
-    PlotCoolingRate(rotating=True)
-    PlotMinResolutionNeeded(metals=[0.014,0.002],rotating=True)
     for metal in [0.014,0.002]:
+        for truefalse in [True, False]:
+            PlotMeanShellDensity(metal=metal,rotating=True,vsR = True,plotnrmsvsnmean=truefalse)
         PlotShellExpansionCorrection(metal=metal,rotating=True,vsR=True)
         PlotShellExpansionCorrection(metal=metal,rotating=True,vsR=True,ratio=True)
         PlotThicknessCorrection(metal=metal,rotating=True,vsR=True)
@@ -1270,10 +1382,14 @@ if __name__=="__main__":
             for justthickness in [True, False]:
                 PlotThicknessRatiow2(metal=metal,rotating=True,vsR = True, justthickness=justthickness,
                     thickshell=thickshell)
+    #PlotShellThickness(10)
     #PlotThicknessRatiow2(metal=0.014,rotating=True,vsR = True)
     #PlotThicknessRatiow2(metal=0.002,rotating=True,vsR = True)
     #PlotThicknessRatiow2(metal=0.014,rotating=True,vsR = True, justthickness=True)
     #PlotThicknessRatiow2(metal=0.002,rotating=True,vsR = True, justthickness=True)
+    
+    PlotCoolingRate(rotating=True)
+    PlotMinResolutionNeeded(metals=[0.014,0.002],rotating=True)
     PlotThicknessRatiow2(rotating=True)
     PlotCoolingRate(metal=0.014,rotating=True)
     PlotCoolingRate(metal=0.002,rotating=True)

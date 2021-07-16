@@ -304,11 +304,13 @@ class _CodeFactory(object):
         pymseslist = glob.glob(self._folder+"/output_?????")
         weltlist = glob.glob(self._folder+"/*.hdf5")
         if len(pymseslist) > 0:
+            print("Making Pymses simulation...")
             pymseslist.sort()
             for out in pymseslist:
                 outnum = int(out[-5:])
                 outputs[outnum] = PymsesSnapshot(self._folder,outnum,self._name)
         elif len(weltlist) > 0:
+            print("Making Weltgeist simulation...")
             weltlist.sort()
             for out in weltlist:
                 outnum = int(out[-10:-5])
