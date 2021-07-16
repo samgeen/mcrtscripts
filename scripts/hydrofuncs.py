@@ -171,6 +171,11 @@ class AllHydros(object):
         h["xHII"] = Hydro("$x_{\mathrm{HII}}$",lambda ro: lambda dset: dset["xHII"],["xHII"],"PRGn","linear",(0,1))
         h["xHeII"] = Hydro("$x_{\mathrm{HeII}}$",lambda ro: lambda dset: dset["xHeII"],["xHeII"],"Reds","linear",(0,1))
         h["xHeIII"] = Hydro("$x_{\mathrm{HeIII}}$",lambda ro: lambda dset: dset["xHeIII"],["xHeIII"],"Reds","linear",(0,1))
+        # Photon flux in photons / cm^2 / s
+        h["NpFUV"] = Hydro("$F_{\mathrm{FUV}}$",lambda ro: lambda dset: dset["NpFUV"]*ro.info["unit_velocity"].express(C.cm/C.s),["NpFUV"],"Reds","log",(None,None))
+        h["NpHII"] = Hydro("$F_{\mathrm{HII}}$",lambda ro: lambda dset: dset["NpHII"]*ro.info["unit_velocity"].express(C.cm/C.s),["NpHII"],"PRGn","log",(None,None))
+        h["NpHeII"] = Hydro("$F_{\mathrm{HeII}}$",lambda ro: lambda dset: dset["NpHeII"]*ro.info["unit_velocity"].express(C.cm/C.s),["NpHeII"],"Reds","log",(None,None))
+        h["NpHeIII"] = Hydro("$F_{\mathrm{HeIII}}$",lambda ro: lambda dset: dset["NpHeIII"]*ro.info["unit_velocity"].express(C.cm/C.s),["NpHeIII"],"Reds","log",(None,None))
         # Gravitational energy - NOTE: doesn't really work in Pymses, including for completeness
         # h["gpe"] = Hydro("Gravitational Potential Energy",func???,[???],"YlOrRd","log",(None,None))
         # Magnetic field strength
@@ -228,7 +233,7 @@ class AllHydros(object):
             func = lambda ro: rtcooling.dedtOnCells(ro)
             h["Lcool"] = Hydro("L$_{cool}$ / erg/s/cm$^{-3}$",func,coolvars,"YlOrRd","log",(None, None))
         # EMPTY DEFAULT HYDRO TO PREVENT ERRORS
-        h["DEFAULTEMPTY"] = lambda hydro: Hydro("",lambda dset: dset[hydro],coolvars,"Blues_r","log",(None, None))
+        h["DEFAULTEMPTY"] = lambda hydro: Hydro("",lambda ro: lambda dset: dset[hydro],coolvars,"Blues_r","linear",(None, None))
         # Done!
         self._hydros = h
         
