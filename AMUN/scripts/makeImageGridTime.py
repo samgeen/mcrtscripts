@@ -365,6 +365,9 @@ def MakeFigure(simnames,times,name,los=None,hydro="rho",Slice=False,wsink=False,
                 pass # already ok
             if timeunits == "codeFirstStar":
                 time += tcreated
+            if timeunits == "outputNumber":
+                outsnaps = {snap.OutputNumber():snap for snap in sim.Snapshots()}
+                time = outsnaps[int(time)].Time()
             # Simulation stuff
             snap  = sim.FindAtTime(time)
             ax    = axes.flatten()[isim]
