@@ -47,6 +47,15 @@ def findnrms(ys,us,n0):
     rms = n0 * np.sqrt(integrateTrapezium(ys,ys*ys/(us*us)) / vol)
     return rms
 
+def findshellmass(rs,ns,Omega):
+    nsleft = ns[:-1]
+    nsright = ns[1:]
+    ravs = 0.5*(rs[:-1]+rs[1:])
+    # Trapezium rule
+    # = 0.5 * (nsleft + nsright) * dr
+    f = Omega * units.mH/units.X * 0.5*(nsleft+nsright) * np.diff(rs) * ravs**2.0
+    return np.sum(f)
+
 
 def solvescalefree(uin,yin,gam,beta):
     '''
@@ -141,6 +150,8 @@ def findprofile(star,cloud,rw,t):
     # Get mean and rms density
     nmean = findnmean(ys,us,n0)
     nrms = findnrms(ys,us,n0)
+    # Get shell mass
+    mshell = findshellmass(rs,ns,cloud.Omega)
     #import pdb; pdb.set_trace()
     if toplot:
         print("PLOTTING")
@@ -159,7 +170,7 @@ def findprofile(star,cloud,rw,t):
         plt.xscale("log")
         plt.savefig("../plots/testhiiprofile.pdf")
         print("DONE")
-    return rs,ns,nmean,nrms
+    return rs,ns,nmean,nrms,mshell
 
 if __name__=="__main__":
     t = 1e5 * units.year
