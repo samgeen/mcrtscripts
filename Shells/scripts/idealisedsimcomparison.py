@@ -37,7 +37,7 @@ def findshellradius(snap):
     hydro = snap.RawData().hydro
     nx = hydro.ncells
     radius = 0.0
-    mask = np.where(hydro.T[0:nx] > 1e3)[0]
+    mask = np.where(hydro.T[0:nx] > 1e5)[0]
     if len(mask) > 0:
         radius = hydro.x[mask[-1]]
     return radius
@@ -254,7 +254,52 @@ def plotenergypartition(sims,windlum):
     plt.legend(fontsize="x-small",frameon=False)
     plt.xscale("linear")
     plt.yscale("linear")
-    plt.savefig("../plots/oned/energypartition.pdf")        
+    plt.savefig("../plots/oned/energypartition.pdf")      
+
+def calculaterana(omega,windlum,n0,time,r0):
+    rho0 = n0 * wunits.mH / wunits.X
+    print(omega)
+    Aw = (1 - omega/3.0)*(1-omega/5.0)**3.0 / (1 - 2.0*omega/7.0) / (1 - omega/11.0)
+    const = Aw * 250.0 / 308.0 / np.pi
+    rana = (const * windlum * time**3.0 * r0**(-omega) / rho0)**(1.0/(5.0-omega))
+    return rana
+
+def findomegainsimname(simname):
+    # Very much depends on the fact I called stuff "_w2_" etc
+    print(simname)
+    txt = simname[simname.find("_")+2:]
+    return float(txt[0])
+
+def plotexpansion(sims,windlum):
+    plt.clf()
+    tunit = wunits.year*1e3
+    difftxt = ""
+    isim = 0
+    r0 = wunits.pc
+    anatxt = "Analytic Solution"
+    for simname, sim in sims.items():
+        isim += 1
+        reload(weltgeist)
+        time, yvals = timefuncs.timefunc(sim,hydrofuncs["shellradius"])
+        estartot = time * windlum
+        col = LineColour(isim, len(sims))
+        omega = findomegainsimname(sim.Folder())
+        rana = calculaterana(omega,windlum,1000,time,r0)
+        plt.plot(time/tunit,rana/wunits.pc,label=anatxt,color="k",linestyle="--")
+        plt.plot(time/tunit,yvals/wunits.pc,label=simname,color=col)
+        anatxt = ""
+        #time, yvals = timefuncs.timefunc(sim,hydrofuncs["shellenergy"])
+        #plt.plot(time/tunit,yvals/estartot,label="Shell "+simname)
+    # Plot analytic solutions
+    #plt.plot(time/tunit,time*0.0+1.0,"k--",label="Analytic Solution")
+    plt.xlabel("Time / kyr")
+    plt.ylabel("$r_w / pc$")
+    plt.xlim([5,200])
+    plt.ylim([0.1,3.0])
+    plt.legend(fontsize="x-small",frameon=False)
+    plt.xscale("log")
+    plt.yscale("log")
+    plt.savefig("../plots/oned/radiuscomparison.pdf")    
 
 def CompareSims(sims):
     """
@@ -281,13 +326,14 @@ def CompareSims(sims):
 
 
 if __name__=="__main__":
-    filenames = ["../outputs/WindOnly1e+36ergspersecond1000_w2_N2048",
+    filenames = ["../outputs/WindOnly1e+36ergspersecond1000_w0_N2048",
                  "../outputs/WindOnly1e+36ergspersecond1000_w1_N2048",
-                 "../outputs/WindOnly1e+36ergspersecond1000_w0_N2048"]
+                 "../outputs/WindOnly1e+36ergspersecond1000_w2_N2048"]
     simnames = ["Simulation: $\omega="+str(i)+"$" for i in (0,1,2)]
     sims = {}
     for simname, filename in zip(simnames, filenames):
         sims[simname] = Hamu.MakeSimulation(simname,filename)
+    plotexpansion(sims,1e36)
     plotenergypartition(sims,1e36)
     #CompareSims(sims)
 

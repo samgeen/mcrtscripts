@@ -113,6 +113,9 @@ class _Star(object):
         self._LnonionisingFunc = None
         self._windenergyFunc = None
 
+    def __str__(self):
+        return "STAR_"+str(self._mass)+"_"+str(self._metal)+"_"+str(self._iscluster)+"_"+str(self._forceAge)
+
     def ForceAge(self,forceAge):
         '''
         Force the age of the star to forceAge (in s)
@@ -171,7 +174,7 @@ class _Star(object):
         if self._forceAge is not None:
             tf = self._forceAge
             # Do this by hand since energy is cumulative
-            return WindLuminosity(tf) * t
+            return self.WindLuminosity(tf) * t
         if self._windenergyFunc is None:
             wt = self._windtimes[0:]
             wl = self._windlum[0:]
