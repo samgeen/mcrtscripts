@@ -62,15 +62,42 @@ Msolar = "M$_{\odot}$"
 plotfolder = "../plots/"
 
 # Simulation names
-mainsimfolder = "/home/stgeen0/MCRT/runs/"
+mainsimfolder = "/home/stgeen0/MCRT/runs/" # on ISMSIM1
+ismsim2folder = "/home/s0geen/MCRT/runs/" # on ISMSIM1
+cartsimfolder = "/home/samgeen/amun/runs/84_windshell"
+if os.path.exists(cartsimfolder):
+    mainsimfolder = cartsimfolder
+if os.path.exists(ismsim2folder):
+    mainsimfolder = ismsim2folder
 windshellfolder = mainsimfolder+"84_windshell/"
 simfolders = {}
-simfolders["NOSHELL_NOMASK"] = windshellfolder+"11_uvwindpress_11grad_shellrttest/" # No wind shell imposed at t=0
-simfolders["SHELL_NOMASK"] = windshellfolder+"12_innershelltest/" # Wind shell imposed at t=0
-simfolders["SHELL_CDMASK"] = windshellfolder+"13_maskcdtest/" # As above but with contact discontinuity masked
-simfolders["SHELL_CDMASK2"] = windshellfolder+"14_maskcdtest2/" # Debugging
-simfolders["SHELL_CDMASK3"] = windshellfolder+"15_maskcdtest3/" # Debugging
-simfolders["SHELL_CDMASK4"] = windshellfolder+"16_maskcdtestnew/" # Debugging
+UseTestRuns = False
+if UseTestRuns:
+    simfolders["NOSHELL_NOMASK"] = windshellfolder+"11_uvwindpress_11grad_shellrttest/" # No wind shell imposed at t=0
+    simfolders["SHELL_NOMASK"] = windshellfolder+"12_innershelltest/" # Wind shell imposed at t=0
+    simfolders["SHELL_CDMASK"] = windshellfolder+"13_maskcdtest/" # As above but with contact discontinuity masked
+    simfolders["SHELL_CDMASK2"] = windshellfolder+"14_maskcdtest2/" # Debugging
+    simfolders["SHELL_CDMASK3"] = windshellfolder+"15_maskcdtest3/" # Debugging
+    simfolders["SHELL_CDMASK4"] = windshellfolder+"16_maskcdtestnew/" # Debugging
+else:
+    # Different seeds
+    simfolders["SEED0_35MSUN_CDMASK_WINDUV"] = windshellfolder+"20_maskcd_35Msun/"
+    simfolders["SEED1_35MSUN_CDMASK_WINDUV"] = windshellfolder+"23_newseed_35Msun/"
+    simfolders["SEED2_35MSUN_CDMASK_WINDUV"] = windshellfolder+"30_newseed2_35Msun/"
+    simfolders["SEED3_35MSUN_CDMASK_WINDUV"] = windshellfolder+"31_newseed3_35Msun/"
+    # NOTE: Run 32 is accidentally identical to run 31
+    simfolders["SEED4_35MSUN_CDMASK_WINDUV"] = windshellfolder+"33_newseed4_35Msun/"
+    # Big clouds
+    simfolders["SEED0_35MSUN_CDMASK_WINDUV_BIGCLOUD"] = windshellfolder+"21_biggercloud_35Msun/"
+    simfolders["SEED1_35MSUN_CDMASK_WINDUV_BIGCLOUD"] = windshellfolder+"22_biggercloud_newseed_35Msun/" 
+    # Turning off physics tests
+    simfolders["SEED1_35MSUN_NOCDMASK_WINDUV"] = windshellfolder+"24_newseed_35Msun_nocd/"
+    simfolders["SEED1_35MSUN_CDMASK_WINDUV_NOB"] = windshellfolder+"25_newseed_35Msun_noB/"
+    simfolders["SEED1_35MSUN_CDMASK_WINDUV_NOREFINE"] = windshellfolder+"26_newseed_35Msun_norefine/"
+    simfolders["SEED1_35MSUN_NOCDMASK_WINDUV_NOREFINE"] = windshellfolder+"27_nocdnorefine/"
+    # Turn off feedback sources
+    simfolders["SEED1_35MSUN_CDMASK_WIND"] = windshellfolder+"28_newseed_35Msun_justwind/"
+    simfolders["SEED1_35MSUN_CDMASK_UV"] = windshellfolder+"29_newseed_35Msun_justuv/"
 allsims = simfolders.keys()
     
 # Populate list of Hamu simulations
