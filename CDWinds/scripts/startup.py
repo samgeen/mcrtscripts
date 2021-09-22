@@ -15,6 +15,7 @@ sys.path.append("/home/stgeen0/Programming/")
 
 import HamuLite as Hamu
 
+print("Import 1...")
 import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
 import hydrofuncs
@@ -22,8 +23,11 @@ import snaptime
 
 import linestyles
 
+print("Import 2...")
 import pymses
 
+
+print("Import 3...")
 import sinks
 import stellars
 import timefuncs
@@ -31,6 +35,8 @@ import singlestar
 import rtcooling
 
 from pymses.utils import constants as C 
+
+print("Import done")
 
 #Hamu.Workspace("HIISFE")
 
