@@ -5,7 +5,7 @@
 NVECTOR = 500
 QUADHILBERT = 16
 NPRE = 8
-RAMFOLDER=/home/stgeen0/Programming/ramses/ramses_ism_amun/trunk/ramses/
+RAMFOLDER=/home/samgeen/Programming/ramses/ramses_ism_amun/trunk/ramses/
 
 NDIM = 3
 SOLVER = mhd
@@ -190,7 +190,7 @@ BINDIR = .
 VPATH = $(shell [ -z $(PATCH) ] || find $(PATCH) -type d):$(RAMFOLDER)/$(SOLVER):$(RAMFOLDER)/cr:$(RAMFOLDER)/fld:$(RAMFOLDER)/nimhd:$(RAMFOLDER)/aton:$(RAMFOLDER)/rt:$(RAMFOLDER)/hydro:$(RAMFOLDER)/pm:$(RAMFOLDER)/poisson:$(RAMFOLDER)/amr
 #############################################################################
 # All objects
-MODOBJ = amr_parameters.o amr_commons.o random.o pm_parameters.o pm_commons.o poisson_parameters.o 
+MODOBJ = mpi_mod.o constants.o amr_parameters.o amr_commons.o random.o pm_parameters.o pm_commons.o poisson_parameters.o 
 ifeq ($(GRACKLE),1)
 MODOBJ += grackle_parameters.o
 endif
@@ -199,7 +199,7 @@ MODOBJ += poisson_commons.o hydro_parameters.o hydro_commons.o cooling_module.o 
 
 MODOBJ += radiation_parameters.o rt_parameters.o rt_hydro_commons.o coolrates_module.o \
 	  rt_spectra.o  rt_metal_cooling_module.o rt_cooling_module.o rt_flux_module.o \
-	  table_1d_module.o singlestar_module.o feedback_module.o cloud_module.o
+	  table_1d_module.o singlestar_module.o feedback_module.o cloud_module.o rt_cooling_maskcd.o
 ifeq ($(NIMHD),1)
 MODOBJ +=  variables_X.o
 endif

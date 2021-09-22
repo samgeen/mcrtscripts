@@ -70,7 +70,7 @@ plotfolder = "../plots/"
 # Simulation names
 mainsimfolder = "/home/stgeen0/MCRT/runs/" # on ISMSIM1
 ismsim2folder = "/home/s0geen/MCRT/runs/" # on ISMSIM1
-cartsimfolder = "/home/samgeen/amun/runs/84_windshell"
+cartsimfolder = "/home/samgeen/amun/runs/"
 if os.path.exists(cartsimfolder):
     mainsimfolder = cartsimfolder
 if os.path.exists(ismsim2folder):
@@ -124,8 +124,11 @@ def _MakeSims():
 _MakeSims()
 
 # Set up single star module
-startableloc = "/home/stgeen0/StellarSources/Compressed/singlestar_z0.014"
-singlestar.star_setup(startableloc)
+print("Importing singlestar...")
+print("HACK : TURNED OFF SINGLESTAR TABLE LOAD!!!")
+startableloc = "/home/samgeen/StellarSources/Compressed/singlestar_z0.014"
+#singlestar.star_setup(startableloc)    
+print("Done")
 
 # Useful functions
 # N_H to/from A_k (from Lombardi+ 2010)

@@ -351,7 +351,12 @@ def MakeFigure(simnames,times,name,los=None,hydro="rho",Slice=False,wsink=False,
         for simname in simnames:
             sim   = Hamu.Simulation(simname)
             # Time stuff
-            snap = sim.Snapshots()[0]
+            try:
+                snap = sim.Snapshots()[0]
+            except:
+                print("ERROR FINDING ANY SNAPSHOTS IN", simname)
+                print(sim.Folder())
+                raise ValueError
             myr   = snap.RawData().info["unit_time"].express(C.Myr)
             time, timeunits = timetuple
             tcreated, sfe = starrelations.runforsim(simname,"firsttime")
@@ -476,17 +481,23 @@ if __name__=="__main__":
     seedset = ["SEED0_35MSUN_CDMASK_WINDUV",
                "SEED1_35MSUN_CDMASK_WINDUV",
                "SEED2_35MSUN_CDMASK_WINDUV",
-               "SEED3_35MSUN_CDMASK_WINDUV",
-               "SEED4_35MSUN_CDMASK_WINDUV"]
-
-    sets = {"seeds:", seedset}
+               "SEED3_35MSUN_CDMASK_WINDUV"]
+    #               "SEED4_35MSUN_CDMASK_WINDUV"]
+    
+    physicsset = ["SEED1_35MSUN_CDMASK_WINDUV", 
+                  "SEED1_35MSUN_NOCDMASK_WINDUV",
+                  "SEED1_35MSUN_CDMASK_WINDUV_NOREFINE",
+                  "SEED1_35MSUN_NOCDMASK_WINDUV_NOREFINE"]
+    # "SEED1_35MSUN_CDMASK_WINDUV_NOB" - no star yet
+    
+    sets = {"physics":physicsset,"seeds":seedset}
     
     for setname, simset in sets.items():
         #simset = ["NOFB","UV_"+smass,"UVWINDPRESS_"+smass]
         #setname = "windset_"+smass+"Msun"
         #simwindname = "UVWIND_"+smass
         #times = np.array([0.5, 0.75, 1.])
-        times = np.array([0.2,0.4]) # np.array([0.9]) # [0.9] # 3.5 Myr = tstarformed + 0.2 Myr 
+        times = np.array([0.2]) # np.array([0.9]) # [0.9] # 3.5 Myr = tstarformed + 0.2 Myr 
         zoom = 0.5
         #if dense:
         #    zoom = 1.0
@@ -498,7 +509,6 @@ if __name__=="__main__":
         timesin = [(time,"MyrFirstStar") for time in times]
         for los in "yxz":
             figname = setname+"_"+los
-            allfigname = figname.replace(smass+"Msun","allstars")
             zoom2 = 0.5
             figname2 = figname.replace("zoom"+str(zoom).replace(".","p"),
                                         "zoom"+str(zoom2).replace(".","p"),)
@@ -553,7 +563,7 @@ if __name__=="__main__":
                                 los=los,hydro=hydro,Slice=False,wsink=True,
                                 timeL=timesmergedL,zoom=zoom,forcerun=forcerun,
                                 doplottime=True,contours=contours,
-                                plotcolorbar=(mass==30))
+                                plotcolorbar=True)
 
 
             # Slices

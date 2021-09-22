@@ -22,7 +22,8 @@ import rdmfile
 
 sys.path.append("/home/stgeen0/MCRT/mcrtscripts/WindInUV/")
 
-import solvecriteria, stars
+import solvecriteria
+#import stars
 
 def _tsfeinsnap(snap):
     mgas = 1e4
