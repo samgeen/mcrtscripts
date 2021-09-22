@@ -472,148 +472,139 @@ if __name__=="__main__":
 
     # Should we force some figures to run?
     forcerun=False
+
+    seedset = ["SEED0_35MSUN_CDMASK_WINDUV",
+               "SEED1_35MSUN_CDMASK_WINDUV",
+               "SEED2_35MSUN_CDMASK_WINDUV",
+               "SEED3_35MSUN_CDMASK_WINDUV",
+               "SEED4_35MSUN_CDMASK_WINDUV"]
+
+    sets = {"seeds:", seedset}
     
-    for dense in [False,True]:
-        for mass in [30,60,120][::-1]:
-            smass = str(mass)
-            if not dense or mass == 120:
-                simset = ["NOFB","UV_"+smass,"UVWINDPRESS_"+smass]
-                setname = "windset_"+smass+"Msun"
-                simwindname = "UVWIND_"+smass
-                if dense:
-                    simset = [x+"_DENSE" for x in simset]
-                    simwindname = "UVWIND_"+smass+"_DENSE"
-                    setname += "_dense"
-                #times = np.array([0.5, 0.75, 1.])
-                times = np.array([0.4]) # np.array([0.9]) # [0.9] # 3.5 Myr = tstarformed + 0.2 Myr 
-                zoom = 0.25
-                if dense:
-                    zoom = 1.0
-                setname = setname+str(times[-1])+"Myr_"+"zoom"+str(zoom)+"_"
-                setname = setname.replace(".","p") # the extra dot confuses latex
-                #timeL = [str(x)+r' t$_{ff}$' for x in times]
-                #timesin = [(time*tffcloud_code,"code") for time in times]
-                timeL = [str(x)+r' Myr' for x in times]
-                timesin = [(time,"MyrFirstStar") for time in times]
-                for los in "yxz":
-                    figname = setname+"_"+los
-                    allfigname = figname.replace(smass+"Msun","allstars")
-                    zoom2 = 0.5
-                    if dense:
-                        zoom2 = 0.5
-                    figname2 = figname.replace("zoom"+str(zoom).replace(".","p"),
-                                               "zoom"+str(zoom2).replace(".","p"),)
-                    # Run for movie
-                    imovie = 0
-                    tmovies = []#np.linspace(0.1,1.0,50)
-                    for tmovie in tmovies:
-                        imovie += 1
-                        timein = (tmovie,"MyrFirstStar")
-                        tmovieL = str(tmovie)+r' Myr'
-                        coolhydros = ["coolemission","ionemission","xrayemission2"]
-                        movienum = str(imovie).zfill(3)
-                        MakeFigure([simset[-1]],[timein],name=figname+"movie"+movienum,los=los,
-                                   hydro=coolhydros,Slice=False,wsink=True,
-                                   timeL=[tmovieL],zoom=zoom,forcerun=forcerun)
-                        #for hydro in ["rho","T","Lcool"]:
-                        #    MakeFigure([simset[-1]],[timein],name=figname+"movieslice",los=los,hydro=hydro,
-                        #               Slice=True,wsink=True,starC=True,
-                        #               timeL=[tmovieL],zoom=zoom,forcerun=True)
-                    # Merged emission map - just wind
-                    coolhydros = ["coolemission","ionemission","xrayemission2"]
-                    timesmerged = [0.1,0.2,0.3,0.4]
-                    timesmergedIn = [(time,"MyrFirstStar") for time in timesmerged]
-                    timesmergedL = [str(x)+r' Myr' for x in timesmerged]
-                    # Doesn't really work, just stitch together sequences with a script
-                    #if mass == 30:
-                    #    windsimnames = ["UVWIND_"+x for x in ["30","60","120","120_DENSE"]]
-                    #    MakeFigure(windsimnames,timesmergedIn,name=allfigname+"windonly_sequence",los=los,hydro=coolhydros,Slice=False,wsink=True,
-                    #            timeL=timesmergedL,zoom=zoom,forcerun=True,doplottime=True)
-                    #    presssimnames = ["UVWINDPRESS_"+x for x in ["30","60","120","120_DENSE"]]
-                    #    MakeFigure(presssimnames,timesmergedIn,name=allfigname+"windpressonly_sequence",los=los,hydro=coolhydros,Slice=False,wsink=True,
-                    #            timeL=timesmergedL,zoom=zoom,forcerun=True,doplottime=True)
+    for setname, simset in sets.items():
+        #simset = ["NOFB","UV_"+smass,"UVWINDPRESS_"+smass]
+        #setname = "windset_"+smass+"Msun"
+        #simwindname = "UVWIND_"+smass
+        #times = np.array([0.5, 0.75, 1.])
+        times = np.array([0.4]) # np.array([0.9]) # [0.9] # 3.5 Myr = tstarformed + 0.2 Myr 
+        zoom = 0.5
+        #if dense:
+        #    zoom = 1.0
+        setname = setname+str(times[-1])+"Myr_"+"zoom"+str(zoom)+"_"
+        setname = setname.replace(".","p") # the extra dot confuses latex
+        #timeL = [str(x)+r' t$_{ff}$' for x in times]
+        #timesin = [(time*tffcloud_code,"code") for time in times]
+        timeL = [str(x)+r' Myr' for x in times]
+        timesin = [(time,"MyrFirstStar") for time in times]
+        for los in "yxz":
+            figname = setname+"_"+los
+            allfigname = figname.replace(smass+"Msun","allstars")
+            zoom2 = 0.5
+            figname2 = figname.replace("zoom"+str(zoom).replace(".","p"),
+                                        "zoom"+str(zoom2).replace(".","p"),)
+            # Run for movie
+            imovie = 0
+            tmovies = []#np.linspace(0.1,1.0,50)
+            for tmovie in tmovies:
+                imovie += 1
+                timein = (tmovie,"MyrFirstStar")
+                tmovieL = str(tmovie)+r' Myr'
+                coolhydros = ["coolemission","ionemission","xrayemission2"]
+                movienum = str(imovie).zfill(3)
+                MakeFigure(simset,[timein],name=figname+"movie"+movienum,los=los,
+                            hydro=coolhydros,Slice=False,wsink=True,
+                            timeL=[tmovieL],zoom=zoom,forcerun=forcerun)
+                #for hydro in ["rho","T","Lcool"]:
+                #    MakeFigure([simset[-1]],[timein],name=figname+"movieslice",los=los,hydro=hydro,
+                #               Slice=True,wsink=True,starC=True,
+                #               timeL=[tmovieL],zoom=zoom,forcerun=True)
+            # Merged emission map - just wind
+            coolhydros = ["coolemission","ionemission","xrayemission2"]
+            timesmerged = [0.1,0.2,0.3,0.4]
+            timesmergedIn = [(time,"MyrFirstStar") for time in timesmerged]
+            timesmergedL = [str(x)+r' Myr' for x in timesmerged]
+            # Doesn't really work, just stitch together sequences with a script
+            #if mass == 30:
+            #    windsimnames = ["UVWIND_"+x for x in ["30","60","120","120_DENSE"]]
+            #    MakeFigure(windsimnames,timesmergedIn,name=allfigname+"windonly_sequence",los=los,hydro=coolhydros,Slice=False,wsink=True,
+            #            timeL=timesmergedL,zoom=zoom,forcerun=True,doplottime=True)
+            #    presssimnames = ["UVWINDPRESS_"+x for x in ["30","60","120","120_DENSE"]]
+            #    MakeFigure(presssimnames,timesmergedIn,name=allfigname+"windpressonly_sequence",los=los,hydro=coolhydros,Slice=False,wsink=True,
+            #            timeL=timesmergedL,zoom=zoom,forcerun=True,doplottime=True)
 
-                    # Forcing this figure to run
-                    #MakeFigure([simset[-1]],[timesin[-1]],name=figname+"ERF",los=los,hydro=coolhydros,
-                    #           Slice=False,wsink=True,starC=True,nonamelabel=True,
-                    #           timeL=[timeL[-1]],zoom=1.0,forcerun=True)
-                    #MakeFigure([simset[-1]],[timesin[-1]],name=figname+"ERF",los=los,hydro="T",
-                    #           Slice=True,wsink=True,starC=True,nonamelabel=True,
-                    #           timeL=[timeL[-1]],zoom=1.0,forcerun=True)
-                    #MakeFigure([simset[-1]],[timesin[-1]],name=figname+"ERF",los=los,hydro="NH",
-                    #           Slice=False,wsink=True,starC=True,nonamelabel=True,
-                    #           timeL=[timeL[-1]],zoom=1.0,forcerun=True,contours=["Wind"])
+            # Forcing this figure to run
+            #MakeFigure([simset[-1]],[timesin[-1]],name=figname+"ERF",los=los,hydro=coolhydros,
+            #           Slice=False,wsink=True,starC=True,nonamelabel=True,
+            #           timeL=[timeL[-1]],zoom=1.0,forcerun=True)
+            #MakeFigure([simset[-1]],[timesin[-1]],name=figname+"ERF",los=los,hydro="T",
+            #           Slice=True,wsink=True,starC=True,nonamelabel=True,
+            #           timeL=[timeL[-1]],zoom=1.0,forcerun=True)
+            #MakeFigure([simset[-1]],[timesin[-1]],name=figname+"ERF",los=los,hydro="NH",
+            #           Slice=False,wsink=True,starC=True,nonamelabel=True,
+            #           timeL=[timeL[-1]],zoom=1.0,forcerun=True,contours=["Wind"])
 
-                    DEBUG = False
-                    # NH maps
-                    for hydro in [coolhydros,"NH"]:
-                        contours = []
-                        if hydro == "NH":
-                            contours = ["Wind","Ionised"]
-                            MakeFigure([simset[-1]],timesmergedIn,name=figname+"windpressonly_sequence",
-                                       los=los,hydro=hydro,Slice=False,wsink=True,
-                                       timeL=timesmergedL,zoom=zoom,forcerun=forcerun,
-                                       doplottime=True,contours=contours,
-                                       plotcolorbar=(mass==30))
+            DEBUG = False
+            # NH maps
+            for hydro in [coolhydros,"NH"]:
+                contours = []
+                if hydro == "NH":
+                    contours = ["Wind","Ionised"]
+                    MakeFigure(simset,timesmergedIn,name=figname+"windpressonly_sequence",
+                                los=los,hydro=hydro,Slice=False,wsink=True,
+                                timeL=timesmergedL,zoom=zoom,forcerun=forcerun,
+                                doplottime=True,contours=contours,
+                                plotcolorbar=(mass==30))
 
 
-                    # Slices
-                    for hydro in ["Lcool","T","rho","xHII","xHeII","xHeIII","P"]:
-                        MakeFigure([simset[-1]],[timesin[-1]],name=figname+"windonly",los=los,hydro=hydro,
-                                   Slice=True,wsink=True,starC=True,
-                                   timeL=[timeL[-1]],zoom=zoom,forcerun=True)
-                        MakeFigure([simset[-1]],[timesin[-1]],name=figname2+"windonly",los=los,hydro=hydro,
-                                   Slice=True,wsink=True,starC=True,
-                                   timeL=[timeL[-1]],zoom=zoom2)
-                        if DEBUG:
-                            MakeFigure(simset,[timesin[-1]],name=figname+"allphysics",los=los,hydro=hydro,
-                                       Slice=True,wsink=True,starC=True,
-                                       timeL=[timeL[-1]],zoom=zoom,forcerun=forcerun)
-                    for hydro in ["EkinperEtherm"]:
-                        #["Ekin","Etherm","EkinperEtherm","xrayemission2"]:
-                        for z in [zoom,zoom2]:
-                            MakeFigure([simset[-1]],[timesin[-1]],name=figname2+"windonly",los=los,hydro=hydro,
-                                       Slice=True,wsink=True,starC=True,
-                                       timeL=[timeL[-1]],zoom=z,forcerun=forcerun,
-                                       contours=["WindSlice","IonisedSlice","FreeStreamSlice"])
+            # Slices
+            for hydro in ["Lcool","T","rho","xHII","xHeII","xHeIII","P"]:
+                MakeFigure(simset,[timesin[-1]],name=figname,los=los,hydro=hydro,
+                            Slice=True,wsink=True,starC=True,
+                            timeL=[timeL[-1]],zoom=zoom,forcerun=True)
+            for hydro in ["EkinperEtherm"]:
+                #["Ekin","Etherm","EkinperEtherm","xrayemission2"]:
+                MakeFigure(simset,[timesin[-1]],name=figname,los=los,hydro=hydro,
+                            Slice=True,wsink=True,starC=True,
+                            timeL=[timeL[-1]],zoom=zoom,forcerun=forcerun,
+                            contours=["WindSlice","IonisedSlice","FreeStreamSlice"])
 
 
-                    if DEBUG:
-                        MakeFigure([simwindname],timesmergedIn,name=figname+"windonly_sequence",los=los,hydro=coolhydros,Slice=False,wsink=True,
-                               timeL=timesmergedL,zoom=zoom,forcerun=forcerun,doplottime=True)
-                        MakeFigure([simset[-1]],[timesin[-1]],name=figname+"windonly",los=los,hydro=coolhydros,Slice=False,wsink=True,
-                                   timeL=[timeL[-1]],zoom=zoom,forcerun=forcerun)
-                    #                     - All physics
-                    if DEBUG:
-                        MakeFigure(simset,[timesin[-1]],name=figname+"allphysics",los=los,hydro=coolhydros,Slice=False,wsink=True,
-                                   timeL=[timeL[-1]],zoom=zoom)
+            #if DEBUG:
+            #    MakeFigure([simwindname],timesmergedIn,name=figname+"windonly_sequence",los=los,hydro=coolhydros,Slice=False,wsink=True,
+            #           timeL=timesmergedL,zoom=zoom,forcerun=forcerun,doplottime=True)
+            #    MakeFigure([simset[-1]],[timesin[-1]],name=figname+"windonly",los=los,hydro=coolhydros,Slice=False,wsink=True,
+            #                timeL=[timeL[-1]],zoom=zoom,forcerun=forcerun)
+            #                     - All physics
+            #if DEBUG:
+            #    MakeFigure(simset,[timesin[-1]],name=figname+"allphysics",los=los,hydro=coolhydros,Slice=False,wsink=True,
+            #                timeL=[timeL[-1]],zoom=zoom)
 
-                            #MakeFigure([simset[-1]],[timesin[-1]],name=figname2+"windonly",los=los,hydro=hydro,Slice=True,wsink=True,starC=True,timeL=[timeL[-1]],zoom=zoom2)
+                    #MakeFigure([simset[-1]],[timesin[-1]],name=figname2+"windonly",los=los,hydro=hydro,Slice=True,wsink=True,starC=True,timeL=[timeL[-1]],zoom=zoom2)
 
-                    # Plot for Raphael
-                    #for z, zb in ([0.25,0.025],[0.025,0.004]):
-                    #    MakeFigure([simset[0]],[(0.1,"MyrFirstStar")],
-                    #               name=figname+"_hpcproposal_nofb"+str(z).replace(".","p").replace("zoom"+str(zoom).replace(".","p"),"")#,
-    #                               los=los,hydro='rho',Slice=False,wsink=False,nonamelabel=True,
-    #                               timeL=['0 Myr'],zoom=z,starC=True,forcerun=True,zoombox=zb
+            # Plot for Raphael
+            #for z, zb in ([0.25,0.025],[0.025,0.004]):
+            #    MakeFigure([simset[0]],[(0.1,"MyrFirstStar")],
+            #               name=figname+"_hpcproposal_nofb"+str(z).replace(".","p").replace("zoom"+str(zoom).replace(".","p"),"")#,
+#                               los=los,hydro='rho',Slice=False,wsink=False,nonamelabel=True,
+#                               timeL=['0 Myr'],zoom=z,starC=True,forcerun=True,zoombox=zb
 
-                    if DEBUG:
-                        # Column density
-                        MakeFigure([simset[-1]],[timesin[-1]],name=figname+"windonly",
-                                   los=los,hydro='NH',Slice=False,wsink=True,
-                                   timeL=[timeL[-1]],zoom=zoom,contours=["Wind","Ionised"],
-                                   plotcolorbar=True)
-                        # Column density (all sims)
-                        MakeFigure(simset,timesin,name=figname,
-                                   los=los,hydro='NH',Slice=False,wsink=True,
-                                   timeL=timeL,zoom=zoom,contours=["Wind","Ionised"],
-                                   plotcolorbar=(mass==30))
-                    #MakeFigure(simset,timesin,name=figname,los=los,hydro='maxT',Slice=False,wsink=True,timeL=timeL,zoom=zoom)
+            #if DEBUG:
+            #    # Column density
+            #    MakeFigure([simset[-1]],[timesin[-1]],name=figname+"windonly",
+            #                los=los,hydro='NH',Slice=False,wsink=True,
+            #                timeL=[timeL[-1]],zoom=zoom,contours=["Wind","Ionised"],
+            #                plotcolorbar=True)
+            #    # Column density (all sims)
+            #    MakeFigure(simset,timesin,name=figname,
+            #                los=los,hydro='NH',Slice=False,wsink=True,
+            #                timeL=timeL,zoom=zoom,contours=["Wind","Ionised"],
+            #                plotcolorbar=(mass==30))
+            #MakeFigure(simset,timesin,name=figname,los=los,hydro='maxT',Slice=False,wsink=True,timeL=timeL,zoom=zoom)
 
-                    # Separate emission maps
-                    for hydro in ["ionemission","xrayemission2","coolemission"][::-1]:
-                        MakeFigure([simset[-1]],[timesin[-1]],name=figname+"windonly",los=los,hydro=hydro,Slice=False,wsink=True,
-                                   timeL=[timeL[-1]],zoom=zoom)
-                    # Temperature slice (all sims)
-                    MakeFigure(simset,timesin,name=figname,los=los,hydro='T',Slice=True,wsink=True,timeL=timeL,zoom=zoom,starC=True,forcerun=forcerun)
+            # Separate emission maps
+            for hydro in ["ionemission","xrayemission2","coolemission"][::-1]:
+                MakeFigure(simset,[timesin[-1]],name=figname,los=los,hydro=hydro,Slice=False,wsink=True,
+                            timeL=[timeL[-1]],zoom=zoom)
+            # Temperature slice (all sims)
+            MakeFigure(simset,timesin,name=figname,los=los,hydro='T',Slice=True,wsink=True,timeL=timeL,zoom=zoom,starC=True,forcerun=forcerun)
         
