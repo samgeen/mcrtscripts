@@ -68,4 +68,6 @@ def Linestyle(simname):
     return "-"
 
 def Label(simname):
-    return simname.replace("_","\_") # TODO: fix this
+    label = simname.replace("_35MSUN","")
+    label = label.replace("_","\_") # TODO: fix this
+    return label

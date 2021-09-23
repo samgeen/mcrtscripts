@@ -490,7 +490,7 @@ if __name__=="__main__":
                   "SEED1_35MSUN_NOCDMASK_WINDUV_NOREFINE"]
     # "SEED1_35MSUN_CDMASK_WINDUV_NOB" - no star yet
     
-    sets = {"physics":physicsset,"seeds":seedset}
+    sets = {"seeds":seedset,"physics":physicsset}
     
     for setname, simset in sets.items():
         #simset = ["NOFB","UV_"+smass,"UVWINDPRESS_"+smass]
