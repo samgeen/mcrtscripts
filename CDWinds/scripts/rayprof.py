@@ -170,7 +170,7 @@ def central_density(snap,dummy=None,rinner=None):
         extent = 10
     else:
         extent = int(len(p)*rextent/boxlen)
-    print "FINDING CENTRAL DENSITY USING ",extent, "CELLS"
+    print("FINDING CENTRAL DENSITY USING ",extent, "CELLS")
     return np.nanmean(p[0:extent])
 
 def mean_density(snap,centre,dummy=None,rinner=None):
@@ -216,7 +216,7 @@ def cloudEdge(snap,nHcut=3.0):
             badcount += 1
             #print prof.min(), prof.max()
             edges[iprof] = 0.0
-    print "Number of edges not found", badcount, "of", nprofs
+    print("Number of edges not found", badcount, "of", nprofs)
     edges = np.sort(edges)
     return edges
 
@@ -244,8 +244,8 @@ def plot(simname,hydro,centre):
         # Plot
         plt.clf()
         # Absolute range and IQR shaded areas
-        print radii.shape
-        print pmax.shape
+        print(radii.shape)
+        print(pmax.shape)
         taba = np.concatenate((radii,radii[::-1])) # there and back again
         minmax = np.concatenate((pmin,pmax[::-1]))
         iqr = np.concatenate((p25p,p75p[::-1]))
@@ -259,6 +259,7 @@ def plot(simname,hydro,centre):
         plt.yscale(hydrofuncs.yscale(hydro))
         plt.xlabel("Radius / pc")
         plt.ylabel(hydrofuncs.hydro_label(hydro))
+        plt.grid()
         plt.savefig(path+"/profile_"+str(snap.OutputNumber()).zfill(5)+".pdf",rasterized=True,dpi=200)
 
 def plotgradient(simname,hydro,time,centre,label=None,xlims=None,powfile=None,suffix=None):
@@ -268,7 +269,7 @@ def plotgradient(simname,hydro,time,centre,label=None,xlims=None,powfile=None,su
     global nray, nprofs,rays,rads
     sim = Hamu.Simulation(simname)
     # HACK
-    print "Running for sim", simname, "hydro", hydro
+    print("Running for sim", simname, "hydro", hydro)
     snaps = sim.Snapshots()
     if time is not None:
         tcode = time * Myrins / unit_t
@@ -365,6 +366,7 @@ def plotgradient(simname,hydro,time,centre,label=None,xlims=None,powfile=None,su
                      verticalalignment='top')
         if suffix is None:
             suffix = ""
+        plt.grid()
         plt.savefig(path+"/profile_"+suffix+str(snap.OutputNumber()).zfill(5)+".pdf",rasterized=True,dpi=200)
 
 def findstarpos(simname,time,useMyr=False):
@@ -376,7 +378,7 @@ def findstarpos(simname,time,useMyr=False):
     snap = sim.FindAtTime(tcode)
     stellar = stellars.FindStellar(snap)
     if len(stellar.mass) == 0:
-        print "No stellar objects in simname",simname,"at time",time
+        print("No stellar objects in simname",simname,"at time",time)
         return None
     imax = np.where(stellar.mass == np.max(stellar.mass))[0][0]
     sinkid = stellar.sinkid[imax]-1
@@ -390,10 +392,11 @@ if __name__ == "__main__":
     # Make figure
     powfile = open("../plots/powerlaws.txt","w")
     labels = OrderedDict()
-    labels["NOFB_DENSE"] = "No star, Dense"
-    labels["NOFB"] = "No star"
-    labels["UV_30"] = "UV only, 30 Msun star"
-    labels["UVWIND_30"] = "UV+Winds, 30 Msun star"
+    #labels["NOFB_DENSE"] = "No star, Dense"
+    #labels["NOFB"] = "No star"
+    #labels["UV_30"] = "UV only, 30 Msun star"
+    #labels["UVWIND_30"] = "UV+Winds, 30 Msun star"
+    labels["SEED1_35MSUN_CDMASK_WINDUV"] = "Seed1, CDMask, Refine"
     sims = labels.keys()
     #sims = ["MASS_04"]
     for simname in sims:
