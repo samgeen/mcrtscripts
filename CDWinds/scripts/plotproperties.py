@@ -660,13 +660,13 @@ def runall():
     
     for setname, simset in simsets.items():
         for func in [energyplusB]:
-            run(func,(simset,), # ,"UVWINDPRESS_120_DENSE"]),
-                (setname,),compare=False)
+            run(func,[simset,], # ,"UVWINDPRESS_120_DENSE"]),
+                [setname,],compare=False)
 
 
         for func in [Bfieldenergy]:
-            run(func,(simset,), # ,"UVWINDPRESS_120_DENSE"]),
-                (setname,),compare=False)
+            run(func,[simset,], # ,"UVWINDPRESS_120_DENSE"]),
+                [setname,],compare=False)
 
     '''
         
