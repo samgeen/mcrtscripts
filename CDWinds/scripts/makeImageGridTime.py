@@ -478,25 +478,8 @@ if __name__=="__main__":
     # Should we force some figures to run?
     forcerun=False
 
-    seedset = ["SEED0_35MSUN_CDMASK_WINDUV",
-               "SEED1_35MSUN_CDMASK_WINDUV",
-               "SEED2_35MSUN_CDMASK_WINDUV",
-               "SEED3_35MSUN_CDMASK_WINDUV"]
-    #               "SEED4_35MSUN_CDMASK_WINDUV"]
     
-    physicsset = ["SEED1_35MSUN_CDMASK_WINDUV", 
-                  "SEED1_35MSUN_NOCDMASK_WINDUV",
-                  "SEED1_35MSUN_CDMASK_WINDUV_NOREFINE",
-                  "SEED1_35MSUN_NOCDMASK_WINDUV_NOREFINE"]
-
-    fbset = ["SEED1_35MSUN_CDMASK_WINDUV", 
-             "SEED1_35MSUN_CDMASK_WIND", 
-             "SEED1_35MSUN_CDMASK_UV"]
-    # "SEED1_35MSUN_CDMASK_WINDUV_NOB" - no star yet
-    
-    sets = {"fb":fbset, "seeds":seedset, "physics":physicsset}
-    
-    for setname, simset in sets.items():
+    for setname, simset in simsets.items():
         #simset = ["NOFB","UV_"+smass,"UVWINDPRESS_"+smass]
         #setname = "windset_"+smass+"Msun"
         #simwindname = "UVWIND_"+smass
