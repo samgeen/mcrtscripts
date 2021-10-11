@@ -345,6 +345,7 @@ def run(simfunc,simnamesets,plotlabels,compare=False,secondfuncs=None,gradient=F
     fig, axes = plt.subplots(1,numcols,sharex=False,sharey=True)
     first = True
     rdm = rdmfile.RDMFile(__file__)
+    import pdb; pdb.set_trace()
     for ax, simnames, plotlabel in zip(axes,simnamesets,plotlabels):
         linenames = []
         # Do func-related stuff for all plots
@@ -659,13 +660,13 @@ def runall():
     
     for setname, simset in simsets.items():
         for func in [energyplusB]:
-            run(func,(simset), # ,"UVWINDPRESS_120_DENSE"]),
-                (setname),compare=False)
+            run(func,(simset,), # ,"UVWINDPRESS_120_DENSE"]),
+                (setname,),compare=False)
 
 
         for func in [Bfieldenergy]:
-            run(func,(simset), # ,"UVWINDPRESS_120_DENSE"]),
-                (setname),compare=False)
+            run(func,(simset,), # ,"UVWINDPRESS_120_DENSE"]),
+                (setname,),compare=False)
 
     '''
         
