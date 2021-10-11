@@ -488,9 +488,13 @@ if __name__=="__main__":
                   "SEED1_35MSUN_NOCDMASK_WINDUV",
                   "SEED1_35MSUN_CDMASK_WINDUV_NOREFINE",
                   "SEED1_35MSUN_NOCDMASK_WINDUV_NOREFINE"]
+
+    fbset = ["SEED1_35MSUN_CDMASK_WINDUV", 
+             "SEED1_35MSUN_CDMASK_WIND", 
+             "SEED1_35MSUN_CDMASK_UV"]
     # "SEED1_35MSUN_CDMASK_WINDUV_NOB" - no star yet
     
-    sets = {"seeds":seedset,"physics":physicsset}
+    sets = {"fb":fbset, "seeds":seedset, "physics":physicsset}
     
     for setname, simset in sets.items():
         #simset = ["NOFB","UV_"+smass,"UVWINDPRESS_"+smass]
