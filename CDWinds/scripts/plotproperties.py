@@ -343,6 +343,8 @@ def run(simfunc,simnamesets,plotlabels,compare=False,secondfuncs=None,gradient=F
     wcloud = 1.71 # cloud density profile power law index
     funcname = simfunc.__name__
     fig, axes = plt.subplots(1,numcols,sharex=False,sharey=True)
+    if len(simnamesets) == 1:
+        axes = [axes,]
     first = True
     rdm = rdmfile.RDMFile(__file__)
     for ax, simnames, plotlabel in zip(axes,simnamesets,plotlabels):
@@ -406,7 +408,6 @@ def run(simfunc,simnamesets,plotlabels,compare=False,secondfuncs=None,gradient=F
         #        ax.get_xaxis().set_major_formatter(plt.ScalarFormatter()) 
         if not compare:
             for simname in simnames:
-                import pdb; pdb.set_trace()
                 t, y = simfunc(simname)
                 tcreated, sfe = starrelations.runforsim(simname,"firsttime")
                 t -= tcreated
