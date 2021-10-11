@@ -345,7 +345,6 @@ def run(simfunc,simnamesets,plotlabels,compare=False,secondfuncs=None,gradient=F
     fig, axes = plt.subplots(1,numcols,sharex=False,sharey=True)
     first = True
     rdm = rdmfile.RDMFile(__file__)
-    import pdb; pdb.set_trace()
     for ax, simnames, plotlabel in zip(axes,simnamesets,plotlabels):
         linenames = []
         # Do func-related stuff for all plots
@@ -407,6 +406,7 @@ def run(simfunc,simnamesets,plotlabels,compare=False,secondfuncs=None,gradient=F
         #        ax.get_xaxis().set_major_formatter(plt.ScalarFormatter()) 
         if not compare:
             for simname in simnames:
+                import pdb; pdb.set_trace()
                 t, y = simfunc(simname)
                 tcreated, sfe = starrelations.runforsim(simname,"firsttime")
                 t -= tcreated
