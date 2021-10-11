@@ -7,6 +7,14 @@ import os, sys, time
 
 import numpy as np
 
+import hashlib
+
+import sys
+if sys.version_info[0] < 3:
+    import cPickle as pik
+else:
+    import pickle as pik
+
 import stars
 import units
 
@@ -117,6 +125,31 @@ def solvescalefree(uin,yin,gam,beta):
     return phis, taus, us, ys
 
 def findprofile(star,cloud,rw,t):
+    # Wrapper function that looks for caches to speed things up
+    cachestrs = str(star)+str(cloud)+str(rw)+str(t)
+    cachehash = hashlib.sha1(cachestrs.encode('utf-8')).hexdigest()
+    cachename = "../cache/profiles/hiiprofile_"+cachehash+".dat"
+    # If it doesn't exist, make it, if not, load it from cache
+    if not os.path.exists(cachename):
+        # Save the output data to a binary file
+        pikfile = open(cachename,"wb")
+        # Run the actual calculation
+        data = _runfindprofile(star,cloud,rw,t)
+        pik.dump(data,pikfile)
+        pikfile.close()
+    else:
+        pikfile = open(cachename,"rb")
+        try:
+            data = pik.load(pikfile)
+        except:
+            print("Hamu: Error reading cache file", pikfile)
+            raise ValueError
+        pikfile.close()
+    # Return result
+    rs,ns,nmean,nrms,mshell = data
+    return rs,ns,nmean,nrms,mshell
+
+def _runfindprofile(star,cloud,rw,t):
     toplot = False
     # Collect values needed for equations
     alphaB = analytics.AlphaB(star,t)

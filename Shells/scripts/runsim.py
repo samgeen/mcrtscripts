@@ -28,7 +28,7 @@ c = 2.99792458e10
 yrins = 3.154e+7
 
 # Turn graphics off?
-NOGRAPHICS = True
+NOGRAPHICS = False
 if not NOGRAPHICS:
     from weltgeist import graphics
 
@@ -48,9 +48,9 @@ def run():
     # Make an integrator
     integrator = weltgeist.integrator.Integrator()
     # And the setup
-    ncells = 2048
+    ncells = 256
     nanalytic = np.zeros((ncells))
-    n0 = 1000.0 # cm^-3
+    n0 = 100.0 # cm^-3
     T0 = 10.0 # K
     integrator.Setup(ncells = ncells, # Number of cells in the grid
             rmax = 4.0*wunits.pc, # maximum radius of simulation volume
