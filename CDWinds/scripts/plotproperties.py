@@ -645,91 +645,90 @@ def runall():
                  "120 "+Msolar+" Star,\n Dense Cloud"),compare=compare)
     '''
     # [momentumatstarpos,tsfe,momentum,radius,nphotonsHII,photodens]
-    alluvnames = ["UV_"+str(num) for num in [30,60,120]]
-    allwindnames = ["UVWIND_"+str(num) for num in [30,60,120]]
-    allwindpressnames = ["UVWINDPRESS_"+str(num) for num in [30,60,120]]
-    allfbnames = alluvnames+allwindnames+allwindpressnames
-    allnames = ["NOFB"]+allfbnames
-    windpressnames = ["UVWIND_120_DENSE"]
+    #alluvnames = ["UV_"+str(num) for num in [30,60,120]]
+    #allwindnames = ["UVWIND_"+str(num) for num in [30,60,120]]
+    #allwindpressnames = ["UVWINDPRESS_"+str(num) for num in [30,60,120]]
+    #allfbnames = alluvnames+allwindnames+allwindpressnames
+    #allnames = ["NOFB"]+allfbnames
+    #windpressnames = ["UVWIND_120_DENSE"]
 
-    for func in [maxBfield]:
-        run(func,(["NOFB"],["NOFB_DENSE"]),
-            ("Diffuse Cloud","Dense Cloud"),compare=False)
-
-    
-    for func in [energyplusB]:
-        run(func,(["UVWINDPRESS_120"],["UVWINDPRESS_120"]), # ,"UVWINDPRESS_120_DENSE"]),
-            ("Diffuse Cloud","Diffuse Cloud"),compare=False)
-
-
-    for func in [Bfieldenergy]:
-        run(func,(["NOFB"]+allwindpressnames,["NOFB_DENSE"]), # ,"UVWINDPRESS_120_DENSE"]),
-            ("Diffuse Cloud","Dense Cloud"),compare=False)
+    #for func in [maxBfield]:
+    #    run(func,(["NOFB"],["NOFB_DENSE"]),
+    #        ("Diffuse Cloud","Dense Cloud"),compare=False)
 
     
-    for func in [momentumatstarpos]:
-        run(func,(["UV_30","UVWIND_30"],
-                  ["UV_60","UVWIND_60"],
-                  ["UV_120","UVWIND_120"],
-                  ["UV_120_DENSE","UVWIND_120_DENSE"]),
-            ("30 "+Msolar+" Star,\n Diffuse Cloud",
-             "60 "+Msolar+" Star,\n Diffuse Cloud",
-             "120 "+Msolar+" Star,\n Diffuse Cloud",
-             "120 "+Msolar+" Star,\n Dense Cloud"),compare=True,secondfuncs=(windmomemitted,))
-        run(func,(["UVWINDPRESS_120","UVWIND_120","UV_120",
-                   "UVWINDPRESS_60","UVWIND_60","UV_60",
-                   "UVWINDPRESS_30","UVWIND_30","UV_30",
-                   "NOFB"],
-                  ["NOFB_DENSE","UV_120_DENSE","UVWIND_120_DENSE","UVWINDPRESS_120_DENSE"][::-1]),
-            ("Diffuse Cloud","Dense Cloud"),compare=False)
-    for func in [momentumatstarpos]:
-        run(func,(["UV_30","UVWIND_30"],
-                  ["UV_60","UVWIND_60"],
-                  ["UV_120","UVWIND_120"],
-                  ["UV_120_DENSE","UVWIND_120_DENSE"]),
-            ("30 "+Msolar+" Star,\n Diffuse Cloud",
-             "60 "+Msolar+" Star,\n Diffuse Cloud",
-             "120 "+Msolar+" Star,\n Diffuse Cloud",
-             "120 "+Msolar+" Star,\n Dense Cloud"),compare=True,secondfuncs=(windmomemitted,))
-        run(func,(["UV_30","UVWIND_30"],
-                  ["UV_60","UVWIND_60"],
-                  ["UV_120","UVWIND_120"],
-                  ["UV_120_DENSE","UVWIND_120_DENSE"]),
-            ("30 "+Msolar+" Star,\n Diffuse Cloud",
-             "60 "+Msolar+" Star,\n Diffuse Cloud",
-             "120 "+Msolar+" Star,\n Diffuse Cloud",
-             "120 "+Msolar+" Star,\n Dense Cloud"),compare=True,secondfuncs=(windmomemitted,),gradient=True)
-        # Same but split up
-        run(func,(["UV_30","UVWIND_30"],
-                  ["UV_60","UVWIND_60"]),
-            ("30 "+Msolar+" Star,\n Diffuse Cloud",
-             "60 "+Msolar+" Star,\n Diffuse Cloud"),
-            compare=True,secondfuncs=(windmomemitted,),gradient=True,suffix="1of2")
-        run(func,(["UV_120","UVWIND_120"],
-                  ["UV_120_DENSE","UVWIND_120_DENSE"]),
-            ("120 "+Msolar+" Star,\n Diffuse Cloud",
-             "120 "+Msolar+" Star,\n Dense Cloud"),
-            compare=True,secondfuncs=(windmomemitted,),gradient=True,suffix="2of2")
-                
-    for func in [windradiusratio]:
-        run(func,(allwindpressnames,["UVWINDPRESS_120_DENSE"]),
-            ("Diffuse Cloud","Dense Cloud"),compare=False,secondfuncs=(windradiusratio_analytic,))
+    for setname, simset in simsets.items():
+        for func in [energyplusB]:
+            run(func,(simset), # ,"UVWINDPRESS_120_DENSE"]),
+                (setname),compare=False)
+
+
+        for func in [Bfieldenergy]:
+            run(func,(simset), # ,"UVWINDPRESS_120_DENSE"]),
+                (setname),compare=False)
+
+    '''
         
+        for func in [momentumatstarpos]:
+            run(func,(["UV_30","UVWIND_30"],
+                    ["UV_60","UVWIND_60"],
+                    ["UV_120","UVWIND_120"],
+                    ["UV_120_DENSE","UVWIND_120_DENSE"]),
+                ("30 "+Msolar+" Star,\n Diffuse Cloud",
+                "60 "+Msolar+" Star,\n Diffuse Cloud",
+                "120 "+Msolar+" Star,\n Diffuse Cloud",
+                "120 "+Msolar+" Star,\n Dense Cloud"),compare=True,secondfuncs=(windmomemitted,))
+            run(func,(["UVWINDPRESS_120","UVWIND_120","UV_120",
+                    "UVWINDPRESS_60","UVWIND_60","UV_60",
+                    "UVWINDPRESS_30","UVWIND_30","UV_30",
+                    "NOFB"],
+                    ["NOFB_DENSE","UV_120_DENSE","UVWIND_120_DENSE","UVWINDPRESS_120_DENSE"][::-1]),
+                ("Diffuse Cloud","Dense Cloud"),compare=False)
+        for func in [momentumatstarpos]:
+            run(func,(["UV_30","UVWIND_30"],
+                    ["UV_60","UVWIND_60"],
+                    ["UV_120","UVWIND_120"],
+                    ["UV_120_DENSE","UVWIND_120_DENSE"]),
+                ("30 "+Msolar+" Star,\n Diffuse Cloud",
+                "60 "+Msolar+" Star,\n Diffuse Cloud",
+                "120 "+Msolar+" Star,\n Diffuse Cloud",
+                "120 "+Msolar+" Star,\n Dense Cloud"),compare=True,secondfuncs=(windmomemitted,))
+            run(func,(["UV_30","UVWIND_30"],
+                    ["UV_60","UVWIND_60"],
+                    ["UV_120","UVWIND_120"],
+                    ["UV_120_DENSE","UVWIND_120_DENSE"]),
+                ("30 "+Msolar+" Star,\n Diffuse Cloud",
+                "60 "+Msolar+" Star,\n Diffuse Cloud",
+                "120 "+Msolar+" Star,\n Diffuse Cloud",
+                "120 "+Msolar+" Star,\n Dense Cloud"),compare=True,secondfuncs=(windmomemitted,),gradient=True)
+            # Same but split up
+            run(func,(["UV_30","UVWIND_30"],
+                    ["UV_60","UVWIND_60"]),
+                ("30 "+Msolar+" Star,\n Diffuse Cloud",
+                "60 "+Msolar+" Star,\n Diffuse Cloud"),
+                compare=True,secondfuncs=(windmomemitted,),gradient=True,suffix="1of2")
+            run(func,(["UV_120","UVWIND_120"],
+                    ["UV_120_DENSE","UVWIND_120_DENSE"]),
+                ("120 "+Msolar+" Star,\n Diffuse Cloud",
+                "120 "+Msolar+" Star,\n Dense Cloud"),
+                compare=True,secondfuncs=(windmomemitted,),gradient=True,suffix="2of2")
+                    
+        for func in [windradiusratio]:
+            run(func,(allwindpressnames,["UVWINDPRESS_120_DENSE"]),
+                ("Diffuse Cloud","Dense Cloud"),compare=False,secondfuncs=(windradiusratio_analytic,))
+            
 
-    for func in [radius]:
-        sfuncs = (windradius,) #freestreamradius)
-        run(func,(allfbnames,
-                  ["UV_120_DENSE","UVWIND_120_DENSE","UVWINDPRESS_120_DENSE"]),
-            ("Diffuse Cloud","Dense Cloud"),compare=False,secondfuncs=sfuncs)
+        for func in [radius]:
+            sfuncs = (windradius,) #freestreamradius)
+            run(func,(allfbnames,
+                    ["UV_120_DENSE","UVWIND_120_DENSE","UVWINDPRESS_120_DENSE"]),
+                ("Diffuse Cloud","Dense Cloud"),compare=False,secondfuncs=sfuncs)
+
+        for func in [windLemittedvscool,windenergyemitted,windmassemitted,windenergyretained,windenergy,windradius,freestreamradius]:
+            run(func,(allwindpressnames,["UVWINDPRESS_120_DENSE"]),
+                ("Diffuse Cloud","Dense Cloud"))
+
         '''
-    for func in [maxdensity,tsfe]:
-        run(func,(allnames,
-                  ["NOFB_DENSE","UV_120_DENSE","UVWIND_120_DENSE","UVWINDPRESS_120_DENSE"]),
-            ("Diffuse Cloud","Dense Cloud"),compare=False)
-'''
-    for func in [windLemittedvscool,windenergyemitted,windmassemitted,windenergyretained,windenergy,windradius,freestreamradius]:
-        run(func,(allwindpressnames,["UVWINDPRESS_120_DENSE"]),
-            ("Diffuse Cloud","Dense Cloud"))
 
 if __name__=="__main__":
     runall()        

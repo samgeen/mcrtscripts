@@ -105,6 +105,25 @@ else:
     simfolders["SEED1_35MSUN_CDMASK_WIND"] = windshellfolder+"28_newseed_35Msun_justwind/"
     simfolders["SEED1_35MSUN_CDMASK_UV"] = windshellfolder+"29_newseed_35Msun_justuv/"
 allsims = simfolders.keys()
+
+# Simulation sets
+seedset = ["SEED0_35MSUN_CDMASK_WINDUV",
+            "SEED1_35MSUN_CDMASK_WINDUV",
+            "SEED2_35MSUN_CDMASK_WINDUV",
+            "SEED3_35MSUN_CDMASK_WINDUV"]
+#               "SEED4_35MSUN_CDMASK_WINDUV"]
+
+physicsset = ["SEED1_35MSUN_CDMASK_WINDUV", 
+                "SEED1_35MSUN_NOCDMASK_WINDUV",
+                "SEED1_35MSUN_CDMASK_WINDUV_NOREFINE",
+                "SEED1_35MSUN_NOCDMASK_WINDUV_NOREFINE"]
+
+fbset = ["SEED1_35MSUN_CDMASK_WINDUV", 
+            "SEED1_35MSUN_CDMASK_WIND", 
+            "SEED1_35MSUN_CDMASK_UV"]
+# "SEED1_35MSUN_CDMASK_WINDUV_NOB" - no star yet
+
+simsets = {"fb":fbset, "seeds":seedset, "physics":physicsset}
     
 # Populate list of Hamu simulations
 # TODO - make these on demand rather than on loadup?
