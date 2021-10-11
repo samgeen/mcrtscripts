@@ -670,7 +670,7 @@ def runall():
                 [setname,],compare=False)
 
         for func in [windLemittedvscool,windenergyemitted,windmassemitted,windenergyretained,windenergy,windradius,freestreamradius]:
-            run(func,[simset,]),
+            run(func,[simset,],
                 [setname,],compare=False)
 
     '''
