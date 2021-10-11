@@ -669,6 +669,10 @@ def runall():
             run(func,[simset,], # ,"UVWINDPRESS_120_DENSE"]),
                 [setname,],compare=False)
 
+        for func in [windLemittedvscool,windenergyemitted,windmassemitted,windenergyretained,windenergy,windradius,freestreamradius]:
+            run(func,[simset,]),
+                [setname,],compare=False)
+
     '''
         
         for func in [momentumatstarpos]:
