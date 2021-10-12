@@ -481,6 +481,7 @@ def maxradiusatstarpos(snap,wind=False):
     amr = snap.amr_source(["rho","xHII","xHeII","xHeIII","P","vel"])
     cell_source = CellsToPoints(amr)
     cells = cell_source.flatten()
+    ion = cells["xHII"]
     vols = (cells.get_sizes())**3.0
     pos = cells.points+0.0
     pos[:,0] -= centre[0]

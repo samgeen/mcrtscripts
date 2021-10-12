@@ -11,7 +11,7 @@ sys.path.append("../../scripts")
 sys.path.append("../../Cooling/f2py")
 import customplot
 
-sys.path.append("/home/stgeen0/Programming/")
+sys.path.append("/home/samgeen/Programming/")
 
 import HamuLite as Hamu
 
@@ -144,9 +144,9 @@ _MakeSims()
 
 # Set up single star module
 print("Importing singlestar...")
-print("HACK : TURNED OFF SINGLESTAR TABLE LOAD!!!")
-startableloc = "/home/samgeen/StellarSources/Compressed/singlestar_z0.014"
-#singlestar.star_setup(startableloc)    
+#print("HACK : TURNED OFF SINGLESTAR TABLE LOAD!!!")
+startableloc = "../../../../StellarSources/Compressed/singlestar_z0.014"
+singlestar.star_setup(startableloc)    
 print("Done")
 
 # Useful functions

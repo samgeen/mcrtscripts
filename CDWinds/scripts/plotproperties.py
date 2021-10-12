@@ -32,7 +32,7 @@ def _tsfeinsnap(snap):
 
 tsfeinsnap = Hamu.Algorithm(_tsfeinsnap)
 
-nprocs = 1
+nprocs = 24
 
 def tsfe(simname):
     global mgas
@@ -78,6 +78,22 @@ def radius(simname):
     #boxlen = 0.121622418993404E+03
     #r *= boxlen
     #t -= tcreated
+    return t, r
+
+maxradiusatstarposinsnap = Hamu.Algorithm(findproperties.maxradiusatstarpos)
+def maxradiusatstarpos(simname):
+    print("Running for simulation", simname)
+    sim = hamusims[simname]
+    tcreated, sfe = starrelations.runforsim(simname,"firsttime")  
+    t,r = timefuncs.timefunc(sim,maxradiusatstarposinsnap,processes=nprocs)
+    return t, r
+
+maxwindradiusatstarposinsnap = Hamu.Algorithm(findproperties.maxwindradiusatstarpos)
+def maxwindradiusatstarpos(simname):
+    print("Running for simulation", simname)
+    sim = hamusims[simname]
+    tcreated, sfe = starrelations.runforsim(simname,"firsttime")  
+    t,r = timefuncs.timefunc(sim,maxwindradiusatstarposinsnap,processes=nprocs)
     return t, r
 
 energyinsnap = Hamu.Algorithm(findproperties.energyinsnap)
@@ -144,7 +160,7 @@ def windLemittedvscool(simname):
     print("Running",fname,"for simulation", simname)
     sim = hamusims[simname]
     tcreated, sfe = starrelations.runforsim(simname,"firsttime")
-    t,Lwe = timefuncs.timefunc(sim,windLemittedHamu)
+    t,Lwe = timefuncs.timefunc(sim,windLemittedHamu,processes=nprocs)
     t,Lwc = timefuncs.timefunc(sim,windLcoolinsnap,processes=nprocs)
     t,Lwx = timefuncs.timefunc(sim,xrayLcoolinsnap,processes=nprocs)
     Lout = np.array([Lwe, Lwc, Lwx]).T
@@ -227,7 +243,7 @@ def windLemitted(simname):
     print("Running for simulation", simname)
     sim = hamusims[simname]
     tcreated, sfe = starrelations.runforsim(simname,"firsttime")
-    t, we = timefuncs.timefunc(sim,windLemittedHamu)
+    t, we = timefuncs.timefunc(sim,windLemittedHamu,processes=nprocs)
     return t, we
 
 
@@ -260,7 +276,7 @@ def windmassemitted(simname):
     print("Running for simulation", simname)
     sim = hamusims[simname]
     tcreated, sfe = starrelations.runforsim(simname,"firsttime")
-    t, wm = timefuncs.timefunc(sim,windmassemittedHamu)
+    t, wm = timefuncs.timefunc(sim,windmassemittedHamu,processes=nprocs)
     return t, wm
 
 Pnontherminsnap = Hamu.Algorithm(findproperties.Pnontherminsnap)
@@ -339,6 +355,7 @@ def plotpowerlaw(ax,w,y0,linestyle,t0=0.3):
 
 def run(simfunc,simnamesets,plotlabels,compare=False,secondfuncs=None,gradient=False,suffix=""):
     plt.clf()
+    linestyles.reset()
     numcols = len(simnamesets)
     wcloud = 1.71 # cloud density profile power law index
     funcname = simfunc.__name__
@@ -560,10 +577,10 @@ def run(simfunc,simnamesets,plotlabels,compare=False,secondfuncs=None,gradient=F
             # Power law density profile
             #plotpowerlaw(ax,4.0/(7.0-2.0*wcloud),10.0,"k--")
         # Set labels etc
-        ax.set_xlim([0.0,1])
-        if funcname == "momentumatstarpos" or funcname == "radius" or funcname == "windradius" or funcname == "freestreamradius":
+        ax.set_xlim([0.0,0.5])
+        if funcname == "momentumatstarpos" or "radius" in funcname:
             ax.set_xscale("log")
-            ax.set_xlim([3e-2,1])
+            ax.set_xlim([3e-2,0.5])
         #if not "MASS" in simnames[0]:
         #    ax.set_xlim([3,7.3])
         #else:
@@ -659,19 +676,27 @@ def runall():
     #        ("Diffuse Cloud","Dense Cloud"),compare=False)
 
     
-    for setname, simset in simsets.items():
+    #    for setname, simset in simsets.items():
+    setname = "physics"
+    simset = physicsset
+    if True:
+
+        for func in [maxradiusatstarpos,maxwindradiusatstarpos,
+                     windLemittedvscool,windenergyemitted,windmassemitted,
+                     windenergyretained,windenergy,windradius,freestreamradius]:
+            run(func,[simset,],
+                [setname,],compare=False,suffix=setname)
+
         for func in [energyplusB]:
             run(func,[simset,], # ,"UVWINDPRESS_120_DENSE"]),
-                [setname,],compare=False)
+                [setname,],compare=False,suffix=setname)
 
 
         for func in [Bfieldenergy]:
             run(func,[simset,], # ,"UVWINDPRESS_120_DENSE"]),
-                [setname,],compare=False)
+                [setname,],compare=False,suffix=setname)
 
-        for func in [windLemittedvscool,windenergyemitted,windmassemitted,windenergyretained,windenergy,windradius,freestreamradius]:
-            run(func,[simset,],
-                [setname,],compare=False)
+
 
     '''
         
