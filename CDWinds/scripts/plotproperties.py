@@ -582,9 +582,12 @@ def run(simfunc,simnamesets,plotlabels,compare=False,secondfuncs=None,gradient=F
             ax.set_xscale("log")
             ax.set_xlim([3e-2,0.5])
 <<<<<<< HEAD
+<<<<<<< HEAD
 #        if "radius" in funcname:
 #            ax.set_xscale("linear")
 #            ax.set_yscale("linear")
+=======
+>>>>>>> 6bd52b84497a53c9a7af09f2ffe4aa3f3fd636a2
 =======
 >>>>>>> 6bd52b84497a53c9a7af09f2ffe4aa3f3fd636a2
         #if not "MASS" in simnames[0]:
@@ -683,6 +686,7 @@ def runall():
 
     
 <<<<<<< HEAD
+<<<<<<< HEAD
     for setname, simset in simsets.items():
         #setname = "physics"
         #simset = physicsset
@@ -699,6 +703,8 @@ def runall():
             #         windenergyemitted,windmassemitted,
             #         windenergyretained,windenergy,windradius,freestreamradius]:
 =======
+=======
+>>>>>>> 6bd52b84497a53c9a7af09f2ffe4aa3f3fd636a2
     #    for setname, simset in simsets.items():
     setname = "physics"
     simset = physicsset
@@ -707,6 +713,9 @@ def runall():
         for func in [maxradiusatstarpos,maxwindradiusatstarpos,
                      windLemittedvscool,windenergyemitted,windmassemitted,
                      windenergyretained,windenergy,windradius,freestreamradius]:
+<<<<<<< HEAD
+>>>>>>> 6bd52b84497a53c9a7af09f2ffe4aa3f3fd636a2
+=======
 >>>>>>> 6bd52b84497a53c9a7af09f2ffe4aa3f3fd636a2
             run(func,[simset,],
                 [setname,],compare=False,suffix=setname)
@@ -716,6 +725,10 @@ def runall():
                 [setname,],compare=False,suffix=setname)
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+
+>>>>>>> 6bd52b84497a53c9a7af09f2ffe4aa3f3fd636a2
 =======
 
 >>>>>>> 6bd52b84497a53c9a7af09f2ffe4aa3f3fd636a2

@@ -103,7 +103,11 @@ ifeq ($(COMP),"GNU")
      FFLAGS = -DWITHOUTMPI
   endif
 <<<<<<< HEAD
+<<<<<<< HEAD
   FFLAGS += -x f95-cpp-input -O3 -frecord-marker=4 -ffree-line-length-none $(DEFINES) -fPIC -fallow-argument-mismatch #-freal-4-real-8 
+=======
+  FFLAGS += -x f95-cpp-input -O3 -frecord-marker=4 -ffree-line-length-none $(DEFINES) -fPIC #-freal-4-real-8 
+>>>>>>> 6bd52b84497a53c9a7af09f2ffe4aa3f3fd636a2
 =======
   FFLAGS += -x f95-cpp-input -O3 -frecord-marker=4 -ffree-line-length-none $(DEFINES) -fPIC #-freal-4-real-8 
 >>>>>>> 6bd52b84497a53c9a7af09f2ffe4aa3f3fd636a2
