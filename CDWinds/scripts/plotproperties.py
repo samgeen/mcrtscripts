@@ -581,6 +581,9 @@ def run(simfunc,simnamesets,plotlabels,compare=False,secondfuncs=None,gradient=F
         if funcname == "momentumatstarpos" or "radius" in funcname:
             ax.set_xscale("log")
             ax.set_xlim([3e-2,0.5])
+#        if "radius" in funcname:
+#            ax.set_xscale("linear")
+#            ax.set_yscale("linear")
         #if not "MASS" in simnames[0]:
         #    ax.set_xlim([3,7.3])
         #else:
@@ -676,21 +679,27 @@ def runall():
     #        ("Diffuse Cloud","Dense Cloud"),compare=False)
 
     
-    #    for setname, simset in simsets.items():
-    setname = "physics"
-    simset = physicsset
-    if True:
+    for setname, simset in simsets.items():
+        #setname = "physics"
+        #simset = physicsset
+        #    if True:
 
-        for func in [maxradiusatstarpos,maxwindradiusatstarpos,
-                     windLemittedvscool,windenergyemitted,windmassemitted,
-                     windenergyretained,windenergy,windradius,freestreamradius]:
+        #for func in [maxradiusatstarpos,maxwindradiusatstarpos,
+        #             windLemittedvscool,windenergyemitted,windmassemitted,
+        #             windenergyretained,windenergy,windradius,freestreamradius]:
+        #    run(func,[simset,],
+        #        [setname,],compare=False,suffix=setname)
+
+        for func in [windenergyretained]:
+            #,maxradiusatstarpos,maxwindradiusatstarpos,
+            #         windenergyemitted,windmassemitted,
+            #         windenergyretained,windenergy,windradius,freestreamradius]:
             run(func,[simset,],
                 [setname,],compare=False,suffix=setname)
 
         for func in [energyplusB]:
             run(func,[simset,], # ,"UVWINDPRESS_120_DENSE"]),
                 [setname,],compare=False,suffix=setname)
-
 
         for func in [Bfieldenergy]:
             run(func,[simset,], # ,"UVWINDPRESS_120_DENSE"]),

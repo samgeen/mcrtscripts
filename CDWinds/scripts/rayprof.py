@@ -396,7 +396,8 @@ if __name__ == "__main__":
     #labels["NOFB"] = "No star"
     #labels["UV_30"] = "UV only, 30 Msun star"
     #labels["UVWIND_30"] = "UV+Winds, 30 Msun star"
-    labels["SEED1_35MSUN_CDMASK_WINDUV"] = "Seed1, CDMask, Refine"
+    #labels["SEED1_35MSUN_CDMASK_WINDUV"] = "Seed1, CDMask, Refine"
+    labels["SEED2_35MSUN_CDMASK_WINDUV"] = "Seed2, CDMask, Refine"
     sims = labels.keys()
     #sims = ["MASS_04"]
     for simname in sims:

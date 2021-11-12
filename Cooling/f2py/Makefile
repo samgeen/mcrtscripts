@@ -102,7 +102,7 @@ ifeq ($(COMP),"GNU")
      F90 = gfortran
      FFLAGS = -DWITHOUTMPI
   endif
-  FFLAGS += -x f95-cpp-input -O3 -frecord-marker=4 -ffree-line-length-none $(DEFINES) -fPIC #-freal-4-real-8 
+  FFLAGS += -x f95-cpp-input -O3 -frecord-marker=4 -ffree-line-length-none $(DEFINES) -fPIC -fallow-argument-mismatch #-freal-4-real-8 
    #FFLAGS += -fbounds-check -fbacktrace -Wuninitialized -Wall
    #FFLAGS += -ffpe-trap=invalid,zero,overflow,underflow -finit-real=nan
    #FFLAGS += -finit-real=nan
