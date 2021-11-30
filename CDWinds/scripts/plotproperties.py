@@ -32,7 +32,7 @@ def _tsfeinsnap(snap):
 
 tsfeinsnap = Hamu.Algorithm(_tsfeinsnap)
 
-nprocs = 24
+nprocs = 1
 
 def tsfe(simname):
     global mgas
@@ -581,15 +581,9 @@ def run(simfunc,simnamesets,plotlabels,compare=False,secondfuncs=None,gradient=F
         if funcname == "momentumatstarpos" or "radius" in funcname:
             ax.set_xscale("log")
             ax.set_xlim([3e-2,0.5])
-<<<<<<< HEAD
-<<<<<<< HEAD
 #        if "radius" in funcname:
 #            ax.set_xscale("linear")
 #            ax.set_yscale("linear")
-=======
->>>>>>> 6bd52b84497a53c9a7af09f2ffe4aa3f3fd636a2
-=======
->>>>>>> 6bd52b84497a53c9a7af09f2ffe4aa3f3fd636a2
         #if not "MASS" in simnames[0]:
         #    ax.set_xlim([3,7.3])
         #else:
@@ -684,9 +678,6 @@ def runall():
     #    run(func,(["NOFB"],["NOFB_DENSE"]),
     #        ("Diffuse Cloud","Dense Cloud"),compare=False)
 
-    
-<<<<<<< HEAD
-<<<<<<< HEAD
     for setname, simset in simsets.items():
         #setname = "physics"
         #simset = physicsset
@@ -698,25 +689,14 @@ def runall():
         #    run(func,[simset,],
         #        [setname,],compare=False,suffix=setname)
 
-        for func in [windenergyretained]:
+        #for func in [windenergyretained]:
             #,maxradiusatstarpos,maxwindradiusatstarpos,
             #         windenergyemitted,windmassemitted,
             #         windenergyretained,windenergy,windradius,freestreamradius]:
-=======
-=======
->>>>>>> 6bd52b84497a53c9a7af09f2ffe4aa3f3fd636a2
-    #    for setname, simset in simsets.items():
-    setname = "physics"
-    simset = physicsset
-    if True:
 
         for func in [maxradiusatstarpos,maxwindradiusatstarpos,
                      windLemittedvscool,windenergyemitted,windmassemitted,
                      windenergyretained,windenergy,windradius,freestreamradius]:
-<<<<<<< HEAD
->>>>>>> 6bd52b84497a53c9a7af09f2ffe4aa3f3fd636a2
-=======
->>>>>>> 6bd52b84497a53c9a7af09f2ffe4aa3f3fd636a2
             run(func,[simset,],
                 [setname,],compare=False,suffix=setname)
 
@@ -724,14 +704,6 @@ def runall():
             run(func,[simset,], # ,"UVWINDPRESS_120_DENSE"]),
                 [setname,],compare=False,suffix=setname)
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-
->>>>>>> 6bd52b84497a53c9a7af09f2ffe4aa3f3fd636a2
-=======
-
->>>>>>> 6bd52b84497a53c9a7af09f2ffe4aa3f3fd636a2
         for func in [Bfieldenergy]:
             run(func,[simset,], # ,"UVWINDPRESS_120_DENSE"]),
                 [setname,],compare=False,suffix=setname)

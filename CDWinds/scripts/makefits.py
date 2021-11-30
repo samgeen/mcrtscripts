@@ -78,8 +78,9 @@ def makelist(snap,folder,hydros,pos,radius):
     lmin = ro.info["levelmin"]
     lsize = 512
     boxlen = ro.info["boxlen"]
+    boxlencm = ro.info["boxlen"]*ro.info["unit_length"].express(C.cm)
     # Sample for each hydro variable
-    hydros = hydros+["x","y","z","cellsize"]
+    hydros = hydros+["x","y","z","amrlevel"]
     cell_source = CellsToPoints(amr)
     samples = cell_source.flatten()
     cells = samples
@@ -88,21 +89,30 @@ def makelist(snap,folder,hydros,pos,radius):
                    "/celllist_"+hydro+"_"+str(snap.OutputNumber()).zfill(5)+".fits"
         if not os.path.exists(filename):
             print("Making", filename,"...",)
-            if hydro not in "xyz" and hydro != "cellsize":
+            if hydro not in "xyz" and hydro != "amrlevel":
                 scale = hydrofuncs.scale_by_units(ro,hydro)
                 hydrocube = scale(samples)
                 #hydrocube = hydrocube.reshape([lsize,lsize,lsize])
-                minmax = (hydrocube.min(),hydrocube.max())
             else:
                 if hydro == "x":
-                    hydrocube = cells.points[:,0]
+                    hydrocube = cells.points[:,0]*boxlencm
                 if hydro == "y":
-                    hydrocube = cells.points[:,1]
+                    hydrocube = cells.points[:,1]*boxlencm
                 if hydro == "z":
-                    hydrocube = cells.points[:,2]
-                if hydro == "cellsize":
+                    hydrocube = cells.points[:,2]*boxlencm
+                if hydro == "amrlevel":
                     hydrocube = cells.get_sizes()
-                hydrocube *= boxlen
+                    # Get level from cell sizes
+                    # 1.0001 limits issues with int casting 0.9999->0
+                    hydrocube = -np.log2(hydrocube)*1.0001
+                    hydrocube = hydrocube.astype(np.int32)
+                    minlevel = hydrocube.min()
+                    maxlevel = hydrocube.max()
+                    # Make info file
+                    infoname = folder+"/infos/"+\
+                        "/info_"+str(snap.OutputNumber()).zfill(5)+".yaml"
+                    makeinfofile(infoname,boxlencm,minlevel,maxlevel)
+            minmax = (hydrocube.min(),hydrocube.max())
             print(" min/max=",minmax,"of",len(hydrocube),"cells")
             #np.save(filename, hydrocube.astype("float32"))
             hdu = fits.PrimaryHDU(hydrocube)
@@ -111,7 +121,21 @@ def makelist(snap,folder,hydros,pos,radius):
         else:
             print(filename, "exists, ignoring")
     print("Done!")
-
+                    
+def makeinfofile(infofilename,boxlencm,minref,maxref):
+    # boxlen in cm, minimum level, maximum level
+    template = '''boxlen: BOXLEN
+    minref: MINREF
+    maxref: MAXREF
+    '''
+    txt = template+""
+    txt = txt.replace("BOXLEN",str(boxlencm))
+    txt = txt.replace("MINREF",str(minref))
+    txt = txt.replace("MAXREF",str(maxref))
+    f = open(infofilename,"w")
+    f.write(txt)
+    f.close()
+    
 def makedir(folder):
     try:
         os.mkdir(folder)
@@ -138,7 +162,8 @@ def runforsim(sim,nouts=None,times=None,pos=None,radius=None,makecubes=True):
         makedir(simfolder+"/"+hydro)
     for cpos in "xyz":
         makedir(simfolder+"/"+cpos)
-    makedir(simfolder+"/cellsize")
+    makedir(simfolder+"/amrlevel")
+    makedir(simfolder+"/infos")
     if makecubes:
         run = makecube
     else:
@@ -150,11 +175,10 @@ def runforsim(sim,nouts=None,times=None,pos=None,radius=None,makecubes=True):
         for time in times:
             snap = sim.FindAtTime(time)
             run(snap,folder=simfolder,hydros=hydros,pos=pos,radius=radius)
-
-
+    
 if __name__=="__main__":
     # Use IMF2, winds + UV
-    sim = hamusims["SHELL_CDMASK4"]
+    sim = hamusims["SEED1_35MSUN_CDMASK_WINDUV"]
     # Pick the last output - TODO, CHANGE TO SPECIFIC OUTPUT!!!
     #nout = snap.OutputNumber()
     #nouts = [nout]
