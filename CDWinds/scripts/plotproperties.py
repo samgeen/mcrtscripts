@@ -32,7 +32,7 @@ def _tsfeinsnap(snap):
 
 tsfeinsnap = Hamu.Algorithm(_tsfeinsnap)
 
-nprocs = 1
+nprocs = 24
 
 def tsfe(simname):
     global mgas
@@ -109,6 +109,14 @@ def energy(simname,kinonly=False,thermonly=False):
     eout = np.array([tot, therm, kin]).T
     return t, eout
 
+windpressureinsnap = Hamu.Algorithm(findproperties.windpressureinsnap)
+def windpressure(simname):
+    print("Running for simulation", simname)
+    sim = hamusims[simname]
+    tcreated, sfe = starrelations.runforsim(simname,"firsttime")  
+    t,r = timefuncs.timefunc(sim,windpressureinsnap,processes=nprocs)
+    return t, r
+
 def windradiusratio(simname):
     print("Running for simulation", simname)
     sim = hamusims[simname]
@@ -142,7 +150,7 @@ def windradiusratio_analytic(simname):
             rwvsri.append(0.0)
     return ts, np.array(rwvsri)
     
-windenergyinsnap = Hamu.Algorithm(findproperties.windenergyinsnap2)
+windenergyinsnap = Hamu.Algorithm(findproperties.windenergyinsnap3)
 def windenergy(simname,kinonly=False,thermonly=False):
     print("Running for simulation", simname)
     sim = hamusims[simname]
@@ -513,11 +521,12 @@ def run(simfunc,simnamesets,plotlabels,compare=False,secondfuncs=None,gradient=F
             tc -= tcreated
             # +ve values (2nd = larger)
             names = [maxdensity,tsfe,mass,maxBfield,nphotonsHII,momentum,radius,
-                     momentumatstarpos,windenergy,windradius,freestreamradius,photodens,windLcool,windLemitted]
+                     momentumatstarpos,windenergy,windradius,freestreamradius,photodens,windLcool,windLemitted,
+                     windpressure]
             effects = ["Maximum density","SFE","mass","max B field","Nphotons","momentum","radius",
                        "outflow momentum","wind bubble energy","wind bubble radius","free streaming radius",
                        "average density of photoionised gas",
-                       "Wind Bubble Cooling Luminosity","Wind Luminosity"]
+                       "Wind Bubble Cooling Luminosity","Wind Luminosity","Pressure in Wind Bubble"]
             effectdict = {k:v for k,v in zip(names, effects)}
             effect = effectdict[simfunc]
             labelplus = "Winds increase "+effect
@@ -622,6 +631,8 @@ def run(simfunc,simnamesets,plotlabels,compare=False,secondfuncs=None,gradient=F
                 #legendloc = "lower right"
             if funcname == "windenergyemitted":
                 ax.set_ylabel("Cumulative energy emitted by winds / erg")
+            if funcname == "windpressure":
+                ax.set_ylabel("Pressure in wind bubble / erg / cm$^3$")
             if funcname == "windLcool":
                 ax.set_ylabel("Total cooling rate in wind bubble / erg/s")
             if funcname == "windLemitted":
@@ -694,7 +705,7 @@ def runall():
             #         windenergyemitted,windmassemitted,
             #         windenergyretained,windenergy,windradius,freestreamradius]:
 
-        for func in [maxradiusatstarpos,maxwindradiusatstarpos,
+        for func in [windpressure,momentumatstarpos,maxradiusatstarpos,maxwindradiusatstarpos,
                      windLemittedvscool,windenergyemitted,windmassemitted,
                      windenergyretained,windenergy,windradius,freestreamradius]:
             run(func,[simset,],

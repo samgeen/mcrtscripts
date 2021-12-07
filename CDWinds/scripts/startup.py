@@ -69,12 +69,12 @@ plotfolder = "../plots/"
 
 # Simulation names
 mainsimfolder = "/home/stgeen0/MCRT/runs/" # on ISMSIM1
-ismsim2folder = "/home/s0geen/MCRT/runs/" # on ISMSIM1
+#ismsim2folder = "/home/s0geen/MCRT/runs/" # on ISMSIM1
 cartsimfolder = "/home/samgeen/amun/runs/"
 if os.path.exists(cartsimfolder):
     mainsimfolder = cartsimfolder
-if os.path.exists(ismsim2folder):
-    mainsimfolder = ismsim2folder
+#if os.path.exists(ismsim2folder):
+#    mainsimfolder = ismsim2folder
 windshellfolder = mainsimfolder+"84_windshell/"
 simfolders = {}
 UseTestRuns = False

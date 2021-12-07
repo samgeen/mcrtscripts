@@ -201,4 +201,4 @@ if __name__=="__main__":
     #radius = 25.0
     #pos = np.zeros(3)+0.5
     radius = 0.25
-    runforsim(sim,times=times,pos=pos,radius=radius,makecubes=False)
+    runforsim(sim,times=times,pos=pos,radius=radius,makecubes=True)
