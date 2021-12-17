@@ -7,10 +7,11 @@ from startup import *
 
 from pymses.utils import constants as C
 
-import columndensity, rayMap, sliceMap, sinks, ysos, starrelations, listfigures
+import columndensity, rayMap, sliceMap, sinks, ysos, starrelations, listfigures, findproperties
 
 from matplotlib import rc
 import matplotlib.cm as mplcm
+import matplotlib.patheffects as PathEffects
 
 import rdmfile
 
@@ -20,6 +21,7 @@ rc('xtick', labelsize=8)
 rc('ytick', labelsize=8)
 
 IMSIZE = columndensity.IMSIZE
+OUTLINEWIDTH = 1
 
 def FindLscale(boxlen):
     # Find the best match for the length scale bar
@@ -125,6 +127,9 @@ def MakeImage(datas,hydros,snap,wsink,ax,dolengthscale,cmap,plottime=False,timeL
     threecolour = [rgb(27,158,119),
                     rgb(217,95,2),
                    rgb(117,112,179)][::-1]
+    #threecolour = [rgb(27,158,119),
+    #                rgb(217,95,2),
+    #               rgb(231,41,138)][::-1]
     for im, hydro in zip(ims, hydros):
         ihydro += 1
         yscale = hydrofuncs.yscale(hydro)
@@ -139,6 +144,10 @@ def MakeImage(datas,hydros,snap,wsink,ax,dolengthscale,cmap,plottime=False,timeL
         # Plot image map
         if len(ims) == 1:
             finalim = im
+            print(hydro)
+            print ("ORIGINAL",finalim.min(),finalim.max())
+            finalim = hydrofuncs.axis_rescale_func(hydro)(finalim)
+            print ("RESCALED",finalim.min(),finalim.max())
         else:
             col = threecolour[ihydro]
             if finalim is None:
@@ -255,26 +264,29 @@ def MakeImage(datas,hydros,snap,wsink,ax,dolengthscale,cmap,plottime=False,timeL
             y1 = 0.04 * boxlen
             y2 = y1
             verticalalignment ="center"
-        ax.plot([x1,x2],[y1,y2],scalecol)
-        ax.text(textx,y2, "  "+str(lscale)+" pc",color=scalecol,
+        line = ax.plot([x1,x2],[y1,y2],"w",path_effects=[PathEffects.withStroke(linewidth=OUTLINEWIDTH+3, foreground='k')])
+        txt = ax.text(textx,y2, "  "+str(lscale)+" pc",color=scalecol,
                 horizontalalignment=textalign,
                 verticalalignment=verticalalignment,fontsize="large")
+        txt.set_path_effects([PathEffects.withStroke(linewidth=OUTLINEWIDTH, foreground='k')])
     # Add label
     if label:
         xt = 0.98 * boxlen
         yt = 0.02 * boxlen
-        ax.text(xt,yt,label,
+        txt = ax.text(xt,yt,label,
                 horizontalalignment="right",
                 verticalalignment="bottom",
                 color=scalecol,fontsize="large")
+        txt.set_path_effects([PathEffects.withStroke(linewidth=OUTLINEWIDTH, foreground='k')])
     # Add time 
     if plottime:
         xt = 0.02 * boxlen
         yt = 0.02 * boxlen
-        ax.text(xt,yt,timeL,
+        txt = ax.text(xt,yt,timeL,
                 horizontalalignment="left",
                 verticalalignment="bottom",
                 color=scalecol,fontsize="large")
+        txt.set_path_effects([PathEffects.withStroke(linewidth=OUTLINEWIDTH, foreground='k')])
     return cax
 
 def MakeFigure(simnames,times,name,los=None,hydro="rho",Slice=False,wsink=False,starC=False,
@@ -377,6 +389,24 @@ def MakeFigure(simnames,times,name,los=None,hydro="rho",Slice=False,wsink=False,
             snap  = sim.FindAtTime(time)
             ax    = axes.flatten()[isim]
             isim += 1
+            # Get sink info
+            stellar = stellars.FindStellar(snap)
+            if len(stellar.mass) == 0:
+                return 0.0
+            imax = np.where(stellar.mass == np.max(stellar.mass))[0][0]
+            sinkid = stellar.sinkid[imax]-1
+            sink = sinks.FindSinks(snap)
+            boxlen = snap.RawData().info["boxlen"]
+            smass = stellar.mass
+            starsinkid = stellar.sinkid[np.where(smass == smass.max())]
+            starsink = np.where(sink.id == starsinkid)[0]
+            starpos = np.array([sink.x[starsinkid],sink.y[starsinkid],sink.z[starsinkid]])/boxlen
+            # Get global variables if needed
+            if "Damkoehler" in hydro:
+                lbubblefunc = Hamu.Algorithm(findproperties.maxradiusatstarpos)
+                lbubble = lbubblefunc(snap)*pcincm
+                hydrofuncs.allhydros.AddGlobals({"Ldamkoehler":lbubble})
+                hydrofuncs.allhydros.AddGlobals({"starpos":starpos})
             # One hydro variable?
             if type(hydro) == type("rho"):
                 dohydrolist = False
@@ -423,11 +453,6 @@ def MakeFigure(simnames,times,name,los=None,hydro="rho",Slice=False,wsink=False,
             #if len(axes) == 1:
             #    label = None
             # Make the pyplot image axis object
-            stellar = stellars.FindStellar(snap)
-            smass = stellar.mass
-            starsinkid = stellar.sinkid[np.where(smass == smass.max())]
-            sink = sinks.FindSinks(snap)
-            starsink = np.where(sink.id == starsinkid)[0]
             im    = MakeImage(datas,hydros,snap,wsink,ax,dolengthscale,cmap,
                               plottime, timeL[ii],label = label,starsink=starsink,rdm=rdm,
                               contours=contours,zoombox=zoombox/zoom,starC=starC,zoom=zoom,Slice=Slice)
@@ -448,16 +473,21 @@ def MakeFigure(simnames,times,name,los=None,hydro="rho",Slice=False,wsink=False,
         #    cax  = fig.add_axes([0.24, 0.1, 0.72, 0.02])
         cbar = fig.colorbar(im,cax=cax,orientation="horizontal")
         label = hydrofuncs.hydro_label((hydro))
-        if not "xH" in hydro:
+        yscale = hydrofuncs.yscale(hydro)
+        if yscale == "log":
             label = "log("+label+")"
         #cbar.set_label(label,fontsize="medium",color="k")
         #cbar.ax.tick_params(labelsize="medium",labelcolor="k")
         #cbar.solids.set_edgecolor("face")
-        cbar.set_label(label,fontsize="large",color="w")
+        cbar.set_label(label,fontsize="large",color="w",
+                       path_effects=[PathEffects.withStroke(linewidth=OUTLINEWIDTH, foreground='k')])
         cbar.ax.tick_params(labelsize="large",labelcolor="w")
+        for t in cbar.ax.get_xticklabels()+cbar.ax.get_yticklabels():
+            t.set_path_effects([PathEffects.withStroke(linewidth=OUTLINEWIDTH, foreground='k')])
         cbar.solids.set_edgecolor("face")
         plt.setp(plt.getp(cbar.ax.axes, 'yticklabels'), color='w')
 
+        
     # Save figure
     print("Saving figure "+figname+"...")
     fig.subplots_adjust(hspace=0.0, wspace=0.0, 
@@ -476,7 +506,7 @@ def MakeFigure(simnames,times,name,los=None,hydro="rho",Slice=False,wsink=False,
 if __name__=="__main__":
 
     # Should we force some figures to run?
-    forcerun=False
+    forcerun=True
 
     
     for setname, simset in simsets.items():
@@ -517,7 +547,7 @@ if __name__=="__main__":
                 #               timeL=[tmovieL],zoom=zoom,forcerun=True)
             # Merged emission map - just wind
             coolhydros = ["coolemission","ionemission","xrayemission2"]
-            timesmerged = [0.1,0.2,0.3,0.4]
+            timesmerged = [0.1,0.2,0.3]
             timesmergedIn = [(time,"MyrFirstStar") for time in timesmerged]
             timesmergedL = [str(x)+r' Myr' for x in timesmerged]
             # Doesn't really work, just stitch together sequences with a script
@@ -541,20 +571,15 @@ if __name__=="__main__":
             #           timeL=[timeL[-1]],zoom=1.0,forcerun=True,contours=["Wind"])
 
             DEBUG = False
-            # NH maps
-            for hydro in [coolhydros,"NH"]:
-                contours = []
-                if hydro == "NH":
-                    contours = ["Wind","Ionised"]
-                    MakeFigure(simset,timesmergedIn,name=figname+"windpressonly_sequence",
-                                los=los,hydro=hydro,Slice=False,wsink=True,
-                                timeL=timesmergedL,zoom=zoom,forcerun=forcerun,
-                                doplottime=True,contours=contours,
-                                plotcolorbar=True)
 
-
+            # Single slices
+            for hydro in ["Damkoehler3","Lcool","T","rho","xHII","xHeII","xHeIII","P"]:
+                MakeFigure([simset[0]],[timesin[-1]],name=figname+"singleslice",los=los,hydro=hydro,
+                            Slice=True,wsink=True,starC=True,
+                            timeL=[timeL[-1]],zoom=zoom,forcerun=True)
+            
             # Slices
-            for hydro in ["Lcool","T","rho","xHII","xHeII","xHeIII","P"]:
+            for hydro in ["Damkoehler3","Lcool","T","rho","xHII","xHeII","xHeIII","P"]:
                 MakeFigure(simset,[timesin[-1]],name=figname,los=los,hydro=hydro,
                             Slice=True,wsink=True,starC=True,
                             timeL=[timeL[-1]],zoom=zoom,forcerun=True)
@@ -564,6 +589,21 @@ if __name__=="__main__":
                             Slice=True,wsink=True,starC=True,
                             timeL=[timeL[-1]],zoom=zoom,forcerun=forcerun,
                             contours=["WindSlice","IonisedSlice","FreeStreamSlice"])
+
+            # Emission and NH maps
+            for hydro in [coolhydros,"NH"]:
+                contourslist = [[],["Wind","Ionised"]]
+                for contours in contourslist:
+                    contxt = ""
+                    if len(contours) > 0:
+                        contxt = "_contours"
+                    MakeFigure(simset,timesmergedIn,name=figname+"windpressonly_sequence"+contxt,
+                               los=los,hydro=hydro,Slice=False,wsink=True,
+                               timeL=timesmergedL,zoom=zoom,forcerun=True,
+                               doplottime=True,contours=contours,
+                               plotcolorbar=True)
+
+
 
 
             #if DEBUG:

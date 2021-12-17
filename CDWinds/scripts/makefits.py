@@ -78,7 +78,8 @@ def makelist(snap,folder,hydros,pos,radius):
     lmin = ro.info["levelmin"]
     lsize = 512
     boxlen = ro.info["boxlen"]
-    boxlencm = ro.info["boxlen"]*ro.info["unit_length"].express(C.cm)
+    unitcm = ro.info["unit_length"].express(C.cm)/ro.info["boxlen"]
+    boxlencm = ro.info["boxlen"]*unitcm
     # Sample for each hydro variable
     hydros = hydros+["x","y","z","amrlevel"]
     cell_source = CellsToPoints(amr)
@@ -96,6 +97,7 @@ def makelist(snap,folder,hydros,pos,radius):
             else:
                 if hydro == "x":
                     hydrocube = cells.points[:,0]*boxlencm
+                    import pdb; pdb.set_trace()
                 if hydro == "y":
                     hydrocube = cells.points[:,1]*boxlencm
                 if hydro == "z":
@@ -201,4 +203,4 @@ if __name__=="__main__":
     #radius = 25.0
     #pos = np.zeros(3)+0.5
     radius = 0.25
-    runforsim(sim,times=times,pos=pos,radius=radius,makecubes=True)
+    runforsim(sim,times=times,pos=pos,radius=radius,makecubes=False)

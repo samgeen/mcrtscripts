@@ -81,7 +81,7 @@ class AbstractHydro(ABCMeta):
 # TODO: Add setter structures like in cmap to all fields
 class Hydro(object):
     
-    def __init__(self,label,scalebyunits,basevariables,colourmap,axisscale,axisrange=(None, None),surfacequantity=False):
+    def __init__(self,label,scalebyunits,basevariables,colourmap,axisscale,axisrange=(None, None),surfacequantity=False,axisrescalefunc=None):
         self._label = label
         self._scalebyunits = scalebyunits
         self._basevariables = basevariables
@@ -89,6 +89,9 @@ class Hydro(object):
         self._axisscale = axisscale
         self._axisrange = axisrange
         self._surfacequantity = surfacequantity
+        if axisrescalefunc is None:
+            axisrescalefunc = lambda x: x
+        self._axisrescalefunc = axisrescalefunc
 
     def Label(self):
         return self._label
@@ -107,6 +110,9 @@ class Hydro(object):
     def AxisScale(self):
         return self._axisscale
 
+    def AxisRescaleFunc(self):
+        return self._axisrescalefunc
+    
     def AxisRange(self):
         return self._axisrange
 
@@ -116,6 +122,8 @@ class Hydro(object):
 class AllHydros(object):
     def __init__(self):
         self._hydros = None
+        # Global variables for the functions to use
+        self._globals = {}
         self._Setup()
 
     def __setitem__(self,name,newHydro):
@@ -129,6 +137,10 @@ class AllHydros(object):
     def __contains__(self,name):
         return name in self._hydros
 
+    def AddGlobals(self,globalsdict):
+        for key, value in globalsdict.items():
+            self._globals[key] = value
+    
     def _Setup(self):
         h = {}
         # Cheat Sheet for Hydro's constructor:
@@ -151,9 +163,9 @@ class AllHydros(object):
         # Thermal pressure
         Pfunc = lambda ro: lambda dset: dset["P"]*ro.info["unit_pressure"].express(C.barye)
         h["P"] = Hydro("Pressure / ergs/cm$^3$",Pfunc,["P"],"YlOrRd","log",(None, None))
-        # Thermal energy (same as thermal pressure)
+        # Thermal energy density (same as thermal pressure)
         h["Etherm"] = Hydro("Thermal energy density / ergs/cm$^3$",Pfunc,["P"],"YlOrRd","log",(-16.0,-7.0))
-        # Kinetic energy
+        # Kinetic energy density
         EKfunc = lambda ro: lambda dset: dset["rho"]*ro.info["unit_density"].express(C.g_cc)* \
                   np.sum(dset["vel"]**2,1)*(ro.info["unit_velocity"].express(C.cm/C.s))**2
         h["Ekin"] = Hydro("Kinetic energy density / ergs/cm$^3$",EKfunc,["rho","vel"],"PuBuGn","log",(-16.0, -7.0))
@@ -211,7 +223,28 @@ class AllHydros(object):
                     rad[:,i] /= dist
                 return np.sum(rad*dset["vel"],1)*unit
             return findvrad
+        def vnonradfunc(ro):
+            unit = ro.info["unit_velocity"].express(C.km/C.s)
+            def findvnonrad(dset):
+                try:
+                    pts = dset.points
+                except:
+                    pts = dset.get_cell_centers()
+                pos = pts+0.0
+                pos[:,0] = pts[:,0]-self._globals["starpos"][0]
+                pos[:,1] = pts[:,1]-self._globals["starpos"][1]
+                pos[:,2] = pts[:,2]-self._globals["starpos"][2]
+                rad = pos # Be careful here! Reference, not value copy
+                dist = np.sqrt(np.sum(pos**2,1))
+                for i in range(0,3):
+                    rad[:,i] /= dist
+                vrad = np.sum(rad*dset["vel"],1)*unit
+                spd = np.sum(dset["vel"]**2,1)*unit
+                vnonrad = spd - vrad
+                return vnonrad
+            return findvnonrad
         h["vrad"] = Hydro("$v_{\mathrm{radial}}$ / km/s",vradfunc,["vel"],"BuGn","log",(None, None))
+        h["vnonrad"] = Hydro("$v_{\mathrm{non-radial}}$ / km/s",vnonradfunc,["vel"],"BuGn","log",(None, None))
         # Gas speed
         spdfunc = lambda ro: lambda dset: np.sqrt(np.sum(dset["vel"]**2,1))*ro.info["unit_velocity"].express(C.km/C.s)
         h["spd"] = Hydro("Gas Speed / km/s",spdfunc,["vel"],"BuGn","log",(None, None))
@@ -227,11 +260,31 @@ class AllHydros(object):
         # Ram pressure
         func = lambda ro: lambda dset: dset["rho"]*np.sum(dset["vel"]**2,1)*ro.info["unit_pressure"].express(C.barye)
         h["Pram"] = Hydro("Ram Pressure / ergs/cm$^3$",func,["rho","vel"],"YlOrRd","log",(None, None))
-        # Cooling rate (energy density change per unit time)
+        # Cooling-related functions
         coolvars = ["rho","P","vel","xHII","xHeII","xHeIII","NpHII","NpHeII","NpHeIII"]
         if usecooling:
-            func = lambda ro: rtcooling.dedtOnCells(ro)
-            h["Lcool"] = Hydro("L$_{cool}$ / erg/s/cm$^{-3}$",func,coolvars,"YlOrRd","log",(None, None))
+            # Cooling rate (energy density change per unit time)
+            coolfunc = lambda ro: rtcooling.dedtOnCells(ro)
+            h["Lcool"] = Hydro("L$_{cool}$ / erg/s/cm$^{-3}$",coolfunc,coolvars,"YlOrRd","log",(None, None))
+            # Damkoehler number
+            def damkoehlerfunc(ro):
+                def finddamkoehlerremapped(dset):
+                    etherm = Pfunc(ro)(dset)
+                    dedt = coolfunc(ro)(dset)
+                    dedt[dedt < 0.0] = 0.0
+                    tcool = etherm / dedt
+                    L = self._globals["Ldamkoehler"]
+                    vnonrad = np.abs(vnonradfunc(ro)(dset) * np.sqrt(3.0/2.0))
+                    D = L / vnonrad
+                    D = D / tcool
+                    # Map to a sigmoid for plotting
+                    remap = D#np.arctan(10.0*(D-1))*2.0/np.pi
+                    #print("DEBUG",L, vnonrad.min(),vnonrad.max(), tcool.min(),tcool.max())
+                    return remap
+                return finddamkoehlerremapped
+            def damkoehlerrescalefunc(D):
+                return np.arctan(5.0*(D-1))*2.0/np.pi
+            h["Damkoehler3"] = Hydro("Negligible Turbulent Mixing $\leftrightarrow$ Strong Turbulent Mixing",damkoehlerfunc,coolvars,"RdBu","linear",(-1.0, 1.0),axisrescalefunc=damkoehlerrescalefunc)
         # EMPTY DEFAULT HYDRO TO PREVENT ERRORS
         h["DEFAULTEMPTY"] = lambda hydro: Hydro("",lambda ro: lambda dset: dset[hydro],coolvars,"Blues_r","linear",(None, None))
         # Done!
@@ -252,6 +305,10 @@ def scale_by_units(ro, hydro):
     '''
     global allhydros
     return allhydros[hydro].ScaleByUnits(ro)
+
+def axis_rescale_func(hydro):
+    global allhydros
+    return allhydros[hydro].AxisRescaleFunc()
 
 def amr_source(ro, hydro,extra=[]):
     '''
