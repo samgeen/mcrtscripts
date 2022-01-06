@@ -3,6 +3,9 @@ Make profiles in rays positioned uniformly on a sphere
 Sam Geen, November 2014
 '''
 
+import matplotlib as mpl
+mpl.use("Agg")
+
 from startup import *
 
 import isomesh
@@ -12,6 +15,9 @@ import profilesphere
 import scipy.optimize
 
 from collections import OrderedDict
+
+# Hack to make it work without latex while it's installed
+mpl.rcParams['text.usetex'] = False
 
 rays = None
 rads = None
@@ -260,7 +266,8 @@ def plot(simname,hydro,centre):
         plt.xlabel("Radius / pc")
         plt.ylabel(hydrofuncs.hydro_label(hydro))
         plt.grid()
-        plt.savefig(path+"/profile_"+str(snap.OutputNumber()).zfill(5)+".pdf",rasterized=True,dpi=200)
+        plt.gca().set_rasterized(True)
+        plt.savefig(path+"/profile_"+str(snap.OutputNumber()).zfill(5)+".pdf",dpi=200)
 
 def plotgradient(simname,hydro,time,centre,label=None,xlims=None,powfile=None,suffix=None):
     '''
@@ -345,9 +352,11 @@ def plotgradient(simname,hydro,time,centre,label=None,xlims=None,powfile=None,su
         #    plt.plot(rs,ps,"k")
         plt.yscale(hydrofuncs.yscale(hydro))
         if hydro == "nH":
-            plt.ylim([3e-1,1e7])
+            plt.ylim([3e-2,1e7])
         if hydro == "vrad":
             plt.ylim([-15,25])
+        if hydro == "P":
+            plt.ylim([1e-17,1e-6])
         plt.xlabel("Radius / pc")
         plt.ylabel(hydrofuncs.hydro_label(hydro))
         if xlims is not None:
@@ -367,7 +376,8 @@ def plotgradient(simname,hydro,time,centre,label=None,xlims=None,powfile=None,su
         if suffix is None:
             suffix = ""
         plt.grid()
-        plt.savefig(path+"/profile_"+suffix+str(snap.OutputNumber()).zfill(5)+".pdf",rasterized=True,dpi=200)
+        #plt.gca().set_rasterized(True)
+        plt.savefig(path+"/profile_"+suffix+str(snap.OutputNumber()).zfill(5)+".png",dpi=200)
 
 def findstarpos(simname,time,useMyr=False):
     sim = hamusims[simname]
@@ -396,20 +406,12 @@ if __name__ == "__main__":
     #labels["NOFB"] = "No star"
     #labels["UV_30"] = "UV only, 30 Msun star"
     #labels["UVWIND_30"] = "UV+Winds, 30 Msun star"
-<<<<<<< HEAD
     labels["SEED1_35MSUN_CDMASK_WINDUV"] = "Seed1, CDMask, Refine"
-=======
-<<<<<<< HEAD
-<<<<<<< HEAD
     #labels["SEED1_35MSUN_CDMASK_WINDUV"] = "Seed1, CDMask, Refine"
     labels["SEED2_35MSUN_CDMASK_WINDUV"] = "Seed2, CDMask, Refine"
-=======
     labels["SEED1_35MSUN_CDMASK_WINDUV"] = "Seed1, CDMask, Refine"
->>>>>>> 6bd52b84497a53c9a7af09f2ffe4aa3f3fd636a2
-=======
-    labels["SEED1_35MSUN_CDMASK_WINDUV"] = "Seed1, CDMask, Refine"
->>>>>>> 6bd52b84497a53c9a7af09f2ffe4aa3f3fd636a2
->>>>>>> dacd3981783136068743eff48673f6efc6d88fab
+    labels["SEED1_35MSUN_NOCDMASK_WINDUV"] = "Seed1, No CDMask, Refine"
+    labels["SEED1_35MSUN_CDMASK_UV"] = "Seed1, Refine, Just UV"
     sims = labels.keys()
     #sims = ["MASS_04"]
     for simname in sims:
@@ -421,6 +423,8 @@ if __name__ == "__main__":
         plotgradient(simname,"T",time,starpos,labels[simname],
                      xlims=[0.03,25.0],powfile=powfile,suffix="starpos")
         plotgradient(simname,"xHII",time,starpos,labels[simname],
+                     xlims=[0.03,25.0],powfile=powfile,suffix="starpos")
+        plotgradient(simname,"P",time,starpos,labels[simname],
                      xlims=[0.03,25.0],powfile=powfile,suffix="starpos")
         #plotgradient(simname,"nH",time,np.array([0.5,0.5,0.5]),"Geometric Centre",
         #             xlims=[0.03,25.0],powfile=powfile,suffix="centre")

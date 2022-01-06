@@ -45,7 +45,7 @@ def profile(snap, hydro,npoints=1000000,centre=[0.5,0.5,0.5],rcut=0.5,hcut=None)
     # TODO: Figure out sampling on centre better?
     hfunc = hydrofuncs.scale_by_units(snap, hydro)
     sphere = pymses.utils.regions.Sphere(centre, radius)
-    points = sphere.random_points(npoints)
+    points = sphere.random_points(int(npoints))
     point_dset = pymses.analysis.sample_points(amr,points)
     # TODO: IMPLEMENT HCUT HERE
     weight_func = hfunc

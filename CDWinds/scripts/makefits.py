@@ -79,13 +79,13 @@ def makelist(snap,folder,hydros,pos,radius):
     lsize = 512
     boxlen = ro.info["boxlen"]
 <<<<<<< HEAD
+<<<<<<< HEAD
     # Sample for each hydro variable
     hydros = hydros+["x","y","z","cellsize"]
-=======
-    boxlencm = ro.info["boxlen"]*ro.info["unit_length"].express(C.cm)
+    unitcm = ro.info["unit_length"].express(C.cm)/ro.info["boxlen"]
+    boxlencm = ro.info["boxlen"]*unitcm
     # Sample for each hydro variable
     hydros = hydros+["x","y","z","amrlevel"]
->>>>>>> dacd3981783136068743eff48673f6efc6d88fab
     cell_source = CellsToPoints(amr)
     samples = cell_source.flatten()
     cells = samples
@@ -94,23 +94,6 @@ def makelist(snap,folder,hydros,pos,radius):
                    "/celllist_"+hydro+"_"+str(snap.OutputNumber()).zfill(5)+".fits"
         if not os.path.exists(filename):
             print("Making", filename,"...",)
-<<<<<<< HEAD
-            if hydro not in "xyz" and hydro != "cellsize":
-                scale = hydrofuncs.scale_by_units(ro,hydro)
-                hydrocube = scale(samples)
-                #hydrocube = hydrocube.reshape([lsize,lsize,lsize])
-                minmax = (hydrocube.min(),hydrocube.max())
-            else:
-                if hydro == "x":
-                    hydrocube = cells.points[:,0]
-                if hydro == "y":
-                    hydrocube = cells.points[:,1]
-                if hydro == "z":
-                    hydrocube = cells.points[:,2]
-                if hydro == "cellsize":
-                    hydrocube = cells.get_sizes()
-                hydrocube *= boxlen
-=======
             if hydro not in "xyz" and hydro != "amrlevel":
                 scale = hydrofuncs.scale_by_units(ro,hydro)
                 hydrocube = scale(samples)
@@ -118,6 +101,7 @@ def makelist(snap,folder,hydros,pos,radius):
             else:
                 if hydro == "x":
                     hydrocube = cells.points[:,0]*boxlencm
+                    import pdb; pdb.set_trace()
                 if hydro == "y":
                     hydrocube = cells.points[:,1]*boxlencm
                 if hydro == "z":
@@ -135,7 +119,6 @@ def makelist(snap,folder,hydros,pos,radius):
                         "/info_"+str(snap.OutputNumber()).zfill(5)+".yaml"
                     makeinfofile(infoname,boxlencm,minlevel,maxlevel)
             minmax = (hydrocube.min(),hydrocube.max())
->>>>>>> dacd3981783136068743eff48673f6efc6d88fab
             print(" min/max=",minmax,"of",len(hydrocube),"cells")
             #np.save(filename, hydrocube.astype("float32"))
             hdu = fits.PrimaryHDU(hydrocube)
@@ -144,9 +127,7 @@ def makelist(snap,folder,hydros,pos,radius):
         else:
             print(filename, "exists, ignoring")
     print("Done!")
-<<<<<<< HEAD
 
-=======
                     
 def makeinfofile(infofilename,boxlencm,minref,maxref):
     # boxlen in cm, minimum level, maximum level
@@ -162,7 +143,6 @@ def makeinfofile(infofilename,boxlencm,minref,maxref):
     f.write(txt)
     f.close()
     
->>>>>>> dacd3981783136068743eff48673f6efc6d88fab
 def makedir(folder):
     try:
         os.mkdir(folder)
@@ -189,12 +169,8 @@ def runforsim(sim,nouts=None,times=None,pos=None,radius=None,makecubes=True):
         makedir(simfolder+"/"+hydro)
     for cpos in "xyz":
         makedir(simfolder+"/"+cpos)
-<<<<<<< HEAD
-    makedir(simfolder+"/cellsize")
-=======
     makedir(simfolder+"/amrlevel")
     makedir(simfolder+"/infos")
->>>>>>> dacd3981783136068743eff48673f6efc6d88fab
     if makecubes:
         run = makecube
     else:
@@ -206,18 +182,10 @@ def runforsim(sim,nouts=None,times=None,pos=None,radius=None,makecubes=True):
         for time in times:
             snap = sim.FindAtTime(time)
             run(snap,folder=simfolder,hydros=hydros,pos=pos,radius=radius)
-<<<<<<< HEAD
-
-
-if __name__=="__main__":
-    # Use IMF2, winds + UV
-    sim = hamusims["SHELL_CDMASK4"]
-=======
-    
+ 
 if __name__=="__main__":
     # Use IMF2, winds + UV
     sim = hamusims["SEED1_35MSUN_CDMASK_WINDUV"]
->>>>>>> dacd3981783136068743eff48673f6efc6d88fab
     # Pick the last output - TODO, CHANGE TO SPECIFIC OUTPUT!!!
     #nout = snap.OutputNumber()
     #nouts = [nout]
@@ -240,8 +208,4 @@ if __name__=="__main__":
     #radius = 25.0
     #pos = np.zeros(3)+0.5
     radius = 0.25
-<<<<<<< HEAD
     runforsim(sim,times=times,pos=pos,radius=radius,makecubes=False)
-=======
-    runforsim(sim,times=times,pos=pos,radius=radius,makecubes=True)
->>>>>>> dacd3981783136068743eff48673f6efc6d88fab
