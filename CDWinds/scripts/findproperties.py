@@ -17,11 +17,8 @@ import time
 
 import triaxfinder
 
-<<<<<<< HEAD
-windtemp = 2e4 # Kelvin
-=======
 windtemp = 1e5 # Kelvin
->>>>>>> dacd3981783136068743eff48673f6efc6d88fab
+
 
 def massinsnap(snap,nHthresh=0.0):
     print("Finding mass in snap", snap.iout)
@@ -95,9 +92,6 @@ def etherminsnap(snap,wind=False):
         etherm = etherm[mask]
     return np.sum(etherm)
 
-<<<<<<< HEAD
-=======
-
 def meanpressureinsnap(snap,wind=False):
     # Physical conversions
     X = 0.76
@@ -129,7 +123,7 @@ def meanpressureinsnap(snap,wind=False):
         pressure = pressure[mask]
     return np.mean(pressure)
 
->>>>>>> dacd3981783136068743eff48673f6efc6d88fab
+
 def ekininsnap(snap,wind=False):
     print("Finding kinetic energy in snap", snap.iout)
     amr = snap.amr_source(["rho","P","vel","xHII","xHeII","xHeIII"])
@@ -193,11 +187,6 @@ def Lcoolinsnap(snap,wind=False,xray=False):
 
 # Version 1: ekin only measures fast winds, etherm only hot winds
 # Version 2: Modified functions above to count both fast and hot winds for both ekin and etherm
-<<<<<<< HEAD
-def windenergyinsnap2(snap):
-    return energyinsnap(snap,wind=True)
-
-=======
 # Version 3: identical to version 2 but with higher windtemp to remove spurious values
 def windenergyinsnap3(snap):
     return energyinsnap(snap,wind=True)
@@ -205,7 +194,6 @@ def windenergyinsnap3(snap):
 def windpressureinsnap(snap):
     return meanpressureinsnap(snap,wind=True)
 
->>>>>>> dacd3981783136068743eff48673f6efc6d88fab
 def windLcoolinsnap(snap):
     return Lcoolinsnap(snap,wind=True)
 
@@ -530,10 +518,7 @@ def maxradiusatstarpos(snap,wind=False):
     amr = snap.amr_source(["rho","xHII","xHeII","xHeIII","P","vel"])
     cell_source = CellsToPoints(amr)
     cells = cell_source.flatten()
-<<<<<<< HEAD
-=======
     ion = cells["xHII"]
->>>>>>> dacd3981783136068743eff48673f6efc6d88fab
     vols = (cells.get_sizes())**3.0
     pos = cells.points+0.0
     pos[:,0] -= centre[0]
@@ -692,3 +677,4 @@ if __name__=="__main__":
     for func in [totalmomentuminsnap,radiusinsnap][::-1]:
         run(func,imfsims,"imf")
         run(func,icsims,"ic")
+        

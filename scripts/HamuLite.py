@@ -31,6 +31,9 @@ import numpy as np
 
 from collections import OrderedDict
 
+# Used for cases where folders have been tarred
+UNTARPATH = None
+# Algorithm output cache location
 CACHEPATH = None
 
 GLOBALFORCEREPLACECACHE = False
@@ -300,6 +303,7 @@ class _CodeFactory(object):
         self._name = name
 
     def Outputs(self):
+        global UNTARPATH
         outputs = OrderedDict()
         pymseslist = glob.glob(self._folder+"/output_?????")
         pymseslist2 = glob.glob(self._folder+"/output_?????.tar")
@@ -312,13 +316,25 @@ class _CodeFactory(object):
             # Loop through list of folders and tar files
             for out in mergedlist:
                 outfolder = out
-                if pymseslist[-4:] == ".tar":
+                if out[-4:] == ".tar":
                     outfolder = out[:-4]
                     # Check for existing mount point and mount if needed
-                    if not os.path.exists(outfolder)
-                        syscommand = "ratarmount "+out+" "+outfolder
-                        print("Mounting tar file as: "+syscommand)
-                        os.system(syscommand)
+                    if not os.path.exists(outfolder):
+                        # Check if we need to untar to a specific place
+                        # e.g. sometimes drives don't like being fusermounted to
+                        print(UNTARPATH)
+                        if UNTARPATH is not None:
+                            outfolder = UNTARPATH+"/"+outfolder
+                        # Check again for the new untar folder in case it's already been untarred
+                        if not os.path.exists(outfolder):
+                            try:
+                                os.makedirs(outfolder)
+                            except:
+                                pass # Probably fine. Probably.
+                            syscommand = "ratarmount "+out+" "+outfolder
+                            print("Mounting tar file as: "+syscommand)
+                            import pdb; pdb.set_trace()
+                            os.system(syscommand)
                 outnum = int(outfolder[-5:])
                 outputs[outnum] = PymsesSnapshot(self._folder,outnum,self._name)
         # Process weltgeist outputs
