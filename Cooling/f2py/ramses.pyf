@@ -70,5 +70,17 @@ python module ramses ! in
     end interface 
 end python module ramses
 
+<<<<<<< HEAD
 ! This file was auto-generated with f2py (version:2).
+=======
+<<<<<<< HEAD
+<<<<<<< HEAD
+! This file was auto-generated with f2py (version:1.21.3).
+=======
+! This file was auto-generated with f2py (version:2).
+>>>>>>> 6bd52b84497a53c9a7af09f2ffe4aa3f3fd636a2
+=======
+! This file was auto-generated with f2py (version:2).
+>>>>>>> 6bd52b84497a53c9a7af09f2ffe4aa3f3fd636a2
+>>>>>>> dacd3981783136068743eff48673f6efc6d88fab
 ! See http://cens.ioc.ee/projects/f2py2e/

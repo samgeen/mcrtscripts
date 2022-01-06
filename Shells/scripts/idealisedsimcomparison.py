@@ -21,6 +21,8 @@ import stars
 
 import matplotlib.pyplot as plt
 
+import rdmfile
+
 import snaptime
 snaptime.nopymses = True
 
@@ -181,9 +183,6 @@ def plottimefuncs(sims,hydro,diff=False,yscale="log"):
             label = hydrolabelsdiff[hydro]
             difftxt = "_diff"
         plt.plot(time/tunit,yvals/yunit,label=simname)
-        #print(yvals.min(), yvals.max(),hydro)
-    if hydro == "shellradius" and diff:
-        plt.plot(time/tunit,41.4 * (0.2 / (5.0/11.0)**0.33))
     plt.xlabel("Time / kyr")
     plt.ylabel(label)
     plt.legend(fontsize="x-small",frameon=False)
@@ -231,6 +230,7 @@ def LineColour(iline,nlines):
 
 def plotenergypartition(sims,windlum):
     plt.clf()
+    rdm = rdmfile.RDMFile(__file__)
     tunit = wunits.year*1e3
     difftxt = ""
     isim = 0
@@ -241,12 +241,16 @@ def plotenergypartition(sims,windlum):
         estartot = time * windlum
         col = LineColour(isim, len(sims))
         plt.plot(time/tunit,yvals/estartot,label=simname,color=col)
+        rdm.AddPoints(time/tunit,yvals/estartot,label=simname)
         #time, yvals = timefuncs.timefunc(sim,hydrofuncs["shellenergy"])
         #plt.plot(time/tunit,yvals/estartot,label="Shell "+simname)
     # Plot analytic solutions
     plt.plot(time/tunit,time*0.0+5.0/11.0,"k--")
     plt.plot(time/tunit,time*0.0+4.0/10.0,"k--")
     plt.plot(time/tunit,time*0.0+3.0/9.0,"k--",label="Analytic Solution")
+    rdm.AddPoints(time/tunit,time*0.0+5.0/11.0,label="Analytic Solution omega=0")
+    rdm.AddPoints(time/tunit,time*0.0+4.0/10.0,label="Analytic Solution omega=1")
+    rdm.AddPoints(time/tunit,time*0.0+3.0/9.0,label="Analytic Solution omega=2")
     plt.xlabel("Time / kyr")
     plt.ylabel("$E_b / L_w t$")
     plt.xlim([0,200])
@@ -254,7 +258,9 @@ def plotenergypartition(sims,windlum):
     plt.legend(fontsize="x-small",frameon=False)
     plt.xscale("linear")
     plt.yscale("linear")
-    plt.savefig("../plots/oned/energypartition.pdf")      
+    filename = "../plots/oned/energypartition.pdf"
+    plt.savefig(filename)  
+    rdm.Write(filename)       
 
 def calculaterana(omega,windlum,n0,time,r0):
     rho0 = n0 * wunits.mH / wunits.X
@@ -272,6 +278,7 @@ def findomegainsimname(simname):
 
 def plotexpansion(sims,windlum):
     plt.clf()
+    rdm = rdmfile.RDMFile(__file__)
     tunit = wunits.year*1e3
     difftxt = ""
     isim = 0
@@ -286,7 +293,9 @@ def plotexpansion(sims,windlum):
         omega = findomegainsimname(sim.Folder())
         rana = calculaterana(omega,windlum,1000,time,r0)
         plt.plot(time/tunit,rana/wunits.pc,label=anatxt,color="k",linestyle="--")
+        rdm.AddPoints(time/tunit,rana/wunits.pc,label=anatxt)
         plt.plot(time/tunit,yvals/wunits.pc,label=simname,color=col)
+        rdm.AddPoints(time/tunit,yvals/wunits.pc,label=simname)
         anatxt = ""
         #time, yvals = timefuncs.timefunc(sim,hydrofuncs["shellenergy"])
         #plt.plot(time/tunit,yvals/estartot,label="Shell "+simname)
@@ -299,7 +308,9 @@ def plotexpansion(sims,windlum):
     plt.legend(fontsize="x-small",frameon=False)
     plt.xscale("log")
     plt.yscale("log")
-    plt.savefig("../plots/oned/radiuscomparison.pdf")    
+    filename = "../plots/oned/radiuscomparison.pdf"
+    plt.savefig(filename) 
+    rdm.Write(filename)   
 
 def CompareSims(sims):
     """

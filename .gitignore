@@ -9,6 +9,13 @@
 *.zip
 *~
 *.pik
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+core.*
+=======
+>>>>>>> 6bd52b84497a53c9a7af09f2ffe4aa3f3fd636a2
+>>>>>>> dacd3981783136068743eff48673f6efc6d88fab
 fits/
 StellarSources/
 runs_anais/

@@ -11,7 +11,11 @@ sys.path.append("../../scripts")
 sys.path.append("../../Cooling/f2py")
 import customplot
 
+<<<<<<< HEAD
 sys.path.append("/home/stgeen0/Programming/")
+=======
+sys.path.append("/home/samgeen/Programming/")
+>>>>>>> dacd3981783136068743eff48673f6efc6d88fab
 
 import HamuLite as Hamu
 
@@ -69,12 +73,21 @@ plotfolder = "../plots/"
 
 # Simulation names
 mainsimfolder = "/home/stgeen0/MCRT/runs/" # on ISMSIM1
+<<<<<<< HEAD
 ismsim2folder = "/home/s0geen/MCRT/runs/" # on ISMSIM1
 cartsimfolder = "/home/samgeen/amun/runs/"
 if os.path.exists(cartsimfolder):
     mainsimfolder = cartsimfolder
 if os.path.exists(ismsim2folder):
     mainsimfolder = ismsim2folder
+=======
+#ismsim2folder = "/home/s0geen/MCRT/runs/" # on ISMSIM1
+cartsimfolder = "/home/samgeen/amun/runs/"
+if os.path.exists(cartsimfolder):
+    mainsimfolder = cartsimfolder
+#if os.path.exists(ismsim2folder):
+#    mainsimfolder = ismsim2folder
+>>>>>>> dacd3981783136068743eff48673f6efc6d88fab
 windshellfolder = mainsimfolder+"84_windshell/"
 simfolders = {}
 UseTestRuns = False
@@ -144,9 +157,15 @@ _MakeSims()
 
 # Set up single star module
 print("Importing singlestar...")
+<<<<<<< HEAD
 print("HACK : TURNED OFF SINGLESTAR TABLE LOAD!!!")
 startableloc = "/home/samgeen/StellarSources/Compressed/singlestar_z0.014"
 #singlestar.star_setup(startableloc)    
+=======
+#print("HACK : TURNED OFF SINGLESTAR TABLE LOAD!!!")
+startableloc = "../../../../StellarSources/Compressed/singlestar_z0.014"
+singlestar.star_setup(startableloc)    
+>>>>>>> dacd3981783136068743eff48673f6efc6d88fab
 print("Done")
 
 # Useful functions

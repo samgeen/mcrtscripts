@@ -44,16 +44,21 @@ def Bfield(nH):
     B[nH >= n0] = B0 * (nH[nH >= n0]/n0)**(gammaB/2.0)
     return B
 
+# Last saved ionisation front
+lastifront = 0.0
+
 def run():
+    global lastifront
     # Make an integrator
     integrator = weltgeist.integrator.Integrator()
     # And the setup
-    ncells = 256
+    ncells = 128
     nanalytic = np.zeros((ncells))
     n0 = 100.0 # cm^-3
     T0 = 10.0 # K
+    boxsize = 30.0*wunits.pc
     integrator.Setup(ncells = ncells, # Number of cells in the grid
-            rmax = 4.0*wunits.pc, # maximum radius of simulation volume
+            rmax = boxsize, # maximum radius of simulation volume
             n0 = n0, # atoms / cm^-3
             T0 = T0, # K
             gamma = 5.0/3.0) # monatomic gas (close enough...)
@@ -61,13 +66,26 @@ def run():
 
     # # Use an isothermal profile
     isothermal = True
+    stepout = False
+    initialwind = True
     if isothermal:
         r0 = 1.0 * wunits.pc
         hydro.nH[1:ncells] = n0 * (hydro.x[1:ncells] / r0)**(-2.0)
         # Prevent a singularity at r=0
         hydro.nH[0] = hydro.nH[1]
-        # Reset temperature
-        hydro.T[0:ncells] = T0
+    # Do a step function to the outside?
+    if stepout:
+        stepmask = np.where(hydro.x[0:ncells] > 0.03*boxsize)
+        hydro.nH[stepmask] = 1.0
+    # Reset temperature
+    hydro.T[0:ncells] = T0
+    if initialwind:
+        initmask = np.where(hydro.x[0:ncells] < 0.03*boxsize)
+        hydro.nH[initmask] = 1e4
+        hydro.T[initmask] = 1e8
+        initmask = np.where(hydro.x[0:ncells] >= 0.03*boxsize)
+        #hydro.nH[initmask] = 1e0
+        hydro.T[initmask] = T0
 
     # Now let's add a star. 
     # First, and this is very important, set the table location
@@ -90,6 +108,8 @@ def run():
     weltgeist.sources.Sources().AddSource(star)
 
     fbname = "nofb"
+    if not wind and radiation:
+        fbname = "uvonly"
     if wind and not radiation:
         fbname = "windonly"
     elif wind and radiation:
@@ -100,7 +120,7 @@ def run():
     # B field?
     magnetic = True
     # Mask the contact discontinuity
-    maskCD = True
+    maskCD = False
     weltgeist.cooling.maskContactDiscontinuity = maskCD
 
     if not NOGRAPHICS:
@@ -119,14 +139,22 @@ def run():
         extra += "maskCD_v2"
     if magnetic:
         extra += "_Bfield"
+    if not weltgeist.cooling.cooling_on:
+        extra += "_nocooling"
+    if stepout:
+        extra += "_stepout"
+    if initialwind:
+        extra += "_initialwindtest"
     folder = "../outputs/"+str(mstar)+"Msun_n"+str(int(n0))+"_w2_N"+str(ncells)+"_"+fbname+"_coolingfix2"+extra+"/"
     print("Writing sim to",folder)
     try:
         os.mkdir(folder)    
     except:
         pass
+
+
     # Output every 0.01 Myr
-    dtout = 1e4*yrins
+    dtout = 1e3*yrins
     endtime = 0.5 * 1e6*yrins
     saver = weltgeist.integrator.Saver(folder,dtout)
     integrator.AddSaver(saver)
@@ -136,6 +164,7 @@ def run():
     # Because of the way the rendering module pyglet works, it has to
     #  control the stepping. So let's make a function to give it
     def MyStep(dtRender):
+        global lastifront
         """
         Function for pyglet to run every timestep
 
@@ -162,6 +191,15 @@ def run():
         # Set the B field if needed
         if magnetic:
             hydro.Bfield[0:ncells] = Bfield(nH)
+        # Save on runaway ionisation
+        try:
+            rxhii = x[xhii > 0.1].max()
+        except:
+            rxhii = -1.0
+        if rxhii > 2.0*lastifront:
+            saver.Save()
+            lastifront = rxhii
+            print(lastifront)
         # Step the integrator
         integrator.Step()
     
