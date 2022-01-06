@@ -302,13 +302,26 @@ class _CodeFactory(object):
     def Outputs(self):
         outputs = OrderedDict()
         pymseslist = glob.glob(self._folder+"/output_?????")
+        pymseslist2 = glob.glob(self._folder+"/output_?????.tar")
         weltlist = glob.glob(self._folder+"/*.hdf5")
-        if len(pymseslist) > 0:
+        # Process pymses (RAMSES) outputs
+        if len(pymseslist) or len(pymseslist2) > 0:
             print("Making Pymses simulation...")
-            pymseslist.sort()
-            for out in pymseslist:
-                outnum = int(out[-5:])
+            mergedlist = pymseslist+pymseslist2
+            mergedlist.sort()
+            # Loop through list of folders and tar files
+            for out in mergedlist:
+                outfolder = out
+                if pymseslist[-4:] == ".tar":
+                    outfolder = out[:-4]
+                    # Check for existing mount point and mount if needed
+                    if not os.path.exists(outfolder)
+                        syscommand = "ratarmount "+out+" "+outfolder
+                        print("Mounting tar file as: "+syscommand)
+                        os.system(syscommand)
+                outnum = int(outfolder[-5:])
                 outputs[outnum] = PymsesSnapshot(self._folder,outnum,self._name)
+        # Process weltgeist outputs
         elif len(weltlist) > 0:
             print("Making Weltgeist simulation...")
             weltlist.sort()
