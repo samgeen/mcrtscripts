@@ -688,20 +688,6 @@ def runall():
     #        ("Diffuse Cloud","Dense Cloud"),compare=False)
 
     for setname, simset in simsets.items():
-        for func in [energyplusB]:
-            run(func,[simset,], # ,"UVWINDPRESS_120_DENSE"]),
-                [setname,],compare=False)
-
-
-        for func in [Bfieldenergy]:
-            run(func,[simset,], # ,"UVWINDPRESS_120_DENSE"]),
-                [setname,],compare=False)
-
-        for func in [windLemittedvscool,windenergyemitted,windmassemitted,windenergyretained,windenergy,windradius,freestreamradius]:
-            run(func,[simset,],
-                [setname,],compare=False)
-
-    for setname, simset in simsets.items():
         #setname = "physics"
         #simset = physicsset
         #    if True:
