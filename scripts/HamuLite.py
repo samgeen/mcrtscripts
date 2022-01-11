@@ -315,6 +315,7 @@ class _CodeFactory(object):
             mergedlist.sort()
             # Loop through list of folders and tar files
             for out in mergedlist:
+                simfolder = self._folder
                 outfolder = out
                 if out[-4:] == ".tar":
                     outfolder = out[:-4]
@@ -333,10 +334,11 @@ class _CodeFactory(object):
                                 pass # Probably fine. Probably.
                             syscommand = "ratarmount "+out+" "+outfolder
                             print("Mounting tar file as: "+syscommand)
-                            import pdb; pdb.set_trace()
-                            os.system(syscommand)
+                        #import pdb; pdb.set_trace()
+                        #os.system(syscommand)
+                        simfolder = outfolder[:-len("output_?????")] 
                 outnum = int(outfolder[-5:])
-                outputs[outnum] = PymsesSnapshot(self._folder,outnum,self._name)
+                outputs[outnum] = PymsesSnapshot(simfolder,outnum,self._name)
         # Process weltgeist outputs
         elif len(weltlist) > 0:
             print("Making Weltgeist simulation...")
