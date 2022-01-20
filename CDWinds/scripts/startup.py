@@ -281,6 +281,22 @@ dustforming = hydrofuncs.Hydro("Dust Forming Gas",_dustforming,
                                 ["rho","P","xHII","xHeII","xHeIII"] ,
                                  "GnBu_r","log",(None,None))
 hydrofuncs.allhydros["dustforming"] = dustforming
+# Fast-moving material, e.g.shells
+def _fastmass(ro):
+    def maskfunc(dset):
+        rho = dset["rho"]
+        vels = dset["vel"]
+        uvel = snap.info["unit_velocity"].express(C.cm/C.s)
+        spds = np.sqrt(np.sum(vels**2.0,1))
+        # Check over 5 km/s
+        mask = np.where(spd>5e5/uvel)
+        rho[not mask] = 0.0
+        return rho
+    return maskfunc
+dustforming = hydrofuncs.Hydro("Mass > 5 km/s",_fastmass,
+                                ["rho","vel"] ,
+                                 "GnBu_r","log",(None,None))
+hydrofuncs.allhydros["fastmass"] = fastmass
 # Set new colours for fields
 hydrofuncs.allhydros["P"].ColourMap("Reds")
 hydrofuncs.allhydros["Lcool"].ColourMap("BuGn")

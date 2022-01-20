@@ -572,6 +572,11 @@ if __name__=="__main__":
 
             DEBUG = False
 
+            # Separate emission maps
+            for hydro in ["ionemission","xrayemission2","coolemission","xHIImax","fastmass"][::-1]:
+                MakeFigure(simset,[timesin[-1]],name=figname,los=los,hydro=hydro,Slice=False,wsink=True,
+                            timeL=[timeL[-1]],zoom=zoom)
+
             # Single slices
             for hydro in ["Damkoehler3","Lcool","T","rho","xHII","xHeII","xHeIII","P"]:
                 MakeFigure([simset[0]],[timesin[-1]],name=figname+"singleslice",los=los,hydro=hydro,
@@ -638,10 +643,6 @@ if __name__=="__main__":
             #                plotcolorbar=(mass==30))
             #MakeFigure(simset,timesin,name=figname,los=los,hydro='maxT',Slice=False,wsink=True,timeL=timeL,zoom=zoom)
 
-            # Separate emission maps
-            for hydro in ["ionemission","xrayemission2","coolemission","xHIImax"][::-1]:
-                MakeFigure(simset,[timesin[-1]],name=figname,los=los,hydro=hydro,Slice=False,wsink=True,
-                            timeL=[timeL[-1]],zoom=zoom)
             # Temperature slice (all sims)
             MakeFigure(simset,timesin,name=figname,los=los,hydro='T',Slice=True,wsink=True,timeL=timeL,zoom=zoom,starC=True,forcerun=forcerun)
         

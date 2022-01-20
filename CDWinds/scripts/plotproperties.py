@@ -25,7 +25,7 @@ sys.path.append("/home/stgeen0/MCRT/mcrtscripts/WindInUV/")
 import solvecriteria
 #import stars
 
-Hamu.IGNOREERRORS = True
+Hamu.IGNOREERRORS = False
 Hamu.ERRORCODE = -100.0
 
 def _tsfeinsnap(snap):
@@ -590,10 +590,10 @@ def run(simfunc,simnamesets,plotlabels,compare=False,secondfuncs=None,gradient=F
             # Power law density profile
             #plotpowerlaw(ax,4.0/(7.0-2.0*wcloud),10.0,"k--")
         # Set labels etc
-        ax.set_xlim([0.0,1])
+        ax.set_xlim([0.0,0.4])
         if funcname == "momentumatstarpos" or funcname == "radius" or funcname == "windradius" or funcname == "freestreamradius":
             ax.set_xscale("log")
-            ax.set_xlim([3e-2,1])
+            ax.set_xlim([3e-2,0.4])
         #if not "MASS" in simnames[0]:
         #    ax.set_xlim([3,7.3])
         #else:
