@@ -639,7 +639,7 @@ if __name__=="__main__":
             #MakeFigure(simset,timesin,name=figname,los=los,hydro='maxT',Slice=False,wsink=True,timeL=timeL,zoom=zoom)
 
             # Separate emission maps
-            for hydro in ["ionemission","xrayemission2","coolemission"][::-1]:
+            for hydro in ["ionemission","xrayemission2","coolemission","xHIImax"][::-1]:
                 MakeFigure(simset,[timesin[-1]],name=figname,los=los,hydro=hydro,Slice=False,wsink=True,
                             timeL=[timeL[-1]],zoom=zoom)
             # Temperature slice (all sims)

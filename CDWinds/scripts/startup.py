@@ -90,8 +90,10 @@ else:
     simfolders["SEED1_35MSUN_CDMASK_WINDUV"] = windshellfolder+"23_newseed_35Msun/"
     simfolders["SEED2_35MSUN_CDMASK_WINDUV"] = windshellfolder+"30_newseed2_35Msun/"
     simfolders["SEED3_35MSUN_CDMASK_WINDUV"] = windshellfolder+"31_newseed3_35Msun/"
+    #simfolders["SEED4_35MSUN_CDMASK_WINDUV"] = windshellfolder+"32_newseed4_35Msun/"
+    #simfolders["SEED5_35MSUN_CDMASK_WINDUV"] = windshellfolder+"33_newseed5_35Msun/"
     # NOTE: Run 32 is accidentally identical to run 31
-    simfolders["SEED4_35MSUN_CDMASK_WINDUV"] = windshellfolder+"33_newseed4_35Msun/"
+    simfolders["SEED4_35MSUN_CDMASK_WINDUV"] = windshellfolder+"33_newseed5_35Msun/"
     # Big clouds
     simfolders["SEED0_35MSUN_CDMASK_WINDUV_BIGCLOUD"] = windshellfolder+"21_biggercloud_35Msun/"
     simfolders["SEED1_35MSUN_CDMASK_WINDUV_BIGCLOUD"] = windshellfolder+"22_biggercloud_newseed_35Msun/" 
@@ -100,26 +102,29 @@ else:
     simfolders["SEED1_35MSUN_CDMASK_WINDUV_NOB"] = windshellfolder+"25_newseed_35Msun_noB/"
     simfolders["SEED1_35MSUN_CDMASK_WINDUV_NOREFINE"] = windshellfolder+"26_newseed_35Msun_norefine/"
     simfolders["SEED1_35MSUN_NOCDMASK_WINDUV_NOREFINE"] = windshellfolder+"27_nocdnorefine/"
+    simfolders["SEED1_35MSUN_WINDUV_WEAKB"] = windshellfolder+"34_newseed_35Msun_vweakB/"
     # Turn off feedback sources
     simfolders["SEED1_35MSUN_CDMASK_WIND"] = windshellfolder+"28_newseed_35Msun_justwind/"
-    simfolders["SEED1_35MSUN_CDMASK_UV"] = windshellfolder+"29_newseed_35Msun_justuv/"
+    #simfolders["SEED1_35MSUN_CDMASK_UV"] = windshellfolder+"29_newseed_35Msun_justuv/"
+    simfolders["SEED1_35MSUN_CDMASK_UV"] = windshellfolder+"Y29_newseed_35Msun_justuv_nopress/"
 allsims = simfolders.keys()
 
 # Simulation sets
 seedset = ["SEED0_35MSUN_CDMASK_WINDUV",
-            "SEED1_35MSUN_CDMASK_WINDUV",
-            "SEED2_35MSUN_CDMASK_WINDUV",
-            "SEED3_35MSUN_CDMASK_WINDUV"]
-#               "SEED4_35MSUN_CDMASK_WINDUV"]
+           "SEED1_35MSUN_CDMASK_WINDUV",
+           "SEED2_35MSUN_CDMASK_WINDUV",
+           "SEED3_35MSUN_CDMASK_WINDUV",
+           "SEED4_35MSUN_CDMASK_WINDUV"]
 
 physicsset = ["SEED1_35MSUN_CDMASK_WINDUV", 
-                "SEED1_35MSUN_NOCDMASK_WINDUV",
-                "SEED1_35MSUN_CDMASK_WINDUV_NOREFINE",
-                "SEED1_35MSUN_NOCDMASK_WINDUV_NOREFINE"]
+              "SEED1_35MSUN_NOCDMASK_WINDUV",
+              "SEED1_35MSUN_CDMASK_WINDUV_NOREFINE",
+              "SEED1_35MSUN_NOCDMASK_WINDUV_NOREFINE",
+              "SEED1_35MSUN_WINDUV_WEAKB"]
 
 fbset = ["SEED1_35MSUN_CDMASK_WINDUV", 
-            "SEED1_35MSUN_CDMASK_WIND", 
-            "SEED1_35MSUN_CDMASK_UV"]
+         "SEED1_35MSUN_CDMASK_WIND", 
+         "SEED1_35MSUN_CDMASK_UV"]
 # "SEED1_35MSUN_CDMASK_WINDUV_NOB" - no star yet
 
 simsets = {"fb":fbset, "seeds":seedset, "physics":physicsset}

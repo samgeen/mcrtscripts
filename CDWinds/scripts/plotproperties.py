@@ -25,6 +25,9 @@ sys.path.append("/home/stgeen0/MCRT/mcrtscripts/WindInUV/")
 import solvecriteria
 #import stars
 
+Hamu.IGNOREERRORS = True
+Hamu.ERRORCODE = -100.0
+
 def _tsfeinsnap(snap):
     mgas = 1e4
     sink = sinks.FindSinks(snap)
@@ -703,7 +706,7 @@ def runall():
             #         windenergyemitted,windmassemitted,
             #         windenergyretained,windenergy,windradius,freestreamradius]:
 
-        for func in [windpressure,momentumatstarpos,maxradiusatstarpos,maxwindradiusatstarpos,
+        for func in [radius,windpressure,momentumatstarpos,maxradiusatstarpos,maxwindradiusatstarpos,
                      windLemittedvscool,windenergyemitted,windmassemitted,
                      windenergyretained,windenergy,windradius,freestreamradius]:
             run(func,[simset,],

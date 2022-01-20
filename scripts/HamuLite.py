@@ -33,10 +33,31 @@ from collections import OrderedDict
 
 # Used for cases where folders have been tarred
 UNTARPATH = None
+
 # Algorithm output cache location
 CACHEPATH = None
 
+# Force replacement of the cache regardless of whether one exists or not
 GLOBALFORCEREPLACECACHE = False
+
+# Error code to place in ignored error outputs
+ERRORCODE = None
+
+# Ignore errors from outputs not found?
+IGNOREERRORS = False
+
+# Class thats wrap a function around a possible error 
+class ErrFunc(object):
+    def __init__(self,func):
+        self._func = func
+
+    def __call__(self,snap,*args,**kwargs):
+        # Call the function and check it works ok
+        try:
+            ret = func(snap,*args,**kwargs)
+        except ValueError:
+            print("ERROR FOUND, IGNORING OUTPUT...")
+            return ERRORCODE
 
 class CacheFile(object):
     def __init__(self, snapshot, algorithm):
@@ -111,7 +132,7 @@ class Algorithm(object):
         '''
         Run for a single snapshot
         '''
-        global GLOBALFORCEREPLACECACHE
+        global GLOBALFORCEREPLACECACHE, IGNOREERRORS
         self._args = args
         self._kwargs = kwargs
         # First, get the cache filename and compare against existing files
@@ -125,8 +146,16 @@ class Algorithm(object):
                 output = self._RunAlgorithm(snap)
                 cache.Save(output)
         else:
-            output = self._RunAlgorithm(snap)
-            cache.Save(output)
+            if not IGNOREERRORS:
+                output = self._RunAlgorithm(snap)
+                cache.Save(output)
+            else:
+                try:
+                    output = self._RunAlgorithm(snap)
+                    cache.Save(output)
+                except ValueError:
+                    print("Error loading file", snap.Folder(), "ignoring...")
+                return ERRORCODE
         return output
 
     def Cached(self, snap, *args, **kwargs):
@@ -233,6 +262,9 @@ class PymsesSnapshot(object):
         '''
         return CacheTime(self) #self._snapshot.info["time"] 
 
+    def Folder(self):
+        return self._folder
+                          
 class WeltgeistSnapshot(object):
     def __init__(self,folder,filename,name=None):
         self._snap = None
