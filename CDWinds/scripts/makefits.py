@@ -29,7 +29,11 @@ def makecube(snap,folder,hydros,pos,radius):
     lsize = 512
     boxlen = ro.info["boxlen"]
     pos = np.array(pos)
+    if radius is None:
+        radius = 0.5*boxlen
     coords = np.linspace(-0.5,0.5,lsize)*2.0*radius
+    if pos is None:
+        pos = [radius,radius,radius]
     grid = np.meshgrid(coords+pos[0],coords+pos[1],coords+pos[2])
     points = np.array([grid[0].flatten(),grid[1].flatten(),grid[2].flatten()])
     points = points.T
@@ -78,8 +82,6 @@ def makelist(snap,folder,hydros,pos,radius):
     lmin = ro.info["levelmin"]
     lsize = 512
     boxlen = ro.info["boxlen"]
-    # Sample for each hydro variable
-    hydros = hydros+["x","y","z","cellsize"]
     unitcm = ro.info["unit_length"].express(C.cm)/ro.info["boxlen"]
     boxlencm = ro.info["boxlen"]*unitcm
     # Sample for each hydro variable
@@ -99,7 +101,6 @@ def makelist(snap,folder,hydros,pos,radius):
             else:
                 if hydro == "x":
                     hydrocube = cells.points[:,0]*boxlencm
-                    import pdb; pdb.set_trace()
                 if hydro == "y":
                     hydrocube = cells.points[:,1]*boxlencm
                 if hydro == "z":
@@ -204,4 +205,4 @@ if __name__=="__main__":
     for simname in simnames:
         sim = hamusims[simname]
         times = [(t,"MyrFirstStar") for t in [0.1,0.2,0.3]]
-        runforsim(simname,times)
+        runforsim(sim,times=times,makecubes=False)
