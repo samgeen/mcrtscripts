@@ -78,8 +78,6 @@ def makelist(snap,folder,hydros,pos,radius):
     lmin = ro.info["levelmin"]
     lsize = 512
     boxlen = ro.info["boxlen"]
-<<<<<<< HEAD
-<<<<<<< HEAD
     # Sample for each hydro variable
     hydros = hydros+["x","y","z","cellsize"]
     unitcm = ro.info["unit_length"].express(C.cm)/ro.info["boxlen"]
@@ -149,22 +147,14 @@ def makedir(folder):
     except:
         pass
 
-def makefitssim(sim,nouts=None,times=None,pos=None,radius=None,makecubes=True):
+def runforsim(sim,nouts=None,times=None,pos=None,radius=None,makecubes=True):
     #hydros = ["vx","vy","vz","rho","T","xHII","Bx","By","Bz","Bmag"]
     hydros = ["T","rho","xHII","P","xHeII","xHeIII","Bx","By","Bz","vx","vy","vz",
               "NpFUV","NpHII","NpHeII","NpHeIII"][::-1]
     simname = sim.Name()
+    # Make folders
     simfolder = "../cubes/fits/"+simname
     makedir(simfolder)
-    snap = sim.Snapshots()[0]
-    myr = snap.RawData().info["unit_time"].express(C.Myr)
-    if nouts is not None:
-        times = []
-        timedict = {snap.OutputNumber():snap.Time() for snap in sim.Snapshots()}
-        for nout in nouts:
-            times.append(timedict[nout])
-    else:
-        times = [t/myr for t in times]
     for hydro in hydros:
         makedir(simfolder+"/"+hydro)
     for cpos in "xyz":
@@ -180,10 +170,10 @@ def makefitssim(sim,nouts=None,times=None,pos=None,radius=None,makecubes=True):
             run(snap,folder=simfolder,hydros=hydros,pos=pos,radius=radius)
     else:
         for time in times:
-            snap = sim.FindAtTime(time)
+            snap = timefuncs.findsnapshot(sim,time)
             run(snap,folder=simfolder,hydros=hydros,pos=pos,radius=radius)
  
-def runforsim(sim):
+def testrun():
     # Use IMF2, winds + UV
     sim = hamusims["SEED1_35MSUN_CDMASK_WINDUV"]
     # Pick the last output - TODO, CHANGE TO SPECIFIC OUTPUT!!!
@@ -196,19 +186,22 @@ def runforsim(sim):
     snap = sim.Snapshots()[50]
     myr = snap.RawData().info["unit_time"].express(C.Myr)
     #times = [snap.Time()*myr for snap in sim.Snapshots()] # np.linspace(0.0,1.0,11)+3.2 # Myr
-    times = [snap.Time()*myr] # np.linspace(0.0,1.0,11)+3.2 # Myr
-    print(snap.OutputNumber())
+    times = [(snap.Time()*myr,"Myr"),] # np.linspace(0.0,1.0,11)+3.2 # Myr
     #snap = sim.FindAtTime(times[0]/myr)
-    boxlen = snap.RawData().info["boxlen"]
+    #boxlen = snap.RawData().info["boxlen"]
     # Pick the first star
-    stars = stellars.FindStellar(snap)
-    pos = [stars.x[0],stars.y[0],stars.z[0]]
-    pos = np.array(pos)/boxlen
-    print(pos)
+    #stars = stellars.FindStellar(snap)
+    #pos = [stars.x[0],stars.y[0],stars.z[0]]
+    #pos = np.array(pos)/boxlen
+    #print(pos)
     #radius = 25.0
     #pos = np.zeros(3)+0.5
     radius = 0.25
-    makefitsforsim(sim,times=times,pos=pos,radius=radius,makecubes=False)
+    runforsim(sim,times=times,pos=pos,radius=radius,makecubes=False)
 
 if __name__=="__main__":
-    runforsim(sim)
+    simnames = seedset
+    for simname in simnames:
+        sim = hamusims[simname]
+        times = [(t,"MyrFirstStar") for t in [0.1,0.2,0.3]]
+        runforsim(simname,times)

@@ -55,3 +55,32 @@ def timefunc(sim,func,noarray=False,verbose=False,processes=1,*args,**kwargs):
     if verbose:
         print(times,vals)
     return times, vals
+
+def findsnapshot(sim,timetuple):
+    # Function for finding at a time with different criteria (e.g. Myr, since first star)
+    simname = sim.Name()
+    # Time stuff
+    try:
+        snap = sim.Snapshots()[0]
+    except:
+        print("ERROR FINDING ANY SNAPSHOTS IN", simname)
+        print(sim.Folder())
+        raise ValueError
+    myr   = snap.RawData().info["unit_time"].express(C.Myr)
+    time, timeunits = timetuple
+    tcreated, sfe = starrelations.runforsim(simname,"firsttime")
+    tcreatedcode = tcreated/myr
+    if timeunits == "Myr":
+        time /= myr
+    if timeunits == "MyrFirstStar":
+        time += tcreated # start from time first star created
+        time /= myr
+    if timeunits == "code":
+        pass # already ok
+    if timeunits == "codeFirstStar":
+        time += tcreated
+    if timeunits == "outputNumber":
+        outsnaps = {snap.OutputNumber():snap for snap in sim.Snapshots()}
+        time = outsnaps[int(time)].Time()
+    return sim.FindAtTime(time)
+

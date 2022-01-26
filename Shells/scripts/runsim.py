@@ -52,11 +52,11 @@ def run():
     # Make an integrator
     integrator = weltgeist.integrator.Integrator()
     # And the setup
-    ncells = 128
+    ncells = 2048
     nanalytic = np.zeros((ncells))
-    n0 = 100.0 # cm^-3
+    n0 = 10000.0 # cm^-3
     T0 = 10.0 # K
-    boxsize = 30.0*wunits.pc
+    boxsize = 4.0*wunits.pc
     integrator.Setup(ncells = ncells, # Number of cells in the grid
             rmax = boxsize, # maximum radius of simulation volume
             n0 = n0, # atoms / cm^-3
@@ -67,7 +67,7 @@ def run():
     # # Use an isothermal profile
     isothermal = True
     stepout = False
-    initialwind = True
+    initialwind = False
     if isothermal:
         r0 = 1.0 * wunits.pc
         hydro.nH[1:ncells] = n0 * (hydro.x[1:ncells] / r0)**(-2.0)
@@ -103,7 +103,7 @@ def run():
     #    star = stellarsource.StellarSource(i,0.014,radiation=True,wind=True,rotating=True)
     mstar = 35
     radiation = True
-    wind = True
+    wind = False
     star = stellarsource.StellarSource(mstar,0.014,radiation=radiation,wind=wind,rotating=True)
     weltgeist.sources.Sources().AddSource(star)
 
@@ -120,7 +120,7 @@ def run():
     # B field?
     magnetic = True
     # Mask the contact discontinuity
-    maskCD = False
+    maskCD = True
     weltgeist.cooling.maskContactDiscontinuity = maskCD
 
     if not NOGRAPHICS:
