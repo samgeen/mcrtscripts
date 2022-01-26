@@ -7,7 +7,9 @@ from startup import *
 
 from pymses.utils import constants as C
 
-import columndensity, rayMap, sliceMap, sinks, ysos, starrelations, listfigures, findproperties
+import columndensity, rayMap, sliceMap, sinks, ysos,
+import starrelations, listfigures, findproperties
+import makefits
 
 from matplotlib import rc
 import matplotlib.cm as mplcm
@@ -536,7 +538,7 @@ if __name__=="__main__":
                 imovie += 1
                 timein = (tmovie,"MyrFirstStar")
                 tmovieL = str(tmovie)+r' Myr'
-                coolhydros = ["coolemission","ionemission","xrayemission2"]
+                coolhydros = ["coolemission","ionemission4","xrayemission2"]
                 movienum = str(imovie).zfill(3)
                 MakeFigure(simset,[timein],name=figname+"movie"+movienum,los=los,
                             hydro=coolhydros,Slice=False,wsink=True,
@@ -546,7 +548,7 @@ if __name__=="__main__":
                 #               Slice=True,wsink=True,starC=True,
                 #               timeL=[tmovieL],zoom=zoom,forcerun=True)
             # Merged emission map - just wind
-            coolhydros = ["coolemission","ionemission","xrayemission2"]
+            coolhydros = ["coolemission","ionemission4","xrayemission2"]
             timesmerged = [0.1,0.2,0.3]
             timesmergedIn = [(time,"MyrFirstStar") for time in timesmerged]
             timesmergedL = [str(x)+r' Myr' for x in timesmerged]
@@ -572,8 +574,8 @@ if __name__=="__main__":
 
             DEBUG = False
 
-            # Separate emission maps
-            for hydro in ["ionemission","xrayemission2","coolemission","xHIImax","fastmass"][::-1]:
+            # Separate emission maps and related images
+            for hydro in ["ionemission4","xrayemission2","coolemission","NH","xHIImax","fastmass6"][::-1]:
                 MakeFigure(simset,[timesin[-1]],name=figname,los=los,hydro=hydro,Slice=False,wsink=True,
                             timeL=[timeL[-1]],zoom=zoom)
 

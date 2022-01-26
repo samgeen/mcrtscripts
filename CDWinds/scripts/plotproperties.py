@@ -396,12 +396,14 @@ def run(simfunc,simnamesets,plotlabels,compare=False,secondfuncs=None,gradient=F
             #xticks = [2,3,4,5,6,7,8,9,10]
         if funcname == "momentumatstarpos" and not gradient:
             textloc = 0.1    
-        if funcname == "radius" or funcname == "radius2":
+        if "radius" in funcname:
             #tlim = 1e-6
-            if not compare:
-                ax.set_ylim([0.08,110])
+            #if not compare:
+            #    ax.set_ylim([0.08,110])
             #ax.set_xlabel("Time after 1st star formed / Myr")
             textloc = 0.1
+            ax.set_xscale("linear")
+            ax.set_yscale("linear")
         #if funcname == "windradius":
             #tlim = 1e-6
             #ax.set_xlabel("Time after 1st star formed / Myr")
@@ -591,9 +593,9 @@ def run(simfunc,simnamesets,plotlabels,compare=False,secondfuncs=None,gradient=F
             #plotpowerlaw(ax,4.0/(7.0-2.0*wcloud),10.0,"k--")
         # Set labels etc
         ax.set_xlim([0.0,0.4])
-        if funcname == "momentumatstarpos" or funcname == "radius" or funcname == "windradius" or funcname == "freestreamradius":
-            ax.set_xscale("log")
-            ax.set_xlim([3e-2,0.4])
+        #if funcname == "momentumatstarpos" or funcname == "radius" or funcname == "windradius" or funcname == "freestreamradius":
+            #ax.set_xscale("log")
+            #ax.set_xlim([3e-2,0.4])
         #if not "MASS" in simnames[0]:
         #    ax.set_xlim([3,7.3])
         #else:

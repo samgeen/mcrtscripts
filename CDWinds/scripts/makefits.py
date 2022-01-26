@@ -149,7 +149,7 @@ def makedir(folder):
     except:
         pass
 
-def runforsim(sim,nouts=None,times=None,pos=None,radius=None,makecubes=True):
+def makefitssim(sim,nouts=None,times=None,pos=None,radius=None,makecubes=True):
     #hydros = ["vx","vy","vz","rho","T","xHII","Bx","By","Bz","Bmag"]
     hydros = ["T","rho","xHII","P","xHeII","xHeIII","Bx","By","Bz","vx","vy","vz",
               "NpFUV","NpHII","NpHeII","NpHeIII"][::-1]
@@ -183,7 +183,7 @@ def runforsim(sim,nouts=None,times=None,pos=None,radius=None,makecubes=True):
             snap = sim.FindAtTime(time)
             run(snap,folder=simfolder,hydros=hydros,pos=pos,radius=radius)
  
-if __name__=="__main__":
+def runforsim(sim):
     # Use IMF2, winds + UV
     sim = hamusims["SEED1_35MSUN_CDMASK_WINDUV"]
     # Pick the last output - TODO, CHANGE TO SPECIFIC OUTPUT!!!
@@ -208,4 +208,7 @@ if __name__=="__main__":
     #radius = 25.0
     #pos = np.zeros(3)+0.5
     radius = 0.25
-    runforsim(sim,times=times,pos=pos,radius=radius,makecubes=False)
+    makefitsforsim(sim,times=times,pos=pos,radius=radius,makecubes=False)
+
+if __name__=="__main__":
+    runforsim(sim)

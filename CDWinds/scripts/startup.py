@@ -127,7 +127,7 @@ fbset = ["SEED1_35MSUN_CDMASK_WINDUV",
          "SEED1_35MSUN_CDMASK_UV"]
 # "SEED1_35MSUN_CDMASK_WINDUV_NOB" - no star yet
 
-simsets = {"fb":fbset, "seeds":seedset, "physics":physicsset}
+simsets = {"fb":fbset, "physics":physicsset, "seeds":seedset}
     
 # Populate list of Hamu simulations
 # TODO - make these on demand rather than on loadup?
@@ -214,10 +214,16 @@ def alpha_B_HII(T):
     return a   
 
 # Add bespoke derived hydro variables
-_ionemissfunc = lambda ro: lambda dset: dset["rho"]**2 * dset["xHII"]
-ionemission = hydrofuncs.Hydro("Warm Emission",_ionemissfunc,
+def _ionemissfunc4(ro):
+    def ionfuncinner(dset):
+        xHII = dset["xHII"]
+        emiss = (dset["rho"] * xHII)**2
+        emiss[xHII < 1e-4] = 1e-20
+        return emiss
+    return ionfuncinner
+ionemission4 = hydrofuncs.Hydro("Warm Emission",_ionemissfunc4,
                                ["rho","xHII"],"PuRd_r","log",(None,None))
-hydrofuncs.allhydros["ionemission"] = ionemission
+hydrofuncs.allhydros["ionemission4"] = ionemission4
 # ---
 def _xrayfunc(ro):
     mufunc = lambda dset: 1./(0.76*(1.+dset["xHII"]) + \
@@ -282,21 +288,30 @@ dustforming = hydrofuncs.Hydro("Dust Forming Gas",_dustforming,
                                  "GnBu_r","log",(None,None))
 hydrofuncs.allhydros["dustforming"] = dustforming
 # Fast-moving material, e.g.shells
-def _fastmass(ro):
+def _fastmass6(ro):
     def maskfunc(dset):
-        rho = dset["rho"]
+        NH = dset["rho"]*ro.info["unit_density"].express(C.H_cc)*ro.info["unit_length"].express(C.cm)
         vels = dset["vel"]
-        uvel = snap.info["unit_velocity"].express(C.cm/C.s)
-        spds = np.sqrt(np.sum(vels**2.0,1))
-        # Check over 5 km/s
-        mask = np.where(spd>5e5/uvel)
-        rho[not mask] = 0.0
-        return rho
+        uvel = ro.info["unit_velocity"].express(C.cm/C.s)
+        #print("VELS SHAPE", vels.shape)
+        spds = np.sqrt(np.sum(vels**2.0,2))*uvel
+        #print("SPD MINMAX", spds.min(), spds.max())
+        # Check over 10 km/s
+        #print("FASTMASS:")
+        #print (NH.shape)
+        #print("BEFORE", NH)
+        #print("SPDS:", spds)
+        #print(mask)
+        spdlimit = 5 * 1e5 # 5 km/s
+        NH[spds < spdlimit] = NH[spds < spdlimit]*1e-20
+        #print("AFTER", NH)
+        #print("---")
+        return NH
     return maskfunc
-dustforming = hydrofuncs.Hydro("Mass > 5 km/s",_fastmass,
+fastmass6 = hydrofuncs.Hydro("$N_H(>5~$km/s$)$",_fastmass6,
                                 ["rho","vel"] ,
-                                 "GnBu_r","log",(None,None))
-hydrofuncs.allhydros["fastmass"] = fastmass
+                                 "GnBu_r","log",(20,23.7),surfacequantity=True)
+hydrofuncs.allhydros["fastmass6"] = fastmass6
 # Set new colours for fields
 hydrofuncs.allhydros["P"].ColourMap("Reds")
 hydrofuncs.allhydros["Lcool"].ColourMap("BuGn")
