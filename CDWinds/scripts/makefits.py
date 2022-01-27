@@ -7,7 +7,7 @@ from startup import *
 
 from astropy.io import fits
 
-import stellars
+import rdmfile, sinks, stellars
 
 from pymses.utils import constants as C 
 from pymses.filters import CellsToPoints
@@ -147,6 +147,51 @@ def makedir(folder):
         os.mkdir(folder)
     except:
         pass
+
+def makestarfiles(snap,folder):
+    # Massive star files
+    stellar = stellars.FindStellar(snap.RawData())
+    sink = sinks.FindSinks(snap.RawData())
+    snaptimeMyr = snap.Time()*snap.info["unit_time"].express(C.Myr)
+    # Remove mass from sinks in massive stars and make stellar positions
+    stellarx = []
+    stellary = []
+    stellarz = []
+    stellarvx = []
+    stellarvy = []
+    stellarvz = []
+    scale_v = snap.info["unit_velocity"].express(C.cm/C.s)/1e5
+    for sinkid, mass in zip(stellar.sinkid, stellar.mass):
+        mask = sink.id == sinkid
+        sink.mass[mask] -= mass
+        stellarx.append(sink.x[mask])
+        stellary.append(sink.y[mask])
+        stellarz.append(sink.z[mask])
+        stellarvx.append(sink.vx[mask])
+        stellarvy.append(sink.vy[mask])
+        stellarvz.append(sink.vz[mask])
+    stellarx = np.array(stellarx)
+    stellary = np.array(stellary)
+    stellarz = np.array(stellarz)
+    stellarvx = np.array(stellarvx)
+    stellarvy = np.array(stellarvy)
+    stellarvz = np.array(stellarvz)
+    # Write the sink files
+    filename = folder+"/sinks/sinks_"+str(snap.OutputNumber()).zfill(5)+".fits"
+    rdm = rdmfile.RDMFile("sinks")
+    rdm.AddPoints(sink.x,sink.y,sink.z,"position/pc")
+    rdm.AddPoints(sink.vx*scale_v,sink.vy*scale_v,sink.vz*scale_v,"velocity")
+    rdm.AddArray(sink.mass,"mass/Msun")
+    rdm.Write(filename) 
+    # Write the massive star files
+    stellarage = snaptimeMyr - stellar.tcreated
+    filename = folder+"/massivestars/massivestars_"+str(snap.OutputNumber()).zfill(5)+".fits"
+    rdm = rdmfile.RDMFile("massivestars")
+    rdm.AddPoints(stellarx,stellary,stellarz,"position/pc")
+    rdm.AddPoints(stellarvx*scale_v,stellarvy*scale_v,stellarvz*scale_v,"velocity")
+    rdm.AddArray(stellar.mass,"mass/Msun")
+    rdm.AddArray(stellarage,"Age/Myr")
+    rdm.Write(filename) 
 
 def runforsim(sim,nouts=None,times=None,pos=None,radius=None,makecubes=True):
     #hydros = ["vx","vy","vz","rho","T","xHII","Bx","By","Bz","Bmag"]
