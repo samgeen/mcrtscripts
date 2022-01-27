@@ -7,7 +7,7 @@ from startup import *
 
 from pymses.utils import constants as C
 
-import columndensity, rayMap, sliceMap, sinks, ysos,
+import columndensity, rayMap, sliceMap, sinks, ysos
 import starrelations, listfigures, findproperties
 import makefits
 

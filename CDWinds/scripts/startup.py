@@ -106,7 +106,7 @@ else:
     # Turn off feedback sources
     simfolders["SEED1_35MSUN_CDMASK_WIND"] = windshellfolder+"28_newseed_35Msun_justwind/"
     #simfolders["SEED1_35MSUN_CDMASK_UV"] = windshellfolder+"29_newseed_35Msun_justuv/"
-    simfolders["SEED1_35MSUN_CDMASK_UV"] = windshellfolder+"Y29_newseed_35Msun_justuv_nopress/"
+    simfolders["SEED1_35MSUN_CDMASK_UV"] = windshellfolder+"Z29_newseed_35Msun_justuv_norefine/"
 allsims = simfolders.keys()
 
 # Simulation sets
