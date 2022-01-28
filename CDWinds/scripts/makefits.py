@@ -85,7 +85,7 @@ def makelist(snap,folder,hydros,pos,radius):
     unitcm = ro.info["unit_length"].express(C.cm)/ro.info["boxlen"]
     boxlencm = ro.info["boxlen"]*unitcm
     # Sample for each hydro variable
-    hydros = hydros+["x","y","z","amrlevel"]
+    hydros = ["stars"]+hydros+["x","y","z","amrlevel"]
     cell_source = CellsToPoints(amr)
     samples = cell_source.flatten()
     cells = samples
@@ -117,6 +117,9 @@ def makelist(snap,folder,hydros,pos,radius):
                     infoname = folder+"/infos/"+\
                         "/info_"+str(snap.OutputNumber()).zfill(5)+".yaml"
                     makeinfofile(infoname,boxlencm,minlevel,maxlevel)
+                if hydro == "stars":
+                    # Make star file
+                    makestarfiles(snap,folder)
             minmax = (hydrocube.min(),hydrocube.max())
             print(" min/max=",minmax,"of",len(hydrocube),"cells")
             #np.save(filename, hydrocube.astype("float32"))
@@ -191,6 +194,32 @@ def makestarfiles(snap,folder):
     rdm.AddPoints(stellarvx*scale_v,stellarvy*scale_v,stellarvz*scale_v,"velocity")
     rdm.AddArray(stellar.mass,"mass/Msun")
     rdm.AddArray(stellarage,"Age/Myr")
+    # Get derived stellar properties
+    nstars = len(stellarage)
+    radii = np.zeros(nstars)
+    Teffs = np.zeros(nstars)
+    currmasses = np.zeros(nstars)
+    surfacegs = np.zeros(nstars)
+
+    for i, mass, age in zip(range(0,nstars), stellar.mass, stellarage):
+        # Get stellar radius / cm
+        ageins = age * Myrins
+        radius = singlestar.star_radius(mass,ageins)
+        radii[i] = radius
+        # Get stellar effective temperature / K
+        Teff = singlestar.star_Teff(mass,ageins)
+        Teffs[i] = Teff
+        # Get stellar current mass / g
+        energy, massloss = energy_mass += singlestar.star_winds(mass,0.0,ageins)
+        currmassing = mass*Msuning - massloss
+        currmasses[i] = currmassing
+        # Get stellar surface gravity
+        surfaceg = G * currmassing / radius**2
+        surfacegs[i] = surfaceg
+    rdm.AddArray(radii,"radius/cm")
+    rdm.AddArray(Teffs,"Teff/K")
+    rdm.AddArray(currmasses,"Current Mass/g")
+    rdm.AddArray(surfacegs,"Surface Gravity/cm/s/s")
     rdm.Write(filename) 
 
 def runforsim(sim,nouts=None,times=None,pos=None,radius=None,makecubes=True):
@@ -207,6 +236,8 @@ def runforsim(sim,nouts=None,times=None,pos=None,radius=None,makecubes=True):
         makedir(simfolder+"/"+cpos)
     makedir(simfolder+"/amrlevel")
     makedir(simfolder+"/infos")
+    makedir(simfolder+"/sinks")
+    makedir(simfolder+"/massivestars")
     if makecubes:
         run = makecube
     else:
