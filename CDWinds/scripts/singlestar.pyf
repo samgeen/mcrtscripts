@@ -5,7 +5,7 @@ python module singlestar ! in
     interface  ! in :singlestar
         subroutine star_setup(tableloc) ! in :singlestar:../singlestar_f2py.f90
             use singlestar_module
-            character*(*) intent(in) :: tableloc
+            character*200 intent(in) :: tableloc
         end subroutine star_setup
         subroutine star_reset ! in :singlestar:../singlestar_f2py.f90
             use singlestar_module
@@ -37,6 +37,18 @@ python module singlestar ! in
             real(kind=8) intent(in) :: dt
             real(kind=8) dimension(3),intent(out) :: energies
         end subroutine star_bandenergies
+        subroutine star_radius(mass_ini,t,radius) ! in :singlestar:../singlestar_f2py.f90
+            use singlestar_module
+            real(kind=8) intent(in) :: mass_ini
+            real(kind=8) intent(in) :: t
+            real(kind=8) intent(out) :: radius
+        end subroutine star_radius
+        subroutine star_teff(mass_ini,t,teff) ! in :singlestar:../singlestar_f2py.f90
+            use singlestar_module
+            real(kind=8) intent(in) :: mass_ini
+            real(kind=8) intent(in) :: t
+            real(kind=8) intent(out) :: teff
+        end subroutine star_teff
     end interface 
 end python module singlestar
 

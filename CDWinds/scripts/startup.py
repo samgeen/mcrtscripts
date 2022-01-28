@@ -107,6 +107,7 @@ else:
     simfolders["SEED1_35MSUN_CDMASK_WIND"] = windshellfolder+"28_newseed_35Msun_justwind/"
     #simfolders["SEED1_35MSUN_CDMASK_UV"] = windshellfolder+"29_newseed_35Msun_justuv/"
     simfolders["SEED1_35MSUN_CDMASK_UV"] = windshellfolder+"Z29_newseed_35Msun_justuv_norefine/"
+    simfolders["SEED1_35MSUN_CDMASK_NOFB"] = windshellfolder+"N23_nofb/"
 allsims = simfolders.keys()
 
 # Simulation sets
@@ -124,7 +125,8 @@ physicsset = ["SEED1_35MSUN_CDMASK_WINDUV",
 
 fbset = ["SEED1_35MSUN_CDMASK_WINDUV", 
          "SEED1_35MSUN_CDMASK_WIND", 
-         "SEED1_35MSUN_CDMASK_UV"]
+         "SEED1_35MSUN_CDMASK_UV",
+         "SEED1_35MSUN_CDMASK_NOFB"]
 # "SEED1_35MSUN_CDMASK_WINDUV_NOB" - no star yet
 
 simsets = {"fb":fbset, "physics":physicsset, "seeds":seedset}
