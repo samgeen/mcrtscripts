@@ -151,7 +151,7 @@ _MakeSims()
 # Set up single star module
 print("Importing singlestar...")
 
-startableloc = "/home/stgeen0/StellarSources/Compressed/singlestar_z0.014"
+startableloc = "/home/stgeen0/StellarSources/Outputs/singlestar_z0.014"
 singlestar.star_setup(startableloc)    
 
 print("Done")
