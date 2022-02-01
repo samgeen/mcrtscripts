@@ -10,7 +10,7 @@ if __name__=="__main__":
     # Should we force some figures to run?
     forcerun=True
 
-    setname = ["seed1only"]
+    setname = "seed1only"
     simset = ["SEED1_35MSUN_CDMASK_WINDUV"]
 
     zoom = 0.5
