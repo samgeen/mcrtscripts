@@ -15,6 +15,7 @@ if __name__=="__main__":
 
     zoom = 0.5
     time = 0.2 # Myr after star born
+    times = [time]
     setname = setname+str(time)+"Myr_"+"zoom"+str(zoom)+"_"
     setname = setname.replace(".","p") # the extra dot confuses latex
     timeL = [str(x)+r' Myr' for x in times]
@@ -46,5 +47,5 @@ if __name__=="__main__":
                                             "GnBu_r","log",(20,23.7),surfacequantity=True)
             hydro = "velocityslice"+str(vmin)+"_v"+los
             hydrofuncs.allhydros[hydro] = velocityfunc
-            MakeFigure(simset,timesin,name=figname,los=los,hydro=hydro,Slice=False,wsink=True,
-                       timeL=timeL,zoom=zoom,velocitybins=True)
+            makeImageGridTime.MakeFigure(simset,timesin,name=figname,los=los,hydro=hydro,Slice=False,wsink=True,
+                                         timeL=timeL,zoom=zoom,velocitybins=True)
