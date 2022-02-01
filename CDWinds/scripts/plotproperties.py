@@ -126,7 +126,11 @@ def windradiusratio(simname):
     sim = hamusims[simname]
     tcreated, sfe = starrelations.runforsim(simname,"firsttime")  
     t,ri = timefuncs.timefunc(sim,radiusinsnap,processes=nprocs)
-    t,rw = timefuncs.timefunc(sim,windradiusinsnap,processes=nprocs)
+    # Don't waste time on this if there are no winds in the run
+    if "WIND" in simname:
+        t,rw = timefuncs.timefunc(sim,windradiusinsnap,processes=nprocs)
+    else:
+        rw = ri * 0.0
     # HACK - fix boxlen error
     #boxlen = 0.121622418993404E+03
     #r *= boxlen
@@ -708,7 +712,7 @@ def runall():
             #         windenergyemitted,windmassemitted,
             #         windenergyretained,windenergy,windradius,freestreamradius]:
 
-        for func in [radius,windpressure,momentumatstarpos,maxradiusatstarpos,maxwindradiusatstarpos,
+        for func in [windradiusratio,radius,windpressure,momentumatstarpos,maxradiusatstarpos,maxwindradiusatstarpos,
                      windLemittedvscool,windenergyemitted,windmassemitted,
                      windenergyretained,windenergy,windradius,freestreamradius]:
             run(func,[simset,],

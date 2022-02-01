@@ -45,7 +45,7 @@ def makecube(snap,folder,hydros,pos,radius):
                    "/cube_"+hydro+"_"+str(snap.OutputNumber()).zfill(5)+".fits"
         if not os.path.exists(filename):
             print("Making", filename,"...",)
-            if hydro not in "xyz":
+            if hydro not in "xyz amrlevel stars":
                 scale = hydrofuncs.scale_by_units(ro,hydro)
                 hydrocube = scale(samples)
                 hydrocube = hydrocube.reshape([lsize,lsize,lsize])
@@ -94,7 +94,7 @@ def makelist(snap,folder,hydros,pos,radius):
                    "/celllist_"+hydro+"_"+str(snap.OutputNumber()).zfill(5)+".fits"
         if not os.path.exists(filename):
             print("Making", filename,"...",)
-            if hydro not in "xyz" and hydro != "amrlevel":
+            if hydro not in "xyz amrlevel stars":
                 scale = hydrofuncs.scale_by_units(ro,hydro)
                 hydrocube = scale(samples)
                 #hydrocube = hydrocube.reshape([lsize,lsize,lsize])
@@ -120,12 +120,13 @@ def makelist(snap,folder,hydros,pos,radius):
                 if hydro == "stars":
                     # Make star file
                     makestarfiles(snap,folder)
-            minmax = (hydrocube.min(),hydrocube.max())
-            print(" min/max=",minmax,"of",len(hydrocube),"cells")
-            #np.save(filename, hydrocube.astype("float32"))
-            hdu = fits.PrimaryHDU(hydrocube)
-            hdul = fits.HDUList([hdu])
-            hdul.writeto(filename)
+            if hydro != "stars":
+                minmax = (hydrocube.min(),hydrocube.max())
+                print(" min/max=",minmax,"of",len(hydrocube),"cells")
+                #np.save(filename, hydrocube.astype("float32"))
+                hdu = fits.PrimaryHDU(hydrocube)
+                hdul = fits.HDUList([hdu])
+                hdul.writeto(filename)
         else:
             print(filename, "exists, ignoring")
     print("Done!")
@@ -154,8 +155,9 @@ def makedir(folder):
 def makestarfiles(snap,folder):
     # Massive star files
     stellar = stellars.FindStellar(snap.RawData())
-    sink = sinks.FindSinks(snap.RawData())
-    snaptimeMyr = snap.Time()*snap.info["unit_time"].express(C.Myr)
+    ro = snap.RawData()
+    sink = sinks.FindSinks(ro)
+    snaptimeMyr = snap.Time()*ro.info["unit_time"].express(C.Myr)
     # Remove mass from sinks in massive stars and make stellar positions
     stellarx = []
     stellary = []
@@ -163,7 +165,7 @@ def makestarfiles(snap,folder):
     stellarvx = []
     stellarvy = []
     stellarvz = []
-    scale_v = snap.info["unit_velocity"].express(C.cm/C.s)/1e5
+    scale_v = ro.info["unit_velocity"].express(C.cm/C.s)/1e5
     for sinkid, mass in zip(stellar.sinkid, stellar.mass):
         mask = sink.id == sinkid
         sink.mass[mask] -= mass
@@ -207,10 +209,10 @@ def makestarfiles(snap,folder):
         radius = singlestar.star_radius(mass,ageins)
         radii[i] = radius
         # Get stellar effective temperature / K
-        Teff = singlestar.star_Teff(mass,ageins)
+        Teff = singlestar.star_teff(mass,ageins)
         Teffs[i] = Teff
         # Get stellar current mass / g
-        energy, massloss = energy_mass += singlestar.star_winds(mass,0.0,ageins)
+        energy, massloss = singlestar.star_winds(mass,0.0,ageins)
         currmassing = mass*Msuning - massloss
         currmasses[i] = currmassing
         # Get stellar surface gravity
