@@ -293,7 +293,7 @@ def MakeImage(datas,hydros,snap,wsink,ax,dolengthscale,cmap,plottime=False,timeL
 
 def MakeFigure(simnames,times,name,los=None,hydro="rho",Slice=False,wsink=False,starC=False,
                nonamelabel=False,timeL=None,shape=None,dpi=200.0,zoom=1.0,contours=[],forcerun=False,zoombox=-1,
-               plotcolorbar=True,doplottime=False):
+               plotcolorbar=True,doplottime=False,velocitybins=False):
     ncols = len(simnames)
     nrows = len(times)
 
@@ -320,6 +320,10 @@ def MakeFigure(simnames,times,name,los=None,hydro="rho",Slice=False,wsink=False,
         folder = "../plots/vis/slice/"
         MakeDirs(folder)
         figname = "sliceTime_"+hname+suffix+".pdf"
+    elif velocitybins:
+        folder = "../plots/vis/velocitybins/"
+        MakeDirs(folder)
+        figname = "velocitybinsTime_"+hname+suffix+".pdf"
     else:
         folder = "../plots/vis/multiray/"
         MakeDirs(folder)
