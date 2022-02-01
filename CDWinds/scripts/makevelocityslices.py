@@ -41,7 +41,7 @@ if __name__=="__main__":
                     NH[vellos > vmax] = NH[vellos > vmax]*0.0
                     return NH
                 return maskfunc
-            velocityfunc = hydrofuncs.Hydro("$N_H("+str(vmin)+"< v/\mathrm{km/s} <"+str(vmax)_")$",_velocityfunc,
+            velocityfunc = hydrofuncs.Hydro("$N_H("+str(vmin)+"< v/\mathrm{km/s} <"+str(vmax)+")$",_velocityfunc,
                                             ["rho","vel"] ,
                                             "GnBu_r","log",(20,23.7),surfacequantity=True)
             hydro = "velocityslice"+str(vmin)+"_v"+los
