@@ -31,7 +31,7 @@ def findstarpos(snap,useMyr=False):
     return pos
 
 
-def getgradients(simname,time=None,label=None,xlims=None,powfile=None):
+def getgradients(simname,time=None,label=None,xlims=None,powfile=None,maxradius=None):
     '''
     Like prof but with a higher gradient
     '''
@@ -58,7 +58,7 @@ def getgradients(simname,time=None,label=None,xlims=None,powfile=None):
         xHIIs = np.reshape(xHIIs,(nprofs, nray)).T
         iraymax = None
         maxr = 0.0
-        Tthresh = 5e3
+        Tthresh = 1e6
         for iray in range(0,nray):
             rshock = radii[np.where(Ts[:,iray] > Tthresh)].max()
             if rshock > maxr:
@@ -74,7 +74,9 @@ def getgradients(simname,time=None,label=None,xlims=None,powfile=None):
     Plabel = "P"
     lnHs = []
     timelabels = []
-    for snap in snaps[-2:][::-1]:
+    times = [0.1,0.2,0.3]
+    snaps = [timefuncs.findsnapshot(sim,(t,"MyrFirstStar")) for t in times]
+    for snap in snaps[::-1]:
         iline += 1
         line = linestyles[iline]
         starpos = findstarpos(snap)
@@ -94,8 +96,8 @@ def getgradients(simname,time=None,label=None,xlims=None,powfile=None):
         plt.plot(radii,Ts[:,iraymax],label=Tlabel,linestyle=line,color="r")
         plt.plot(radii,Ps[:,iraymax],label=Plabel,linestyle=line,color="b")
         lnHs.append(lnH)
-        tkyr = snaptime.Myr(snap)*1e3
-        timelabels.append("{:.2f}".format(tkyr)+" kyr")
+        tMyr = snaptime.Myr(snap) - timefuncs.FindTcreatedFirstStar(sim)
+        timelabels.append("{:.1f}".format(tMyr)+" Myr")
         nHlabel = None
         Tlabel = None
         Plabel = None
@@ -103,18 +105,28 @@ def getgradients(simname,time=None,label=None,xlims=None,powfile=None):
     legend1 = plt.legend(fontsize="small",ncol=3,frameon=False,loc="upper right")
     legend2 = plt.legend(lnHs, timelabels,fontsize="small",frameon=False,loc=(0.1,0.25))
     plt.gca().add_artist(legend1)
+    if maxradius is not None:
+        plt.xlim([0.0,maxradius])
     plt.xlabel("Radius / pc")
-    plt.ylabel("Values at ray which has largest extent of wind/HII")
+    plt.ylabel("Values at ray which has largest extent of wind")
     suffix = ""
-    plt.xscale("log")
+    plt.xscale("linear")
     plt.yscale("log")
     #plt.ylim([1e-14,1e10])
-    plt.savefig("../plots/gradrays/"+simname+"/maxrprofiles_"+suffix+".pdf",rasterized=True,dpi=200)
+    filename = "../plots/gradrays/"+simname+"/maxrprofiles.pdf"
+    print("Writing "+filename)
+    plt.savefig(filename,rasterized=True,dpi=200)
 
 if __name__=="__main__":
     labels = OrderedDict()
-    labels["SEED1_35MSUN_NOCDMASK_WINDUV"] = "Seed1, CDMask, Refine"
+    labels["SEED1_35MSUN_CDMASK_WINDUV"] = "Seed1, CDMask, Refine"
+    labels["SEED0_35MSUN_CDMASK_WINDUV"] = "Seed0, CDMask, Refine"
+    labels["SEED1_35MSUN_CDMASK_WINDUV"] = "Seed1, CDMask, Refine"
+    labels["SEED2_35MSUN_CDMASK_WINDUV"] = "Seed2, CDMask, Refine"
+    labels["SEED3_35MSUN_CDMASK_WINDUV"] = "Seed3, CDMask, Refine"
+    labels["SEED4_35MSUN_CDMASK_WINDUV"] = "Seed4, CDMask, Refine"
     sims = labels.keys()
     #sims = ["MASS_04"]
+    maxradius = 15.0 # in pc
     for simname in sims:
-        getgradients(simname)
+        getgradients(simname,maxradius=maxradius)

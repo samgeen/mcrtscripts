@@ -108,6 +108,11 @@ else:
     #simfolders["SEED1_35MSUN_CDMASK_UV"] = windshellfolder+"29_newseed_35Msun_justuv/"
     simfolders["SEED1_35MSUN_CDMASK_UV"] = windshellfolder+"Z29_newseed_35Msun_justuv_norefine/"
     simfolders["SEED1_35MSUN_CDMASK_NOFB"] = windshellfolder+"N23_nofb/"
+    #Extra no feedback stuff
+    simfolders["SEED0_35MSUN_CDMASK_NOFB"] = windshellfolder+"N20_nofb/"
+    simfolders["SEED2_35MSUN_CDMASK_NOFB"] = windshellfolder+"N30_nofb/"
+    simfolders["SEED3_35MSUN_CDMASK_NOFB"] = windshellfolder+"N31_nofb/"
+    simfolders["SEED4_35MSUN_CDMASK_NOFB"] = windshellfolder+"N33_nofb/"
 allsims = simfolders.keys()
 
 # Simulation sets
@@ -120,8 +125,8 @@ seedset = ["SEED0_35MSUN_CDMASK_WINDUV",
 physicsset = ["SEED1_35MSUN_CDMASK_WINDUV",
               "SEED1_35MSUN_CDMASK_WINDUV_NOREFINE",
               "SEED1_35MSUN_NOCDMASK_WINDUV",
-              "SEED1_35MSUN_NOCDMASK_WINDUV_NOREFINE",
-              "SEED1_35MSUN_WINDUV_WEAKB"]
+              "SEED1_35MSUN_NOCDMASK_WINDUV_NOREFINE"]
+#              "SEED1_35MSUN_WINDUV_WEAKB"]
 
 fbset = ["SEED1_35MSUN_CDMASK_WINDUV", 
          "SEED1_35MSUN_CDMASK_WIND", 
@@ -129,7 +134,9 @@ fbset = ["SEED1_35MSUN_CDMASK_WINDUV",
          "SEED1_35MSUN_CDMASK_NOFB"]
 # "SEED1_35MSUN_CDMASK_WINDUV_NOB" - no star yet
 
-simsets = {"fb":fbset, "physics":physicsset, "seeds":seedset}
+singleset = ["SEED1_35MSUN_CDMASK_WINDUV"] 
+
+simsets = {"single":singleset, "fb":fbset, "physics":physicsset, "seeds":seedset}
     
 # Populate list of Hamu simulations
 # TODO - make these on demand rather than on loadup?

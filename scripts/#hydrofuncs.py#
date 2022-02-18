@@ -285,7 +285,7 @@ class AllHydros(object):
             def damkoehlerrescalefunc(D):
                 return np.arctan(5.0*(D-1))*2.0/np.pi
             h["Damkoehler4"] = Hydro("Negligible Turbulent Mixing $\leftrightarrow$ Strong Turbulent Mixing",damkoehlerfunc,coolvars,"RdBu","linear",(-1.0, 1.0),axisrescalefunc=damkoehlerrescalefunc)
-        # EMPTY DEFAULT HYDRO TO PREVENT ERRORS
+
         h["DEFAULTEMPTY"] = lambda hydro: Hydro("",lambda ro: lambda dset: dset[hydro],coolvars,"Blues_r","linear",(None, None))
         # Done!
         self._hydros = h

@@ -105,6 +105,21 @@ def rgb(r,g,b):
 def MakeImage(datas,hydros,snap,wsink,ax,dolengthscale,cmap,plottime=False,timeL=None,label=None,
                   starsink=None,rdm=None,contours=[],zoombox=-1,starC=False,zoom=1.0,Slice=False):
 
+    # Get sink info
+    stellar = stellars.FindStellar(snap)
+    if len(stellar.mass) == 0:
+        return 0.0
+    imax = np.where(stellar.mass == np.max(stellar.mass))[0][0]
+    sinkid = stellar.sinkid[imax]-1
+    sink = sinks.FindSinks(snap)
+    boxlen = snap.RawData().info["boxlen"]
+    levelmax = snap.RawData().info["levelmax"]
+    mincellsize = boxlen / 2.0**levelmax
+    smass = stellar.mass
+    starsinkid = stellar.sinkid[np.where(smass == smass.max())]
+    starsink = np.where(sink.id == starsinkid)[0]
+    starpos = np.array([sink.x[starsinkid],sink.y[starsinkid],sink.z[starsinkid]])/boxlen
+
     ims = []
     for data, hydro in zip(datas, hydros):
         # NOTE: for different hydro variables, only im should be different
@@ -199,6 +214,19 @@ def MakeImage(datas,hydros,snap,wsink,ax,dolengthscale,cmap,plottime=False,timeL
             contourim   = dmap.getSliceMap()
             contourlims = [1000]
             contourcolour = "m"
+        if contour == "Damkoehler4Slice":
+            lbubble = mincellsize*pcincm
+            hydrofuncs.allhydros.AddGlobals({"Ldamkoehler":lbubble})
+            hydrofuncs.allhydros.AddGlobals({"starpos":starpos})
+            dmap = sliceMap.SliceMap(snap,"Damkoehler4",los=los,zoom=zoom,starC=starC)
+            contourim   = dmap.getSliceMap()
+            contourlims = [1]
+            contourcolour = "b"
+        if contour == "MaskCDSlice":
+            dmap = sliceMap.SliceMap(snap,"MaskCD",los=los,zoom=zoom,starC=starC)
+            contourim   = dmap.getSliceMap()
+            contourlims = [1]
+            contourcolour = "b"
         contourim = np.flipud(contourim)
         ax.contour(xarr,yarr,contourim,contourlims,colors=contourcolour,alpha=0.75,linewidths=1.5)
         rdm.AddArray(finalim,label=label+" contour"+contour)
@@ -293,7 +321,7 @@ def MakeImage(datas,hydros,snap,wsink,ax,dolengthscale,cmap,plottime=False,timeL
 
 def MakeFigure(simnames,times,name,los=None,hydro="rho",Slice=False,wsink=False,starC=False,
                nonamelabel=False,timeL=None,shape=None,dpi=200.0,zoom=1.0,contours=[],forcerun=False,zoombox=-1,
-               plotcolorbar=True,doplottime=False,velocitybins=False):
+               plotcolorbar=True,doplottime=False,velocitybins=False,altname=None):
     ncols = len(simnames)
     nrows = len(times)
 
@@ -403,14 +431,18 @@ def MakeFigure(simnames,times,name,los=None,hydro="rho",Slice=False,wsink=False,
             sinkid = stellar.sinkid[imax]-1
             sink = sinks.FindSinks(snap)
             boxlen = snap.RawData().info["boxlen"]
+            levelmax = snap.RawData().info["levelmax"]
+            mincellsize = boxlen / 2.0**levelmax
             smass = stellar.mass
             starsinkid = stellar.sinkid[np.where(smass == smass.max())]
             starsink = np.where(sink.id == starsinkid)[0]
             starpos = np.array([sink.x[starsinkid],sink.y[starsinkid],sink.z[starsinkid]])/boxlen
             # Get global variables if needed
             if "Damkoehler" in hydro:
-                lbubblefunc = Hamu.Algorithm(findproperties.maxradiusatstarpos)
-                lbubble = lbubblefunc(snap)*pcincm
+                #lbubblefunc = Hamu.Algorithm(findproperties.maxradiusatstarpos)
+                #lbubble = lbubblefunc(snap)*pcincm
+                # INSTEAD use cell size for outer scale (since we already include bubble-scale turbulence)
+                lbubble = mincellsize*pcincm
                 hydrofuncs.allhydros.AddGlobals({"Ldamkoehler":lbubble})
                 hydrofuncs.allhydros.AddGlobals({"starpos":starpos})
             # One hydro variable?
@@ -504,6 +536,10 @@ def MakeFigure(simnames,times,name,los=None,hydro="rho",Slice=False,wsink=False,
     fig.savefig(figname,
                 pad_inches=0,
                 dpi=dpi)
+    if altname is not None:
+        fig.savefig(altname,
+                pad_inches=0,
+                dpi=dpi)
     rdm.Write(figname)
     # Crop out borders
     os.system("pdfcrop "+figname+" "+figname)
@@ -524,14 +560,14 @@ if __name__=="__main__":
         zoom = 0.5
         #if dense:
         #    zoom = 1.0
-        setname = setname+str(times[-1])+"Myr_"+"zoom"+str(zoom)+"_"
-        setname = setname.replace(".","p") # the extra dot confuses latex
+        newsetname = setname+str(times[-1])+"Myr_"+"zoom"+str(zoom)+"_"
+        newsetname = newsetname.replace(".","p") # the extra dot confuses latex
         #timeL = [str(x)+r' t$_{ff}$' for x in times]
         #timesin = [(time*tffcloud_code,"code") for time in times]
         timeL = [str(x)+r' Myr' for x in times]
         timesin = [(time,"MyrFirstStar") for time in times]
         for los in "yxz":
-            figname = setname+"_"+los
+            figname = newsetname+"_"+los
             zoom2 = 0.5
             figname2 = figname.replace("zoom"+str(zoom).replace(".","p"),
                                         "zoom"+str(zoom2).replace(".","p"),)
@@ -578,22 +614,45 @@ if __name__=="__main__":
 
             DEBUG = False
 
-            # Separate emission maps and related images
-            for hydro in ["ionemission4","xrayemission2","coolemission","NH","xHIImax","fastmass6"][::-1]:
-                MakeFigure(simset,[timesin[-1]],name=figname,los=los,hydro=hydro,Slice=False,wsink=True,
-                            timeL=[timeL[-1]],zoom=zoom)
+
+            # Damkoehler comparison plot
+            if setname == "single":
+                for hydro in ["T","rho"]:
+                    #contourslist = [[],["Damkoehler4Slice"]]
+                    contourslist = [["MaskCDSlice"],[]]
+                    Damzoom = 0.4
+                    for contours in contourslist:
+                        contoursname = ""
+                        for contour in contours:
+                            contoursname += contour
+                        MakeFigure(simset,timesmergedIn,
+                                   name=figname.replace(str(zoom).replace(".","p"),
+                                                        str(Damzoom).replace(".","p")+"singleslice"+contoursname),
+                                   los=los,hydro=hydro,Slice=True,wsink=True,starC=True,
+                                   timeL=timesmergedL,zoom=Damzoom,forcerun=True,contours=contours)
+            
 
             # Single slices
-            for hydro in ["Damkoehler3","Lcool","T","rho","xHII","xHeII","xHeIII","P"]:
+            for hydro in ["Damkoehler4","Lcool","T","rho","xHII","xHeII","xHeIII","P"]:
                 MakeFigure([simset[0]],[timesin[-1]],name=figname+"singleslice",los=los,hydro=hydro,
                             Slice=True,wsink=True,starC=True,
                             timeL=[timeL[-1]],zoom=zoom,forcerun=True)
             
             # Slices
-            for hydro in ["Damkoehler3","Lcool","T","rho","xHII","xHeII","xHeIII","P"]:
+            for hydro in ["Damkoehler4","Lcool","T","rho","xHII","xHeII","xHeIII","P"]:
                 MakeFigure(simset,[timesin[-1]],name=figname,los=los,hydro=hydro,
-                            Slice=True,wsink=True,starC=True,
-                            timeL=[timeL[-1]],zoom=zoom,forcerun=True)
+                           Slice=True,wsink=True,starC=True,
+                           timeL=[timeL[-1]],zoom=zoom,forcerun=True)
+                MakeFigure(simset,timesmergedIn,name=figname,los=los,hydro=hydro,
+                           Slice=True,wsink=True,starC=True,
+                           timeL=timesmergedL,zoom=zoom,forcerun=True)
+                                
+
+            # Separate emission maps and related images
+            for hydro in ["ionemission4","xrayemission2","coolemission","NH","xHIImax","fastmass6"][::-1]:
+                MakeFigure(simset,[timesin[-1]],name=figname,los=los,hydro=hydro,Slice=False,wsink=True,
+                            timeL=[timeL[-1]],zoom=zoom)
+
             for hydro in ["EkinperEtherm"]:
                 #["Ekin","Etherm","EkinperEtherm","xrayemission2"]:
                 MakeFigure(simset,[timesin[-1]],name=figname,los=los,hydro=hydro,
@@ -608,7 +667,7 @@ if __name__=="__main__":
                     contxt = ""
                     if len(contours) > 0:
                         contxt = "_contours"
-                    MakeFigure(simset,timesmergedIn,name=figname+"windpressonly_sequence"+contxt,
+                        MakeFigure(simset,timesmergedIn,name=figname+"windpressonly_sequence"+contxt,
                                los=los,hydro=hydro,Slice=False,wsink=True,
                                timeL=timesmergedL,zoom=zoom,forcerun=True,
                                doplottime=True,contours=contours,

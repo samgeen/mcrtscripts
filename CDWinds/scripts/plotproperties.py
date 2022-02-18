@@ -72,10 +72,13 @@ def mass(simname):
     return t, p
     
 radiusinsnap = Hamu.Algorithm(findproperties.radiusinsnap3)
-def radius(simname):
+def radius(sim):
+    if type(sim) == type("duck"):
+        sim = hamusims[sim]
+    else:
+        simname = sim.Name()
     print("Running for simulation", simname)
-    sim = hamusims[simname]
-    tcreated, sfe = starrelations.runforsim(simname,"firsttime")  
+    #tcreated, sfe = starrelations.runforsim(simname,"firsttime")  
     t,r = timefuncs.timefunc(sim,radiusinsnap,processes=nprocs)
     # HACK - fix boxlen error
     #boxlen = 0.121622418993404E+03
@@ -159,11 +162,17 @@ def windradiusratio_analytic(simname):
     return ts, np.array(rwvsri)
     
 windenergyinsnap = Hamu.Algorithm(findproperties.windenergyinsnap3)
-def windenergy(simname,kinonly=False,thermonly=False):
+def windenergy(sim,kinonly=False,thermonly=False):
+    if type(sim) == type("duck"):
+        sim = hamusims[sim]
+    else:
+        simname = sim.Name()
     print("Running for simulation", simname)
-    sim = hamusims[simname]
-    tcreated, sfe = starrelations.runforsim(simname,"firsttime")
+    if type(sim) == type("duck"):
+        sim = hamusims[simname]
+    #tcreated, sfe = starrelations.runforsim(simname,"firsttime")
     t,e = timefuncs.timefunc(sim,windenergyinsnap,processes=1) # doesn't like tuples in the pool map
+    print(e.shape)
     #t -= tcreated
     therm = e[:,0]
     kin = e[:,1]
@@ -276,12 +285,15 @@ def windmomemitted(simname):
     return t, wm
 
 
-def windenergyretained(simname):
+def windenergyretained(simname,sim=None):
     print("Running for simulation", simname)
-    sim = hamusims[simname]
-    tcreated, sfe = starrelations.runforsim(simname,"firsttime")
+    if sim is None:
+        sim = hamusims[simname]
+    #tcreated, sfe = starrelations.runforsim(simname,"firsttime")
+    #tcreated = timefuncs.FindTcreatedFirstStar(sim)
     t, wemit = timefuncs.timefunc(sim,windenergyemittedHamu)
     t, weingas = timefuncs.timefunc(sim,windenergyinsnap,processes=1) # doesn't like tuples in the pool map
+    print(weingas, weingas.shape, wemit, t)
     return t, weingas[:,2] / wemit
 
 def _windmassemitted(snap):

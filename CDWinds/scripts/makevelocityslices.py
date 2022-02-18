@@ -24,7 +24,9 @@ if __name__=="__main__":
         figname = setname+"_"+los
         # Run for each velocity slice
         vdiff = 0.3
+        imovie = 0
         for vmin in np.arange(-100,100.1) * vdiff:
+            imovie += 1
             vmax = vmin + vdiff
             # Sample velocities within the velociyt range required
             def _velocityfunc(ro):
@@ -47,5 +49,6 @@ if __name__=="__main__":
                                             "GnBu_r","log",(20,23.7),surfacequantity=True)
             hydro = "velocityslice"+str(vmin)+"_v"+los
             hydrofuncs.allhydros[hydro] = velocityfunc
+            altname = "../plots/vis/velocitybins/movie"+str(imovie).zfill(5)+"_"+los+".png"
             makeImageGridTime.MakeFigure(simset,timesin,name=figname,los=los,hydro=hydro,Slice=False,wsink=True,
-                                         timeL=timeL,zoom=zoom,velocitybins=True)
+                                         timeL=timeL,zoom=zoom,velocitybins=True,altname=altname)

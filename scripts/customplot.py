@@ -20,7 +20,7 @@ mpl.rcParams["savefig.bbox"] = "tight"
 # Fixes Type 3 fonts issue with MNRAS submission
 mpl.rcParams['ps.useafm'] = True
 mpl.rcParams['pdf.use14corefonts'] = True
-mpl.rcParams['text.usetex'] = True
+mpl.rcParams['text.usetex'] = False
 #mpl.rcParams['text.latex.unicode'] = True
 
 import fixpyplotraster

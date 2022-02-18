@@ -90,15 +90,16 @@ def findsnapshot(sim,timetuple):
     time, timeunits = timetuple
     # Find time the first star is created
     # Result will be in Myr
-    tcreated = FindTcreatedFirstStar(sim)
     if timeunits == "Myr":
         time /= myr
     if timeunits == "MyrFirstStar":
+        tcreated = FindTcreatedFirstStar(sim)
         time += tcreated # start from time first star created
         time /= myr
     if timeunits == "code":
         pass # already ok
     if timeunits == "codeFirstStar":
+        tcreated = FindTcreatedFirstStar(sim)
         time += tcreated
     if timeunits == "outputNumber":
         outsnaps = {snap.OutputNumber():snap for snap in sim.Snapshots()}
