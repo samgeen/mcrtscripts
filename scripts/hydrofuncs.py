@@ -271,6 +271,8 @@ class AllHydros(object):
         # Velocity vector (z)
         func = lambda ro: lambda dset: dset["vel"][:,2]*ro.info["unit_velocity"].express(C.km/C.s)
         h["vz"] = Hydro("$v_{\mathrm{z}}$ / km/s",func,["vel"],"BuGn","linear",(None, None))
+        # Vorticity - NOTE: THIS IS HANDLED BY SPECIAL CODE IN sliceMap !!!
+        h["vorticity"] = Hydro("$|\nabla \times \mathbf{v}| / s^{-1}$",vradfracfunc,["vx","vy","vz"],"BuGn","log",(None, None))
         # Ram pressure
         func = lambda ro: lambda dset: dset["rho"]*np.sum(dset["vel"]**2,1)*ro.info["unit_pressure"].express(C.barye)
         h["Pram"] = Hydro("Ram Pressure / ergs/cm$^3$",func,["rho","vel"],"YlOrRd","log",(None, None))

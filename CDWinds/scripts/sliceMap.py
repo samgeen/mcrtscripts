@@ -103,6 +103,7 @@ def hydro_label(hydro):
     if hydro == "Bmag":
         return "|B| (code units)"
 
+
 def _MapSlice(snap,hydro='rho',los='z',zoom=1.0,starC=False):
     amr = hydrofuncs.amr_source(snap,hydro)
 
@@ -117,6 +118,7 @@ def _MapSlice(snap,hydro='rho',los='z',zoom=1.0,starC=False):
         boxlen = snap.info["boxlen"]
         centre[lostoi[los]] = np.array([stars.x[0], stars.y[0], stars.z[0]])[lostoi[los]]/boxlen
     up = ups[los]
+    across = acrosses[los]
 
     size = np.zeros(2)+zoom
 
@@ -130,7 +132,62 @@ def _MapSlice(snap,hydro='rho',los='z',zoom=1.0,starC=False):
         print("Made slice (min/max:", slc.min(), slc.max(), ")")
         return slc
 
-    slc = makeslice(snap,hydro)
+    def makevorticity(x1,y1,z1,x2,y2,z2):
+        dvx = x2 - x1
+        dvy = y2 - y1
+        # dx in km (to match velocity units)
+        dx = boxlen * zoom / float(IMSIZE) * pcincm / 1000.0
+        # Calculate curl
+        cx = z2-z1
+
+
+    if not "vorticity" in hydro:
+        slc = makeslice(snap,hydro)
+    else:
+        # MAKE VORTICITY MAPS YES THIS IS HORRIBLE
+        # Get pixel size
+        dxcam = zoom / float(IMSIZE)
+        # dx in km (to match velocity units)
+        # We pre-divide every slice map by this to make calculations easier later
+        dxphys = boxlen * zoom / float(IMSIZE) * pcincm / 1000.0
+        # Get xyz in frame of image (ensure right-handed coordinate system)
+        # We need this because we calculate d/dx etc in frame of image
+        vx0 = makeslice(snap,"v"+acrosses) / dxphys
+        vy0 = makeslice(snap,"v"+up) / dxphys
+        vz0 = makeslice(snap,"v"+los) / dxphys
+        # Make new slice + dx
+        cx = centre+0.0
+        cx[lostoi[across]] += dxcam
+        cam = v.Camera(center=cx, line_of_sight_axis=los, 
+                    region_size=size, up_vector=up, 
+                    map_max_size=IMSIZE, log_sensitive=True)
+        vxx = makeslice(snap,"v"+acrosses) / dxphys
+        vyx = makeslice(snap,"v"+up) / dxphys
+        vzx = makeslice(snap,"v"+los) / dxphys
+        # Make new slice + dy
+        cy = centre+0.0
+        cy[lostoi[up]] += dxcam
+        cam = v.Camera(center=cy, line_of_sight_axis=los, 
+                    region_size=size, up_vector=up, 
+                    map_max_size=IMSIZE, log_sensitive=True)
+        vxy = makeslice(snap,"v"+acrosses) / dxphys
+        vyy = makeslice(snap,"v"+up) / dxphys
+        vzy = makeslice(snap,"v"+los) / dxphys
+        # Make new slice + dz
+        cz = centre+0.0
+        cz[lostoi[los]] += dxcam
+        cam = v.Camera(center=cz, line_of_sight_axis=los, 
+                    region_size=size, up_vector=up, 
+                    map_max_size=IMSIZE, log_sensitive=True)
+        vxz = makeslice(snap,"v"+acrosses) / dxphys
+        vyz = makeslice(snap,"v"+up) / dxphys
+        vzz = makeslice(snap,"v"+los) / dxphys
+        # Make vorticity map
+        vortx = (vzy - vz0) - (vyz - vy0) 
+        vorty = (vxz - vx0) - (vzx - vz0) 
+        vortz = (vyx - vy0) - (vxy - vx0) 
+        # Find magnitude
+        slc = np.sqrt(vortx**2 + vorty**2 + vortz**2)
     return slc
 
 _MapSliceHamu = Hamu.Algorithm(_MapSlice)
@@ -156,7 +213,9 @@ class SliceMap(object):
             #pixlength = snap.info["boxlen"] * zoom / float(IMSIZE)
             pixlength = self._snap.info["boxlen"] / float(IMSIZE)
         self._pixlength = pixlength
-        self._slice = _MapSliceHamu(self._snap.hamusnap,self._hydro,self._los,self._zoom, self._starC)
+        self._slice = None
 
     def getSliceMap(self):
+        if self._slice is None:
+            self._slice = _MapSliceHamu(self._snap.hamusnap,self._hydro,self._los,self._zoom, self._starC)
         return self._slice
