@@ -152,7 +152,7 @@ def _MapSlice(snap,hydro='rho',los='z',zoom=1.0,starC=False):
         dxphys = boxlen * zoom / float(IMSIZE) * pcincm / 1000.0
         # Get xyz in frame of image (ensure right-handed coordinate system)
         # We need this because we calculate d/dx etc in frame of image
-        vx0 = makeslice(snap,"v"+acrosses) / dxphys
+        vx0 = makeslice(snap,"v"+across) / dxphys
         vy0 = makeslice(snap,"v"+up) / dxphys
         vz0 = makeslice(snap,"v"+los) / dxphys
         # Make new slice + dx
@@ -161,7 +161,7 @@ def _MapSlice(snap,hydro='rho',los='z',zoom=1.0,starC=False):
         cam = v.Camera(center=cx, line_of_sight_axis=los, 
                     region_size=size, up_vector=up, 
                     map_max_size=IMSIZE, log_sensitive=True)
-        vxx = makeslice(snap,"v"+acrosses) / dxphys
+        vxx = makeslice(snap,"v"+across) / dxphys
         vyx = makeslice(snap,"v"+up) / dxphys
         vzx = makeslice(snap,"v"+los) / dxphys
         # Make new slice + dy
@@ -170,7 +170,7 @@ def _MapSlice(snap,hydro='rho',los='z',zoom=1.0,starC=False):
         cam = v.Camera(center=cy, line_of_sight_axis=los, 
                     region_size=size, up_vector=up, 
                     map_max_size=IMSIZE, log_sensitive=True)
-        vxy = makeslice(snap,"v"+acrosses) / dxphys
+        vxy = makeslice(snap,"v"+across) / dxphys
         vyy = makeslice(snap,"v"+up) / dxphys
         vzy = makeslice(snap,"v"+los) / dxphys
         # Make new slice + dz
@@ -179,7 +179,7 @@ def _MapSlice(snap,hydro='rho',los='z',zoom=1.0,starC=False):
         cam = v.Camera(center=cz, line_of_sight_axis=los, 
                     region_size=size, up_vector=up, 
                     map_max_size=IMSIZE, log_sensitive=True)
-        vxz = makeslice(snap,"v"+acrosses) / dxphys
+        vxz = makeslice(snap,"v"+across) / dxphys
         vyz = makeslice(snap,"v"+up) / dxphys
         vzz = makeslice(snap,"v"+los) / dxphys
         # Make vorticity map
