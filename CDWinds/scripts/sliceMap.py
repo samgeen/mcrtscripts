@@ -147,9 +147,14 @@ def _MapSlice(snap,hydro='rho',los='z',zoom=1.0,starC=False):
         # MAKE VORTICITY MAPS YES THIS IS HORRIBLE
         # Get pixel size
         dxcam = zoom / float(IMSIZE)
+        # Step across multiple pixels / cells?
+        if hydro == "vorticity2px":
+            dxcam *= 2
+        if hydro == "vorticity4px":
+            dxcam *= 4
         # dx in km (to match velocity units)
         # We pre-divide every slice map by this to make calculations easier later
-        dxphys = boxlen * zoom / float(IMSIZE) * pcincm / 1000.0
+        dxphys = dxcam * boxlen * pcincm / 1000.0
         # Get xyz in frame of image (ensure right-handed coordinate system)
         # We need this because we calculate d/dx etc in frame of image
         vx0 = makeslice(snap,"v"+across) / dxphys
@@ -186,8 +191,8 @@ def _MapSlice(snap,hydro='rho',los='z',zoom=1.0,starC=False):
         vortx = (vzy - vz0) - (vyz - vy0) 
         vorty = (vxz - vx0) - (vzx - vz0) 
         vortz = (vyx - vy0) - (vxy - vx0) 
-        # Find magnitude
-        slc = np.sqrt(vortx**2 + vorty**2 + vortz**2)
+        # Find magnitude in Myr^-1
+        slc = np.sqrt(vortx**2 + vorty**2 + vortz**2) * Myrins
     return slc
 
 _MapSliceHamu = Hamu.Algorithm(_MapSlice)
