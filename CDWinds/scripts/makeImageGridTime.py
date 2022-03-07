@@ -635,7 +635,7 @@ if __name__=="__main__":
             
 
             # Single slices
-            for hydro in ["vorticity4px_speedcompare","vorticity4px_timescale","vorticity1px","vorticity2px","vorticity4px",
+            for hydro in ["vorticity4px_speedcompare2","vorticity4px_timescale","vorticity1px","vorticity2px","vorticity4px",
                           "Lcool","T","rho","xHII","xHeII","xHeIII",
                           "P","vradfrac3","vrad","vx","vy","vz"]:
                 MakeFigure([simset[0]],[timesin[-1]],name=figname+"singleslice",los=los,hydro=hydro,
