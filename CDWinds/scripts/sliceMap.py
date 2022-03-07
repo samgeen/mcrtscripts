@@ -193,6 +193,9 @@ def _MapSlice(snap,hydro='rho',los='z',zoom=1.0,starC=False):
         vortz = (vyx - vy0) - (vxy - vx0) 
         # Find magnitude in Myr^-1
         slc = np.sqrt(vortx**2 + vorty**2 + vortz**2) * Myrins
+        # Find turnover timescale?
+        if "timescale" in hydro:
+            slc = 1.0 / slc
     return slc
 
 _MapSliceHamu = Hamu.Algorithm(_MapSlice)
