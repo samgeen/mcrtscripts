@@ -4,6 +4,7 @@ Sam Geen, January 2021
 '''
 
 import os, sys
+#from stat import FILE_ATTRIBUTE_REPARSE_POINT
 from importlib import reload  
 
 import numpy as np
@@ -237,7 +238,7 @@ def plotenergyretained(setname,sims,starmass,starmetal,starrotating=True):
     plt.ylabel("$E_{hot} / E_{wind}$")
     plt.legend(fontsize="x-small",frameon=False)
     plt.plot([0.1,200],[1.0/3.0]*2,"k--",alpha=0.5)
-    plt.xlim([0.1,200])
+    plt.xlim([0.1,110])
     plt.xscale("linear")
     plt.yscale("linear")
     plt.savefig("../plots/oned/timefunc_"+setname+"_energyretained"+difftxt+".pdf")
@@ -275,7 +276,7 @@ def MakeSims(simnames,filenames):
         sims[simname] = Hamu.MakeSimulation(simname,filename,simname)
     return sims
 
-if __name__=="__main__":
+def RunAll():
     # Step function test
     simnames = ["Step Test"]
     filenames = ["../outputs/35Msun_n100_w2_N2048_uvwind_coolingfix2_Bfield_stepout"]
@@ -293,12 +294,14 @@ if __name__=="__main__":
                  "../outputs/35Msun_n100_w2_N2048_windonly_coolingfix2_Bfield"]
     windonlyset = MakeSims(simnames,filenames)
     # Density comparison
-    simnames = ["$10^3~$cm$^{-3}$","$10^2~$cm$^{-3}$"]
+    simnames = ["$10^2~$cm$^{-3}$","$10^3~$cm$^{-3}$","$10^4~$cm$^{-3}$"]
     filenames = ["../outputs/35Msun_n100_w2_N2048_uvonly_coolingfix2maskCD_v2_Bfield",
-                 "../outputs/35Msun_n100_w2_N2048_uvwind_coolingfix2_Bfield"]
+                 "../outputs/35Msun_n1000_w2_N2048_uvonly_coolingfix2maskCD_v2_Bfield",
+                 "../outputs/35Msun_n10000_w2_N2048_uvonly_coolingfix2maskCD_v2_Bfield"]
     densityset = MakeSims(simnames,filenames)
     # Big list of simulation sets
-    simsets = {"stepset":stepset,"fbset":fbset,"windonly_cdmaskset":windonlyset,"densityset":densityset}
+    #simsets = {"stepset":stepset,"fbset":fbset,"windonly_cdmaskset":windonlyset,"densityset":densityset}
+    simsets = {"windonly_cdmaskset":windonlyset}
 
     # Plot energy retained
     plotenergyretained("windonly_cdmaskset",windonlyset,35.0,0.014,True)
@@ -306,6 +309,20 @@ if __name__=="__main__":
     # Make other general plots
     for setname, sims in simsets.items():
         CompareSims(setname,sims)
+
+def TestBoxsize(simname,filename):
+    sim = Hamu.MakeSimulation(simname,filename,simname)
+    print(filename)
+    snap = sim.Snapshots()[0]
+    hydro = snap.RawData().hydro
+    print(hydro.x[-1]/wunits.pc)
+
+if __name__=="__main__":
+    #for fname in ["../outputs/35Msun_n100_w2_N2048_windonly_coolingfix2_nocooling",
+    #             "../outputs/35Msun_n100_w2_N2048_windonly_coolingfix2maskCD_v2_Bfield",
+    #             "../outputs/35Msun_n100_w2_N2048_windonly_coolingfix2_Bfield"]:
+    #    TestBoxsize("asdsa",fname)
+    RunAll()
 
 '''
 #simname = "../outputs/30Msun_n3000_w2_N128_windonly_coolingfix/"

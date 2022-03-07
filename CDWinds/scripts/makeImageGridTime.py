@@ -616,6 +616,7 @@ if __name__=="__main__":
 
 
             # Damkoehler comparison plot
+            '''
             if setname == "single":
                 for hydro in ["T","rho"]:
                     #contourslist = [[],["Damkoehler4Slice"]]
@@ -630,16 +631,17 @@ if __name__=="__main__":
                                                         str(Damzoom).replace(".","p")+"singleslice"+contoursname),
                                    los=los,hydro=hydro,Slice=True,wsink=True,starC=True,
                                    timeL=timesmergedL,zoom=Damzoom,forcerun=True,contours=contours)
+            '''
             
 
             # Single slices
-            for hydro in ["Damkoehler4","Lcool","T","rho","xHII","xHeII","xHeIII","P","vrad","vx","vy","vz"]:
+            for hydro in ["Lcool","T","rho","xHII","xHeII","xHeIII","P","vradfrac2","vrad","vx","vy","vz"]:
                 MakeFigure([simset[0]],[timesin[-1]],name=figname+"singleslice",los=los,hydro=hydro,
                             Slice=True,wsink=True,starC=True,
                             timeL=[timeL[-1]],zoom=zoom,forcerun=True)
             
             # Slices
-            for hydro in ["Damkoehler4","Lcool","T","rho","xHII","xHeII","xHeIII","P"]:
+            for hydro in ["Lcool","T","rho","xHII","xHeII","xHeIII","P"]:
                 MakeFigure(simset,[timesin[-1]],name=figname,los=los,hydro=hydro,
                            Slice=True,wsink=True,starC=True,
                            timeL=[timeL[-1]],zoom=zoom,forcerun=True)
