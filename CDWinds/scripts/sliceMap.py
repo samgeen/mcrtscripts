@@ -196,6 +196,10 @@ def _MapSlice(snap,hydro='rho',los='z',zoom=1.0,starC=False):
         # Find turnover timescale?
         if "timescale" in hydro:
             slc = 1.0 / slc
+        # Compare the eddy turnover speed (dxphys / curl V) to the bulk gas speed
+        if "speedcompare" in hydro:
+            spd = np.sqrt(vx0**2 + vy0**2 + vz0**2) / dxphys
+            slc = dxphys * slc / spd
     return slc
 
 _MapSliceHamu = Hamu.Algorithm(_MapSlice)
