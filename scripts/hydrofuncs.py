@@ -261,7 +261,7 @@ class AllHydros(object):
         spdfunc = lambda ro: lambda dset: np.sqrt(np.sum(dset["vel"]**2,1))*ro.info["unit_velocity"].express(C.km/C.s)
         h["spd"] = Hydro("Gas Speed / km/s",spdfunc,["vel"],"BuGn","log",(None, None))
         # Radial fraction
-        h["vradfrac2"] = Hydro("$v_{rad} / |v|$",vradfracfunc,["vel"],"BuGn","log",(None, None))
+        h["vradfrac3"] = Hydro("$v_{rad} / |v|$",vradfracfunc,["vel"],"BuGn","linear",(None, None))
         # Velocity vector (x)
         func = lambda ro: lambda dset: dset["vel"][:,0]*ro.info["unit_velocity"].express(C.km/C.s)
         h["vx"] = Hydro("$v_{\mathrm{x}}$ / km/s",func,["vel"],"BuGn","linear",(None, None))
