@@ -243,11 +243,25 @@ class AllHydros(object):
                 vnonrad = spd - vrad
                 return vnonrad
             return findvnonrad
+        def vradfracfunc(ro):
+            unit = ro.info["unit_velocity"].express(C.km/C.s)
+            def findvrad(dset):
+                pos = dset.points-0.5
+                rad = pos # Be careful here! Reference, not value copy
+                dist = np.sqrt(np.sum(pos**2,1))
+                for i in range(0,3):
+                    rad[:,i] /= dist
+                vrad = np.sum(rad*dset["vel"],1)
+                spd = np.sqrt(np.sum(dset["vel"]**2,1))
+                return vrad / spd
+            return findvrad
         h["vrad"] = Hydro("$v_{\mathrm{radial}}$ / km/s",vradfunc,["vel"],"BuGn","log",(None, None))
         h["vnonrad"] = Hydro("$v_{\mathrm{non-radial}}$ / km/s",vnonradfunc,["vel"],"BuGn","log",(None, None))
         # Gas speed
         spdfunc = lambda ro: lambda dset: np.sqrt(np.sum(dset["vel"]**2,1))*ro.info["unit_velocity"].express(C.km/C.s)
         h["spd"] = Hydro("Gas Speed / km/s",spdfunc,["vel"],"BuGn","log",(None, None))
+        # Radial fraction
+        h["vradfrac"] = Hydro("$v_{rad} / |v|$",spdfunc,["vel"],"BuGn","log",(None, None))
         # Velocity vector (x)
         func = lambda ro: lambda dset: dset["vel"][:,0]*ro.info["unit_velocity"].express(C.km/C.s)
         h["vx"] = Hydro("$v_{\mathrm{x}}$ / km/s",func,["vel"],"BuGn","linear",(None, None))
