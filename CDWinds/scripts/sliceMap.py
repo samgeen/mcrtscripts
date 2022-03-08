@@ -14,6 +14,8 @@ scop = v.ScalarOperator
 from pymses.sources.ramses.output import *
 from pymses.analysis.visualization import *
 
+import skimage.transform
+
 import stellars
 
 # Axes up and across for each line of sight
@@ -122,9 +124,6 @@ def _MapSlice(snap,hydro='rho',los='z',zoom=1.0,starC=False):
 
     size = np.zeros(2)+zoom
 
-    cam  = v.Camera(center=centre, line_of_sight_axis=los, 
-                    region_size=size, up_vector=up, 
-                    map_max_size=IMSIZE, log_sensitive=True)
 
     def makeslice(snap,hydro):
         hydro_op = scop(hydrofuncs.scale_by_units(snap,hydro))
@@ -132,26 +131,27 @@ def _MapSlice(snap,hydro='rho',los='z',zoom=1.0,starC=False):
         print("Made slice (min/max:", slc.min(), slc.max(), ")")
         return slc
 
-    def makevorticity(x1,y1,z1,x2,y2,z2):
-        dvx = x2 - x1
-        dvy = y2 - y1
-        # dx in km (to match velocity units)
-        dx = boxlen * zoom / float(IMSIZE) * pcincm / 1000.0
-        # Calculate curl
-        cx = z2-z1
-
 
     if not "vorticity" in hydro:
+        cam  = v.Camera(center=centre, line_of_sight_axis=los, 
+                        region_size=size, up_vector=up, 
+                        map_max_size=IMSIZE, log_sensitive=True)
+
         slc = makeslice(snap,hydro)
     else:
         # MAKE VORTICITY MAPS YES THIS IS HORRIBLE
         # Get pixel size
-        dxcam = zoom / float(IMSIZE)
+        NEWIMSIZE = IMSIZE
         # Step across multiple pixels / cells?
         if hydro == "vorticity2px":
-            dxcam *= 2
+            NEWIMSIZE /= 2
         if hydro == "vorticity4px":
-            dxcam *= 4
+            NEWIMSIZE /= 4
+        dxcam = zoom / float(NEWIMSIZE)
+        # Make camera again in case
+        cam  = v.Camera(center=centre, line_of_sight_axis=los, 
+                    region_size=size, up_vector=up, 
+                    map_max_size=NEWIMSIZE, log_sensitive=True)
         # dx in km (to match velocity units)
         # We pre-divide every slice map by this to make calculations easier later
         dxphys = dxcam * boxlen * pcincm / 1000.0
@@ -165,7 +165,7 @@ def _MapSlice(snap,hydro='rho',los='z',zoom=1.0,starC=False):
         cx[lostoi[across]] += dxcam
         cam = v.Camera(center=cx, line_of_sight_axis=los, 
                     region_size=size, up_vector=up, 
-                    map_max_size=IMSIZE, log_sensitive=True)
+                    map_max_size=NEWIMSIZE, log_sensitive=True)
         vxx = makeslice(snap,"v"+across) / dxphys
         vyx = makeslice(snap,"v"+up) / dxphys
         vzx = makeslice(snap,"v"+los) / dxphys
@@ -174,7 +174,7 @@ def _MapSlice(snap,hydro='rho',los='z',zoom=1.0,starC=False):
         cy[lostoi[up]] += dxcam
         cam = v.Camera(center=cy, line_of_sight_axis=los, 
                     region_size=size, up_vector=up, 
-                    map_max_size=IMSIZE, log_sensitive=True)
+                    map_max_size=NEWIMSIZE, log_sensitive=True)
         vxy = makeslice(snap,"v"+across) / dxphys
         vyy = makeslice(snap,"v"+up) / dxphys
         vzy = makeslice(snap,"v"+los) / dxphys
@@ -183,7 +183,7 @@ def _MapSlice(snap,hydro='rho',los='z',zoom=1.0,starC=False):
         cz[lostoi[los]] += dxcam
         cam = v.Camera(center=cz, line_of_sight_axis=los, 
                     region_size=size, up_vector=up, 
-                    map_max_size=IMSIZE, log_sensitive=True)
+                    map_max_size=NEWIMSIZE, log_sensitive=True)
         vxz = makeslice(snap,"v"+across) / dxphys
         vyz = makeslice(snap,"v"+up) / dxphys
         vzz = makeslice(snap,"v"+los) / dxphys
@@ -200,6 +200,9 @@ def _MapSlice(snap,hydro='rho',los='z',zoom=1.0,starC=False):
         if "speedcompare" in hydro:
             spd = np.sqrt(vx0**2 + vy0**2 + vz0**2) * dxphys
             slc = dxphys * slc / Myrins / spd
+        # Resize the output image if needed
+        if NEWIMSIZE != IMSIZE:
+            slc = skimage.transform.resize(slc, (IMSIZE, IMSIZE))
     return slc
 
 _MapSliceHamu = Hamu.Algorithm(_MapSlice)
