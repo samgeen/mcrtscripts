@@ -152,10 +152,10 @@ def _MapSlice(snap,hydro='rho',los='z',zoom=1.0,starC=False):
         cam  = v.Camera(center=centre, line_of_sight_axis=los, 
                     region_size=size, up_vector=up, 
                     map_max_size=NEWIMSIZE, log_sensitive=True)
+        centre = centre+0.5*dxcam
         # dx in km (to match velocity units)
         # We pre-divide every slice map by this to make calculations easier later
         dxphys = dxcam * boxlen * pcincm / 1000.0
-        centre = centre+0.5*dxcam
         # Get xyz in frame of image (ensure right-handed coordinate system)
         # We need this because we calculate d/dx etc in frame of image
         vx0 = makeslice(snap,"v"+across)
@@ -201,7 +201,7 @@ def _MapSlice(snap,hydro='rho',los='z',zoom=1.0,starC=False):
             slc = 1.0 / slc
         # Compare the eddy turnover speed (dxphys / curl V) to the bulk gas speed
         if "speedcompare" in hydro:
-            spd = np.sqrt(vx0**2 + vy0**2 + vz0**2) * dxphys
+            spd = np.sqrt(vx0**2 + vy0**2 + vz0**2)
             slc = dxphys * slc / Myrins / spd
         # Resize the output image if needed
         if NEWIMSIZE != IMSIZE:
