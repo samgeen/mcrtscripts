@@ -115,9 +115,9 @@ def _MapSlice(snap,hydro='rho',los='z',zoom=1.0,starC=False):
         pass
 
     centre = np.zeros(3)+0.5
+    boxlen = snap.info["boxlen"]
     if starC:
         stars = stellars.FindStellar(snap)
-        boxlen = snap.info["boxlen"]
         centre[lostoi[los]] = np.array([stars.x[0], stars.y[0], stars.z[0]])[lostoi[los]]/boxlen
     up = ups[los]
     across = acrosses[los]
