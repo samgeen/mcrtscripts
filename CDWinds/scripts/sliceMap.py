@@ -147,7 +147,7 @@ def _MapSlice(snap,hydro='rho',los='z',zoom=1.0,starC=False):
             NEWIMSIZE = IMSIZE / 2
         if hydro == "vorticity4px":
             NEWIMSIZE = IMSIZE/ 4
-        dxcam = zoom / float(NEWIMSIZE) * 0.5 # Slightly undersample
+        dxcam = zoom / float(NEWIMSIZE) * 2.0 # Slightly undersample
         # Make camera again in case
         cam  = v.Camera(center=centre, line_of_sight_axis=los, 
                     region_size=size, up_vector=up, 
