@@ -636,7 +636,7 @@ if __name__=="__main__":
 
             # Single slices
             # HACK - FORCE RERUN OF ALL PLOTS
-            for hydro in ["vorticity1px_speedcompare"]:
+            for hydro in ["vorticity1px_timescale","vorticity1px_speedcompare"]:
                 MakeFigure([simset[0]],[timesin[-1]],name=figname+"singleslice",los=los,hydro=hydro,
                             Slice=True,wsink=True,starC=False,
                             timeL=[timeL[-1]],zoom=zoom,forcerun=True)
