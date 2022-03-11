@@ -171,7 +171,7 @@ def _MapSlice(snap,hydro='rho',los='z',zoom=1.0,starC=False):
         vzx = makeslice(snap,"v"+los) / dxphys
         # Make new slice + dy
         cy = centre+0.0
-        cy[lostoi[up]] += dxcam
+        cy[lostoi[up]] -= dxcam
         cam = v.Camera(center=cy, line_of_sight_axis=los, 
                     region_size=size, up_vector=up, 
                     map_max_size=NEWIMSIZE, log_sensitive=True)
@@ -181,7 +181,7 @@ def _MapSlice(snap,hydro='rho',los='z',zoom=1.0,starC=False):
         # Make new slice + dz
         cz = centre+0.0
         # HACK TEST
-        cz[lostoi[los]] -= dxcam
+        cz[lostoi[los]] += dxcam
         cam = v.Camera(center=cz, line_of_sight_axis=los, 
                     region_size=size, up_vector=up, 
                     map_max_size=NEWIMSIZE, log_sensitive=True)

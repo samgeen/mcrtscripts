@@ -277,7 +277,7 @@ class AllHydros(object):
         h["vorticity2px"] = Hydro("$| \\nabla \\times \mathbf{v}|(2 px) / Myr^{-1}$",vradfracfunc,["vel"],"BuGn","log",(None, None))
         h["vorticity4px"] = Hydro("$| \\nabla \\times \mathbf{v}|(4 px) / Myr^{-1}$",vradfracfunc,["vel"],"BuGn","log",(None, None))
         h["vorticity4px_timescale2"] = Hydro("$1 / | \\nabla \\times \mathbf{v}|(4 px) / Myr$",vradfracfunc,["vel"],"BuGn_r","log",(None, None))
-        h["vorticity4px_speedcompareHACK"] = Hydro("Eddy speed / bulk speed",vradfracfunc,["vel"],"RdBu","log",(-1, 1))
+        h["vorticity4px_speedcompareHACK2"] = Hydro("Eddy speed / bulk speed",vradfracfunc,["vel"],"RdBu","log",(-1, 1))
         # Ram pressure
         func = lambda ro: lambda dset: dset["rho"]*np.sum(dset["vel"]**2,1)*ro.info["unit_pressure"].express(C.barye)
         h["Pram"] = Hydro("Ram Pressure / ergs/cm$^3$",func,["rho","vel"],"YlOrRd","log",(None, None))
