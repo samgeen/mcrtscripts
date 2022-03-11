@@ -557,7 +557,7 @@ if __name__=="__main__":
         #simwindname = "UVWIND_"+smass
         #times = np.array([0.5, 0.75, 1.])
         times = np.array([0.2]) # np.array([0.9]) # [0.9] # 3.5 Myr = tstarformed + 0.2 Myr 
-        zoom = 0.5
+        zoom = 0.25
         #if dense:
         #    zoom = 1.0
         newsetname = setname+str(times[-1])+"Myr_"+"zoom"+str(zoom)+"_"

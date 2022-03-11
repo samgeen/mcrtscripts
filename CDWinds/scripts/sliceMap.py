@@ -234,8 +234,8 @@ class SliceMap(object):
         self._slice = None
 
     def getSliceMap(self):
-        Hamu.GLOBALFORCEREPLACECACHE = True
+        #Hamu.GLOBALFORCEREPLACECACHE = True
         if self._slice is None:
             self._slice = _MapSliceHamu(self._snap.hamusnap,self._hydro,self._los,self._zoom, self._starC)
-        Hamu.GLOBALFORCEREPLACECACHE = False
+        #Hamu.GLOBALFORCEREPLACECACHE = False
         return self._slice
