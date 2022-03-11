@@ -158,27 +158,27 @@ def _MapSlice(snap,hydro='rho',los='z',zoom=1.0,starC=False):
         centre = centre+0.5*dxcam
         # Get xyz in frame of image (ensure right-handed coordinate system)
         # We need this because we calculate d/dx etc in frame of image
-        vx0 = makeslice(snap,"v"+across) / dxphys
-        vy0 = makeslice(snap,"v"+up) / dxphys
-        vz0 = makeslice(snap,"v"+los) / dxphys
+        vx0 = makeslice(snap,"v"+across)
+        vy0 = makeslice(snap,"v"+up) 
+        vz0 = makeslice(snap,"v"+los) 
         # Make new slice + dx
         cx = centre+0.0
         cx[lostoi[across]] += dxcam
         cam = v.Camera(center=cx, line_of_sight_axis=los, 
                     region_size=size, up_vector=up, 
                     map_max_size=NEWIMSIZE, log_sensitive=True)
-        vxx = makeslice(snap,"v"+across) / dxphys
-        vyx = makeslice(snap,"v"+up) / dxphys
-        vzx = makeslice(snap,"v"+los) / dxphys
+        vxx = makeslice(snap,"v"+across) 
+        vyx = makeslice(snap,"v"+up)
+        vzx = makeslice(snap,"v"+los)
         # Make new slice + dy
         cy = centre+0.0
         cy[lostoi[up]] += dxcam
         cam = v.Camera(center=cy, line_of_sight_axis=los, 
                     region_size=size, up_vector=up, 
                     map_max_size=NEWIMSIZE, log_sensitive=True)
-        vxy = makeslice(snap,"v"+across) / dxphys
-        vyy = makeslice(snap,"v"+up) / dxphys
-        vzy = makeslice(snap,"v"+los) / dxphys
+        vxy = makeslice(snap,"v"+across) 
+        vyy = makeslice(snap,"v"+up) 
+        vzy = makeslice(snap,"v"+los) 
         # Make new slice + dz
         cz = centre+0.0
         # HACK TEST
@@ -186,15 +186,16 @@ def _MapSlice(snap,hydro='rho',los='z',zoom=1.0,starC=False):
         cam = v.Camera(center=cz, line_of_sight_axis=los, 
                     region_size=size, up_vector=up, 
                     map_max_size=NEWIMSIZE, log_sensitive=True)
-        vxz = makeslice(snap,"v"+across) / dxphys
-        vyz = makeslice(snap,"v"+up) / dxphys
-        vzz = makeslice(snap,"v"+los) / dxphys
+        vxz = makeslice(snap,"v"+across)
+        vyz = makeslice(snap,"v"+up) 
+        vzz = makeslice(snap,"v"+los) 
+        # Get vorticity components in s^{-1}
+        vortx = ((vzy - vz0) - (vyz - vy0)) / dxphys
+        vorty = ((vxz - vx0) - (vzx - vz0)) / dxphys
+        vortz = ((vyx - vy0) - (vxy - vx0)) / dxphys
         # Make vorticity map
-        vortx = (vzy - vz0) - (vyz - vy0) 
-        vorty = (vxz - vx0) - (vzx - vz0) 
-        vortz = (vyx - vy0) - (vxy - vx0) 
-        # Find magnitude in Myr^-1
-        slc = np.sqrt(vortx**2 + vorty**2 + vortz**2) * Myrins
+        # Find magnitude in Myr^{-1}
+        slc = np.sqrt(vortx**2 + vorty**2 + vortz**2) * Myrins 
         # Find turnover timescale?
         if "timescale" in hydro:
             slc = 1.0 / slc
