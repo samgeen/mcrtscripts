@@ -144,9 +144,9 @@ def _MapSlice(snap,hydro='rho',los='z',zoom=1.0,starC=False):
         NEWIMSIZE = IMSIZE
         # Step across multiple pixels / cells?
         if hydro == "vorticity2px":
-            NEWIMSIZE /= 2
+            NEWIMSIZE = IMSIZE / 2
         if hydro == "vorticity4px":
-            NEWIMSIZE /= 4
+            NEWIMSIZE = IMSIZE/ 4
         dxcam = zoom / float(NEWIMSIZE)
         # Make camera again in case
         cam  = v.Camera(center=centre, line_of_sight_axis=los, 
@@ -171,7 +171,7 @@ def _MapSlice(snap,hydro='rho',los='z',zoom=1.0,starC=False):
         vzx = makeslice(snap,"v"+los) / dxphys
         # Make new slice + dy
         cy = centre+0.0
-        cy[lostoi[up]] -= dxcam
+        cy[lostoi[up]] += dxcam
         cam = v.Camera(center=cy, line_of_sight_axis=los, 
                     region_size=size, up_vector=up, 
                     map_max_size=NEWIMSIZE, log_sensitive=True)

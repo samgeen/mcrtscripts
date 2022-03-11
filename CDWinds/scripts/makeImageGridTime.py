@@ -635,7 +635,15 @@ if __name__=="__main__":
             
 
             # Single slices
-            for hydro in ["vorticity1px_speedcompareHACK2","vorticity4px_timescale2","vorticity1px","vorticity2px","vorticity4px",
+            # HACK - FORCE RERUN OF ALL PLOTS
+            HamuLite.GLOBALFORCEREPLACECACHE = True
+            for hydro in ["vorticity1px_speedcompare"]:
+                MakeFigure([simset[0]],[timesin[-1]],name=figname+"singleslice",los=los,hydro=hydro,
+                            Slice=True,wsink=True,starC=False,
+                            timeL=[timeL[-1]],zoom=zoom,forcerun=True)
+            HamuLite.GLOBALFORCEREPLACECACHE = False
+
+            for hydro in ["vorticity1px_speedcompare","vorticity4px_timescale2","vorticity1px","vorticity2px","vorticity4px",
                           "Lcool","T","rho","xHII","xHeII","xHeIII",
                           "P","vradfrac3","vrad","vx","vy","vz"]:
                 MakeFigure([simset[0]],[timesin[-1]],name=figname+"singleslice",los=los,hydro=hydro,
