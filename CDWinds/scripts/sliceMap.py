@@ -161,7 +161,7 @@ def _MapSlice(snap,hydro='rho',los='z',zoom=1.0,starC=False):
         vy0 = makeslice(snap,"v"+up) / dxphys
         vz0 = makeslice(snap,"v"+los) / dxphys
         # Make new slice + dx
-        cx = centre+0.0
+        cx = centre+0.5*dxcam
         cx[lostoi[across]] += dxcam
         cam = v.Camera(center=cx, line_of_sight_axis=los, 
                     region_size=size, up_vector=up, 
