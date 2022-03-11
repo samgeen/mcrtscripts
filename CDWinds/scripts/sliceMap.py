@@ -155,13 +155,14 @@ def _MapSlice(snap,hydro='rho',los='z',zoom=1.0,starC=False):
         # dx in km (to match velocity units)
         # We pre-divide every slice map by this to make calculations easier later
         dxphys = dxcam * boxlen * pcincm / 1000.0
+        centre = centre+0.5*dxcam
         # Get xyz in frame of image (ensure right-handed coordinate system)
         # We need this because we calculate d/dx etc in frame of image
         vx0 = makeslice(snap,"v"+across) / dxphys
         vy0 = makeslice(snap,"v"+up) / dxphys
         vz0 = makeslice(snap,"v"+los) / dxphys
         # Make new slice + dx
-        cx = centre+0.5*dxcam
+        cx = centre+0.0
         cx[lostoi[across]] += dxcam
         cam = v.Camera(center=cx, line_of_sight_axis=los, 
                     region_size=size, up_vector=up, 
