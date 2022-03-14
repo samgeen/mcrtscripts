@@ -273,12 +273,12 @@ class AllHydros(object):
         h["vz"] = Hydro("$v_{\mathrm{z}}$ / km/s",func,["vel"],"BuGn","linear",(None, None))
         # Vorticity - NOTE: THIS IS HANDLED BY SPECIAL CODE IN sliceMap !!!
         # Number refers to number of pixels to sample across
-        h["vorticity1px"] = Hydro("$| \\nabla \\times \mathbf{v}|(1 px) / Myr^{-1}$",vradfracfunc,["vel"],"BuGn","log",(None, None))
-        h["vorticity2px"] = Hydro("$| \\nabla \\times \mathbf{v}|(2 px) / Myr^{-1}$",vradfracfunc,["vel"],"BuGn","log",(None, None))
-        h["vorticity4px"] = Hydro("$| \\nabla \\times \mathbf{v}|(4 px) / Myr^{-1}$",vradfracfunc,["vel"],"BuGn","log",(None, None))
-        h["vorticity1px_timescale"] = Hydro("$1 / | \\nabla \\times \mathbf{v}|(1 px) / Myr$",vradfracfunc,["vel"],"BuGn_r","log",(None, None))
-        h["vorticity2px_timescale"] = Hydro("$1 / | \\nabla \\times \mathbf{v}|(2 px) / Myr$",vradfracfunc,["vel"],"BuGn_r","log",(None, None))
-        h["vorticity4px_timescale"] = Hydro("$1 / | \\nabla \\times \mathbf{v}|(4 px) / Myr$",vradfracfunc,["vel"],"BuGn_r","log",(None, None))
+        h["vorticity1px"] = Hydro("$| \\nabla \\times \mathbf{v}|(1 px) / Myr^{-1}$",vradfracfunc,["vel"],"BuGn","log",(-1, 3))
+        h["vorticity2px"] = Hydro("$| \\nabla \\times \mathbf{v}|(2 px) / Myr^{-1}$",vradfracfunc,["vel"],"BuGn","log",(-1, 3))
+        h["vorticity4px"] = Hydro("$| \\nabla \\times \mathbf{v}|(4 px) / Myr^{-1}$",vradfracfunc,["vel"],"BuGn","log",(-1, 3))
+        h["vorticity1px_timescale"] = Hydro("$1 / | \\nabla \\times \mathbf{v}|(1 px) / Myr$",vradfracfunc,["vel"],"BuGn_r","log",(-3, 1))
+        h["vorticity2px_timescale"] = Hydro("$1 / | \\nabla \\times \mathbf{v}|(2 px) / Myr$",vradfracfunc,["vel"],"BuGn_r","log",(-3, 1))
+        h["vorticity4px_timescale"] = Hydro("$1 / | \\nabla \\times \mathbf{v}|(4 px) / Myr$",vradfracfunc,["vel"],"BuGn_r","log",(-3, 1))
         h["vorticity1px_speedcompare"] = Hydro("Eddy speed / bulk speed",vradfracfunc,["vel"],"RdBu","log",(-1, 1))
         # Ram pressure
         func = lambda ro: lambda dset: dset["rho"]*np.sum(dset["vel"]**2,1)*ro.info["unit_pressure"].express(C.barye)

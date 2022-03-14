@@ -557,7 +557,7 @@ if __name__=="__main__":
         #simwindname = "UVWIND_"+smass
         #times = np.array([0.5, 0.75, 1.])
         times = np.array([0.2]) # np.array([0.9]) # [0.9] # 3.5 Myr = tstarformed + 0.2 Myr 
-        zoom = 0.25
+        zoom = 0.5
         #if dense:
         #    zoom = 1.0
         newsetname = setname+str(times[-1])+"Myr_"+"zoom"+str(zoom)+"_"
@@ -635,18 +635,19 @@ if __name__=="__main__":
             
 
             # Single slices
-            for hydro in ["vorticity1px_timescale","vorticity1px_speedcompare"]:
-                MakeFigure([simset[0]],[timesin[-1]],name=figname+"singleslice",los=los,hydro=hydro,
-                            Slice=True,wsink=True,starC=True,
-                            timeL=[timeL[-1]],zoom=zoom,forcerun=True)
-
-            for hydro in ["vorticity1px_timescale","vorticity1px_speedcompare","vorticity4px_timescale",
-                          "vorticity1px","vorticity2px","vorticity4px",
-                          "Lcool","T","rho","xHII","xHeII","xHeIII",
-                          "P","vradfrac3","vrad","vx","vy","vz"]:
-                MakeFigure([simset[0]],[timesin[-1]],name=figname+"singleslice",los=los,hydro=hydro,
-                            Slice=True,wsink=True,starC=True,
-                            timeL=[timeL[-1]],zoom=zoom,forcerun=True)
+            #for hydro in ["vorticity1px_timescale","vorticity1px_speedcompare"]:
+            #    MakeFigure([simset[0]],[timesin[-1]],name=figname+"singleslice",los=los,hydro=hydro,
+            #                Slice=True,wsink=True,starC=True,
+            #                timeL=[timeL[-1]],zoom=zoom,forcerun=True)
+            
+            if simset == "single":
+                for hydro in ["vorticity1px_timescale","vorticity1px_speedcompare","vorticity4px_timescale",
+                              "vorticity1px","vorticity2px","vorticity4px",
+                              "Lcool","T","rho","xHII","xHeII","xHeIII",
+                              "P","vradfrac3","vrad","vx","vy","vz"]:
+                    MakeFigure([simset[0]],[timesin[-1]],name=figname+"singleslice",los=los,hydro=hydro,
+                               Slice=True,wsink=True,starC=True,
+                               timeL=[timeL[-1]],zoom=zoom,forcerun=True)
             
             # Slices
             for hydro in ["Lcool","T","rho","xHII","xHeII","xHeIII","P"]:
