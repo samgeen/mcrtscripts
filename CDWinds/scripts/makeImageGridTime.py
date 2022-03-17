@@ -640,15 +640,22 @@ if __name__=="__main__":
             #                Slice=True,wsink=True,starC=True,
             #                timeL=[timeL[-1]],zoom=zoom,forcerun=True)
             
-            if simset == "single":
-                for hydro in ["vorticity1px_timescale","vorticity1px_speedcompare","vorticity4px_timescale",
-                              "vorticity1px","vorticity2px","vorticity4px",
-                              "Lcool","T","rho","xHII","xHeII","xHeIII",
-                              "P","vradfrac3","vrad","vx","vy","vz"]:
+            if setname == "single":
+                for hydro in ["spd",
+                              "vdispersion1px","vdispersion1px_speedcompare",
+                              "vdispersion2px","vdispersion2px_speedcompare",
+                              "vorticity1px_timescale",
+                              "vorticity2px_timescale",
+                              "vorticity4px_timescale",
+                              "vorticity1px_speedcompare","vorticity2px_speedcompare","vorticity4px_speedcompare",
+                              "vorticity1px","vorticity2px","vorticity4px"]:
+                    #"Lcool","T","rho","xHII","xHeII","xHeIII",
+                    #"P","vradfrac3","vrad","vx","vy","vz"]:
                     MakeFigure([simset[0]],[timesin[-1]],name=figname+"singleslice",los=los,hydro=hydro,
                                Slice=True,wsink=True,starC=True,
                                timeL=[timeL[-1]],zoom=zoom,forcerun=True)
-            
+
+                    
             # Slices
             for hydro in ["Lcool","T","rho","xHII","xHeII","xHeIII","P"]:
                 MakeFigure(simset,[timesin[-1]],name=figname,los=los,hydro=hydro,
@@ -683,8 +690,6 @@ if __name__=="__main__":
                                timeL=timesmergedL,zoom=zoom,forcerun=True,
                                doplottime=True,contours=contours,
                                plotcolorbar=True)
-
-
 
 
             #if DEBUG:

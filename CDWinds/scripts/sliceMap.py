@@ -116,6 +116,8 @@ def _MapSlice(snap,hydro='rho',los='z',zoom=1.0,starC=False):
 
     centre = np.zeros(3)+0.5
     boxlen = snap.info["boxlen"]
+    levelmax = snap.info["levelmax"]
+    dx = boxlen * 2.0**(-levelmax)
     if starC:
         stars = stellars.FindStellar(snap)
         centre[lostoi[los]] = np.array([stars.x[0], stars.y[0], stars.z[0]])[lostoi[los]]/boxlen
@@ -132,7 +134,7 @@ def _MapSlice(snap,hydro='rho',los='z',zoom=1.0,starC=False):
         return slc
 
 
-    if not "vorticity" in hydro:
+    if not "vorticity" in hydro or "vdispersion" in hydro:
         cam  = v.Camera(center=centre, line_of_sight_axis=los, 
                         region_size=size, up_vector=up, 
                         map_max_size=IMSIZE, log_sensitive=True)
@@ -143,11 +145,12 @@ def _MapSlice(snap,hydro='rho',los='z',zoom=1.0,starC=False):
         # Get pixel size
         NEWIMSIZE = IMSIZE
         # Step across multiple pixels / cells?
-        if hydro == "vorticity2px":
+        if "2px" in hydro:
             NEWIMSIZE = IMSIZE / 2
-        if hydro == "vorticity4px":
+        if "4px" in hydro:
             NEWIMSIZE = IMSIZE/ 4
-        dxcam = zoom / float(NEWIMSIZE) * 0.25 # Undersample to prevent cell skipping effects
+        #dxcam = zoom / float(NEWIMSIZE) * 0.5 # Undersample to prevent cell skipping effects
+        dxcam = dx * float(IMSIZE) / float(NEWIMSIZE)
         # Make camera again in case
         cam  = v.Camera(center=centre, line_of_sight_axis=los, 
                     region_size=size, up_vector=up, 
@@ -155,7 +158,7 @@ def _MapSlice(snap,hydro='rho',los='z',zoom=1.0,starC=False):
         centre = centre+0.5*dxcam
         # dx in km (to match velocity units)
         # We pre-divide every slice map by this to make calculations easier later
-        dxphys = dxcam * boxlen * pcincm / 1000.0
+        dxphys = dxcam * boxlen * pcincm
         # Get xyz in frame of image (ensure right-handed coordinate system)
         # We need this because we calculate d/dx etc in frame of image
         vx0 = makeslice(snap,"v"+across)
@@ -190,19 +193,35 @@ def _MapSlice(snap,hydro='rho',los='z',zoom=1.0,starC=False):
         vyz = makeslice(snap,"v"+up) 
         vzz = makeslice(snap,"v"+los) 
         # Get vorticity components in s^{-1}
-        vortx = ((vzy - vz0) - (vyz - vy0)) / dxphys
-        vorty = ((vxz - vx0) - (vzx - vz0)) / dxphys
-        vortz = ((vyx - vy0) - (vxy - vx0)) / dxphys
+        # x1000 to convert from km/s to cgs
+        vortx = ((vzy - vz0) - (vyz - vy0)) / dxphys * 1000.0
+        vorty = ((vxz - vx0) - (vzx - vz0)) / dxphys * 1000.0
+        vortz = ((vyx - vy0) - (vxy - vx0)) / dxphys * 1000.0
+        # N = 4 here for the mean and velocity dispersion
+        vxmean = (vx0 + vxx + vxy + vxz) / 4.0
+        vymean = (vy0 + vyx + vyy + vyz) / 4.0
+        vzmean = (vz0 + vzx + vzy + vzz) / 4.0
+        vdisp = 0.0
+        vdisp += (vx0 - vxmean)**2 + (vxx - vxmean)**2 + (vxy - vxmean)**2 + (vxz - vxmean)**2
+        vdisp += (vy0 - vymean)**2 + (vyx - vymean)**2 + (vyy - vymean)**2 + (vyz - vymean)**2
+        vdisp += (vz0 - vzmean)**2 + (vzx - vzmean)**2 + (vzy - vzmean)**2 + (vzz - vzmean)**2
+        vdisp = np.sqrt(vdisp / 4.0) * 1000.0 # --> cm/s
+        # Speed in cgs from km/s
+        spd = np.sqrt(vx0**2 + vy0**2 + vz0**2) * 1000.0
         # Make vorticity map
         # Find magnitude in Myr^{-1}
-        slc = np.sqrt(vortx**2 + vorty**2 + vortz**2) * Myrins 
-        # Find turnover timescale?
-        if "timescale" in hydro:
-            slc = 1.0 / slc
-        # Compare the eddy turnover speed (dxphys / curl V) to the bulk gas speed
-        if "speedcompare" in hydro:
-            spd = np.sqrt(vx0**2 + vy0**2 + vz0**2)
-            slc = dxphys * slc / Myrins / spd
+        if "vorticity" in hydro:
+            slc = np.sqrt(vortx**2 + vorty**2 + vortz**2) * Myrins 
+            # Find turnover timescale?
+            if "timescale" in hydro:
+                slc = 1.0 / slc
+            # Compare the eddy turnover speed (dxphys / curl V) to the bulk gas speed
+            if "speedcompare" in hydro:
+                slc = dxphys * slc / Myrins / spd
+        if "vdispersion" in hydro:
+            slc = vdisp / 1000.0 # -> km/s
+            if "speedcompare" in hydro:
+                slc = vdisp / spd
         # Resize the output image if needed
         if NEWIMSIZE != IMSIZE:
             slc = skimage.transform.resize(slc, (IMSIZE, IMSIZE))
@@ -234,8 +253,9 @@ class SliceMap(object):
         self._slice = None
 
     def getSliceMap(self):
-        #Hamu.GLOBALFORCEREPLACECACHE = True
+        if "vdispersion" in self._hydro:
+            Hamu.GLOBALFORCEREPLACECACHE = True
         if self._slice is None:
             self._slice = _MapSliceHamu(self._snap.hamusnap,self._hydro,self._los,self._zoom, self._starC)
-        #Hamu.GLOBALFORCEREPLACECACHE = False
+        Hamu.GLOBALFORCEREPLACECACHE = False
         return self._slice
