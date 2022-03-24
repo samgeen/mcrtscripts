@@ -577,7 +577,7 @@ def hotchampagneplot():
     # Make slices
     for hydro in ["vorticity2px_timescale","T","rho","xHII","P"]:
         MakeFigure([simname],timetuples,name=figname,los=los,hydro=hydro,
-                    Slice=True,wsink=True,starC=True,
+                    Slice=True,wsink=True,starC=True,doplottime=True,
                     timeL=timeL,zoom=zoom,forcerun=True)
 
 if __name__=="__main__":
