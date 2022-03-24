@@ -460,6 +460,11 @@ def MakeFigure(simnames,times,name,los=None,hydro="rho",Slice=False,wsink=False,
                 cmap = None
                 
             def MakeData(hydro):
+                # Make sure we don't try to load the CD mask if it's not there
+                if not "_CDMASK" in simname:
+                    if hydro == "xrayemission3":
+                        # Use function that doesn't include MaskCD
+                        hydro = "xrayemission2"
                 if Slice:
                     if wsink:
                         data  = createSliceMap_sink(snap,hydro,los,zoom,starC)      
@@ -594,7 +599,7 @@ if __name__=="__main__":
                 #               Slice=True,wsink=True,starC=True,
                 #               timeL=[tmovieL],zoom=zoom,forcerun=True)
             # Merged emission map - just wind
-            coolhydros = ["coolemission","ionemission4","xrayemission2"]
+            coolhydros = ["coolemission","ionemission4","xrayemission3"]
             timesmerged = [0.1,0.2,0.3]
             timesmergedIn = [(time,"MyrFirstStar") for time in timesmerged]
             timesmergedL = [str(x)+r' Myr' for x in timesmerged]
@@ -640,6 +645,19 @@ if __name__=="__main__":
             '''
             
 
+            # Emission and NH maps
+            for hydro in [coolhydros,"NH"]:
+                contourslist = [[],["Wind","Ionised"]]
+                for contours in contourslist:
+                    contxt = ""
+                    if len(contours) > 0:
+                        contxt = "_contours"
+                        MakeFigure(simset,timesmergedIn,name=figname+"windpressonly_sequence"+contxt,
+                               los=los,hydro=hydro,Slice=False,wsink=True,
+                               timeL=timesmergedL,zoom=zoom,forcerun=True,
+                               doplottime=True,contours=contours,
+                               plotcolorbar=True)
+
             # Single slices
             #for hydro in ["vorticity1px_timescale","vorticity1px_speedcompare"]:
             #    MakeFigure([simset[0]],[timesin[-1]],name=figname+"singleslice",los=los,hydro=hydro,
@@ -683,19 +701,6 @@ if __name__=="__main__":
                             Slice=True,wsink=True,starC=True,
                             timeL=[timeL[-1]],zoom=zoom,forcerun=forcerun,
                             contours=["WindSlice","IonisedSlice","FreeStreamSlice"])
-
-            # Emission and NH maps
-            for hydro in [coolhydros,"NH"]:
-                contourslist = [[],["Wind","Ionised"]]
-                for contours in contourslist:
-                    contxt = ""
-                    if len(contours) > 0:
-                        contxt = "_contours"
-                        MakeFigure(simset,timesmergedIn,name=figname+"windpressonly_sequence"+contxt,
-                               los=los,hydro=hydro,Slice=False,wsink=True,
-                               timeL=timesmergedL,zoom=zoom,forcerun=True,
-                               doplottime=True,contours=contours,
-                               plotcolorbar=True)
 
 
             #if DEBUG:

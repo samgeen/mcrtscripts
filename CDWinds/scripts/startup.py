@@ -269,7 +269,32 @@ def _xrayfunc2(ro):
 xrayemission2 = hydrofuncs.Hydro("Hot Emission",_xrayfunc2,
                                 ["rho","P","vel","xHII","xHeII","xHeIII","NpHII","NpHeII","NpHeIII"] ,
                                  "YlOrRd_r","log",(None,None))
-hydrofuncs.allhydros["xrayemission2"] = xrayemission2# ---
+hydrofuncs.allhydros["xrayemission2"] = xrayemission2
+
+# ---
+# Include MaskCD if possible
+def _xrayfunc3(ro):
+    mufunc = lambda dset: 1./(0.76*(1.+dset["xHII"]) + \
+                          0.25*0.24*(1.+dset["xHeII"]+2.*dset["xHeIII"]))
+    coolfunc = rtcooling.dedtOnCells(ro)
+    def xrayfunc(dset):
+        shape = dset["rho"].shape
+        temp = dset["P"].flatten()/dset["rho"].flatten()*ro.info["unit_temperature"].express(C.K)#*mufunc(dset)
+        temp = np.reshape(temp,shape)
+        cool = coolfunc(dset)
+        cool[cool < 0.0] = 0.0
+        if "MaskCD" in dset:
+            maskcd = dset["MaskCD"] > 1.0
+            cool[maskcd] = 0.0
+        emiss = cool+0.0
+        emiss[temp < 1e6] = 0.0 # cool[cool > 0.0].min()*0.1
+        return emiss
+    return xrayfunc
+xrayemission3 = hydrofuncs.Hydro("Hot Emission",_xrayfunc3,
+                                ["rho","P","vel","xHII","xHeII","xHeIII","NpHII","NpHeII","NpHeIII","MaskCD"] ,
+                                 "YlOrRd_r","log",(None,None))
+hydrofuncs.allhydros["xrayemission3"] = xrayemission2
+# ---
 def _lowtempfunc(ro):
     mufunc = lambda dset: 1./(0.76*(1.+dset["xHII"]) + \
                           0.25*0.24*(1.+dset["xHeII"]+2.*dset["xHeIII"]))
