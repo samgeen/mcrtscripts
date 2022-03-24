@@ -565,7 +565,6 @@ def hotchampagneplot():
     # Get times in Myr
     outsnaps = {snap.OutputNumber():snap for snap in sim.Snapshots()}
     myr   = outsnaps[outnums[0]].RawData().info["unit_time"].express(C.Myr)
-    time = outsnaps[int(time)].Time()
     tcreated = FindTcreatedFirstStar(sim)
     timesMyr = [outsnaps[o].Time() * myr - tcreated for o in outnums]
     timeL = [str(x)+r' Myr' for x in timesMyr]
