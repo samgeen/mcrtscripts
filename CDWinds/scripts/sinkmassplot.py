@@ -21,33 +21,38 @@ def _findmainsinkmass(snap):
     return mainsinkmass
 findmainsinkmass = Hamu.Algorithm(_findmainsinkmass)
 
-def plotforsims(labels):
+def plotforsims(labels,plotdiff=False):
     plt.clf()  
     simnames = labels.keys()
-    isim = 0
+    difftxt = ""
     for simname in simnames:
         print("Running for sim", simname)
-        isim += 1
-        #if isim > len(simnames)//2:
-        #    linestyles.isim = 0
         sim = hamusims[simname]
         label = labels[simname]
         tcreated = timefuncs.FindTcreatedFirstStar(sim)
         times, sinkmasses = timefuncs.timefunc(sim,findmainsinkmass)
         times -= tcreated
-        plt.plot()
+        x = times
+        y = sinkmasses
+        if plotdiff:
+            difftxt = "_diff"
+            y = np.diff(sinkmasses) / np.diff(times)
+            x = 0.5*(times[1:] + times[:-1])
         colour = linestyles.Colour(simname)
         line = "-"
+
         #if "NOFB" in simname:
         #    line = "--"
-        plt.gca().plot(times,sinkmasses,color=colour,label=label,
+        plt.gca().plot(x,y,color=colour,label=label,
                 linestyle=line,alpha=0.9,                                                                      
                 path_effects=[pe.Stroke(linewidth=5, foreground='k'), pe.Normal()]) 
     plt.legend(fontsize="x-small",frameon=False)
     plt.xlim([0,0.4]) # Myr
     plt.xlabel("Time / Myr")
     plt.ylabel("Main Sink Mass / M$_{\odot}$")
-    plt.savefig("../plots/mainsinkmass.pdf")
+    if plotdiff:
+        plt.ylabel("Main Sink Accretion Rate / M$_{\odot} / Myr$")
+    plt.savefig("../plots/mainsinkmass"+difftxt+".pdf")
 
 
 
@@ -67,3 +72,4 @@ if __name__ == "__main__":
     #labels["SEED4_35MSUN_CDMASK_WINDUV"] = "Seed4, Wind \& UV"
 
     plotforsims(labels)
+    plotforsims(labels,plotdiff=True)
