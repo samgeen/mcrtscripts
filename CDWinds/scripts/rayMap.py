@@ -17,6 +17,7 @@ from pymses.analysis.visualization import *
 # Axes up and across for each line of sight
 ups = {'x':'z','y':'x','z':'y'}
 acrosses = {'x':'y','y':'z','z':'x'}
+lostoi = {"x":0, "y":1, "z":2}
 
 IMSIZE = 1024
 
@@ -105,6 +106,7 @@ def _MapRayTrace(snap,hydro='rho',los='z',zoom=1.0,starC=False):
         boxlen = snap.info["boxlen"]
         centre = np.array([stars.x[0], stars.y[0], stars.z[0]])/boxlen
     up = ups[los]
+    across = acrosses[los]
 
     cam  = v.Camera(center=centre, line_of_sight_axis=los, 
                     region_size=size, up_vector=up, 
@@ -125,7 +127,7 @@ def _MapRayTrace(snap,hydro='rho',los='z',zoom=1.0,starC=False):
         print("Made ray trace map for "+hydro+" (with min/max:", im.min(), im.max(), ")")
         return im
     im = makeray(snap,hydro)
-    return im
+    return centre[lostoi[across]],centre[lostoi[up]], im
 
 _MapRayTraceHamu = Hamu.Algorithm(_MapRayTrace)
 #_MapRayTraceHamu._force_replace_cache = True
@@ -141,6 +143,8 @@ class RayTraceMap(object):
         zoom                        - Factor to zoom (<1 = zoom, 1 = full box)
         '''
         self._snap  = snap.RawData()
+        self._cx = None
+        self._cy = None
         self._los   = los
         self._hydro = hydro
         self._zoom  = zoom
@@ -153,8 +157,8 @@ class RayTraceMap(object):
 
     def getRaytraceMap(self):
         if self._raytrace is None:
-            self._raytrace = _MapRayTraceHamu(self._snap.hamusnap,self._hydro,self._los,self._zoom,self._starC)
-        return self._raytrace
+            self._cx, self._cy, self._raytrace = _MapRayTraceHamu(self._snap.hamusnap,self._hydro,self._los,self._zoom,self._starC)
+        return self._cx, self._cy, self._raytrace
 
     # Maybe in the future helpful
     #def returnMap(self):

@@ -461,7 +461,7 @@ def radiusinsnap(snap,wind=False,freestream=False):
     #print "RADIUS FOUND", radius
     return radius
 
-def radiusinsnap3(snap,wind=False,freestream=False):
+def radiusinsnap3(snap,wind=False,freestream=False,Twind=None):
     '''
     2nd implementation: measure volume of ionised gas and sphericise
     '''

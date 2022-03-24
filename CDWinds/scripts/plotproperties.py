@@ -75,8 +75,7 @@ radiusinsnap = Hamu.Algorithm(findproperties.radiusinsnap3)
 def radius(sim):
     if type(sim) == type("duck"):
         sim = hamusims[sim]
-    else:
-        simname = sim.Name()
+    simname = sim.Name()
     print("Running for simulation", simname)
     #tcreated, sfe = starrelations.runforsim(simname,"firsttime")  
     t,r = timefuncs.timefunc(sim,radiusinsnap,processes=nprocs)
@@ -165,11 +164,8 @@ windenergyinsnap = Hamu.Algorithm(findproperties.windenergyinsnap3)
 def windenergy(sim,kinonly=False,thermonly=False):
     if type(sim) == type("duck"):
         sim = hamusims[sim]
-    else:
-        simname = sim.Name()
+    simname = sim.Name()
     print("Running for simulation", simname)
-    if type(sim) == type("duck"):
-        sim = hamusims[simname]
     #tcreated, sfe = starrelations.runforsim(simname,"firsttime")
     t,e = timefuncs.timefunc(sim,windenergyinsnap,processes=1) # doesn't like tuples in the pool map
     print(e.shape)
@@ -420,6 +416,13 @@ def run(simfunc,simnamesets,plotlabels,compare=False,secondfuncs=None,gradient=F
             textloc = 0.1
             ax.set_xscale("linear")
             ax.set_yscale("linear")
+        # HARD-CODE TO ALLOW COMPARISON
+        if "maxradius" in funcname:
+            for setname in simnamesets:
+                if "physics" in setname:
+                    ax.set_ylim([0,13])
+                if "seeds" in setname:
+                    ax.set_ylim([0,25])
         #if funcname == "windradius":
             #tlim = 1e-6
             #ax.set_xlabel("Time after 1st star formed / Myr")
@@ -635,7 +638,7 @@ def run(simfunc,simnamesets,plotlabels,compare=False,secondfuncs=None,gradient=F
             if funcname == "radius":
                 ax.set_ylabel("Mean HII Region radius / pc")
                 legendloc = "upper left"
-                ncollegend=3
+                #ncollegend=3
             if funcname == "radius2":
                 ax.set_ylabel("Sphericised HII Region radius / pc")
             if funcname == "nphotonsHII":

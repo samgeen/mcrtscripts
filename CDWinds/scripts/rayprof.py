@@ -272,7 +272,8 @@ def plot(simname,hydro,centre):
         plt.gca().set_rasterized(True)
         plt.savefig(path+"/profile_"+str(snap.OutputNumber()).zfill(5)+".pdf",dpi=200)
 
-def plotgradient(simname,hydro,time,centre,label=None,xlims=None,powfile=None,suffix=None,xscale="linear"):
+def plotgradient(simname,hydro,time,centre,label=None,xlims=None,powfile=None,suffix=None,xscale="linear",
+                 onlyfirst=False):
     '''
     Like prof but with a higher gradient
     '''
@@ -382,6 +383,9 @@ def plotgradient(simname,hydro,time,centre,label=None,xlims=None,powfile=None,su
         plt.grid()
         #plt.gca().set_rasterized(True)
         plt.savefig(path+"/profile_"+suffix+str(snap.OutputNumber()).zfill(5)+"_x"+xscale+".png",dpi=200)
+        # Only plot the first instance?
+        if onlyfirst:
+            return
 
 def findstarpos(simname,time,useMyr=False):
     sim = hamusims[simname]
@@ -410,21 +414,25 @@ if __name__ == "__main__":
     #labels["NOFB"] = "No star"
     #labels["UV_30"] = "UV only, 30 Msun star"
     #labels["UVWIND_30"] = "UV+Winds, 30 Msun star"
-    labels["SEED0_35MSUN_CDMASK_WINDUV"] = "Seed0, CDMask, Refine"
-    labels["SEED1_35MSUN_CDMASK_WINDUV"] = "Seed1, CDMask, Refine"
-    labels["SEED2_35MSUN_CDMASK_WINDUV"] = "Seed2, CDMask, Refine"
-    labels["SEED3_35MSUN_CDMASK_WINDUV"] = "Seed3, CDMask, Refine"
-    labels["SEED4_35MSUN_CDMASK_WINDUV"] = "Seed4, CDMask, Refine"
+
+    #labels["SEED0_35MSUN_CDMASK_WINDUV"] = "Seed0, CDMask, Refine"
+    #labels["SEED1_35MSUN_CDMASK_WINDUV"] = "Seed1, CDMask, Refine"
+    #labels["SEED2_35MSUN_CDMASK_WINDUV"] = "Seed2, CDMask, Refine"
+    #labels["SEED3_35MSUN_CDMASK_WINDUV"] = "Seed3, CDMask, Refine"
+    #labels["SEED4_35MSUN_CDMASK_WINDUV"] = "Seed4, CDMask, Refine"
+
     #labels["SEED1_35MSUN_CDMASK_WINDUV"] = "Seed1, CDMask, Refine"
     #labels["SEED2_35MSUN_CDMASK_WINDUV"] = "Seed2, CDMask, Refine"
     #labels["SEED1_35MSUN_CDMASK_WINDUV"] = "Seed1, CDMask, Refine"
     #labels["SEED1_35MSUN_NOCDMASK_WINDUV"] = "Seed1, No CDMask, Refine"
     #labels["SEED1_35MSUN_CDMASK_UV"] = "Seed1, Refine, Just UV"
+
     labels["SEED0_35MSUN_CDMASK_NOFB"] = "Seed0, No Feedback"
     labels["SEED1_35MSUN_CDMASK_NOFB"] = "Seed1, No Feedback"
     labels["SEED2_35MSUN_CDMASK_NOFB"] = "Seed2, No Feedback"
     labels["SEED3_35MSUN_CDMASK_NOFB"] = "Seed3, No Feedback"
     labels["SEED4_35MSUN_CDMASK_NOFB"] = "Seed4, No Feedback"
+
     sims = labels.keys()
     #sims = ["MASS_04"]
     for simname in sims:
@@ -432,22 +440,22 @@ if __name__ == "__main__":
         #import pdb; pdb.set_trace()
         starpos = None
         plotgradient(simname,"Pram",time,starpos,labels[simname],
-                     xlims=[0.03,25.0],powfile=None,suffix="starpos")
+                     xlims=[0.03,25.0],powfile=None,suffix="starpos",onlyfirst=True)
         plotgradient(simname,"vrad",time,starpos,labels[simname],
-                     xlims=[0.03,25.0],powfile=None,suffix="starpos")
+                     xlims=[0.03,25.0],powfile=None,suffix="starpos",onlyfirst=True)
         plotgradient(simname,"nH",time,starpos,labels[simname],
-                     xlims=[0.03,25.0],powfile=powfile,suffix="starpos")
+                     xlims=[0.03,25.0],powfile=powfile,suffix="starpos",onlyfirst=True)
         plotgradient(simname,"nH",time,starpos,labels[simname],
                      xlims=[0.03,25.0],powfile=powfile,suffix="starpos",
-                     xscale="log")
+                     xscale="log",onlyfirst=True)
         plotgradient(simname,"T",time,starpos,labels[simname],
-                     xlims=[0.03,25.0],powfile=None,suffix="starpos")
+                     xlims=[0.03,25.0],powfile=None,suffix="starpos",onlyfirst=True)
         # Crashes if trying to run with nofb (makes a huge image?)
         if not "NOFB" in simname:
             plotgradient(simname,"xHII",time,starpos,labels[simname],
-                         xlims=[0.03,25.0],powfile=None,suffix="starpos")
+                         xlims=[0.03,25.0],powfile=None,suffix="starpos",onlyfirst=True)
         plotgradient(simname,"P",time,starpos,labels[simname],
-                     xlims=[0.03,25.0],powfile=None,suffix="starpos")
+                     xlims=[0.03,25.0],powfile=None,suffix="starpos",onlyfirst=True)
         #plotgradient(simname,"nH",time,np.array([0.5,0.5,0.5]),"Geometric Centre",
         #             xlims=[0.03,25.0],powfile=powfile,suffix="centre")
     powfile.close()

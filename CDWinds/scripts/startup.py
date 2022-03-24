@@ -105,6 +105,7 @@ else:
     simfolders["SEED1_35MSUN_WINDUV_WEAKB"] = windshellfolder+"34_newseed_35Msun_vweakB/"
     # Turn off feedback sources
     simfolders["SEED1_35MSUN_CDMASK_WIND"] = windshellfolder+"28_newseed_35Msun_justwind/"
+    simfolders["SEED1_35MSUN_NOCDMASK_WIND"] = windshellfolder+"37_newseed_35Msun_justwind_nocd/"
     #simfolders["SEED1_35MSUN_CDMASK_UV"] = windshellfolder+"29_newseed_35Msun_justuv/"
     simfolders["SEED1_35MSUN_CDMASK_UV"] = windshellfolder+"Z29_newseed_35Msun_justuv_norefine/"
     simfolders["SEED1_35MSUN_CDMASK_NOFB"] = windshellfolder+"N23_nofb/"
@@ -136,7 +137,10 @@ fbset = ["SEED1_35MSUN_CDMASK_WINDUV",
 
 singleset = ["SEED1_35MSUN_CDMASK_WINDUV"] 
 
-simsets = {"single":singleset, "fb":fbset, "physics":physicsset, "seeds":seedset}
+windonlyset = ["SEED1_35MSUN_CDMASK_WIND",
+               "SEED1_35MSUN_NOCDMASK_WIND"]
+
+simsets = {"windonly":windonlyset,"single":singleset, "fb":fbset, "physics":physicsset, "seeds":seedset}
     
 # Populate list of Hamu simulations
 # TODO - make these on demand rather than on loadup?

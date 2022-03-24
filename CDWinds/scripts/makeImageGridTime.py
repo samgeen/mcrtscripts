@@ -52,11 +52,14 @@ def _createColDensMap(snap,los=None,hydro='rho',wsink=False,zoom=1.0):
 def _createColDensMap_sink(snap,los=None,hydro='rho',wsink=True,zoom=1.0):
     ro = snap.RawData()
     dmap = columndensity.DensityMap(snap,los,zoom=zoom)
-    im = dmap.NH()
+    cx, cy, im = dmap.NH()
     boxlen = ro.info["boxlen"]
     # Plot with sinks
     sinkx, sinky, sinkm = ProjectSinks(ro,los)
     # Shift sink position if zooming in
+    print("TODO: ADD CENTRED COLUMN DENSITY MAPS")
+    #sinkx -= (cx - 0.5*zoom)*boxlen
+    #sinky -= (cy - 0.5*zoom)*boxlen
     sinkx -= 0.5*(1.0-zoom)*boxlen
     sinky -= 0.5*(1.0-zoom)*boxlen
     return [im, sinkx, sinky, sinkm, boxlen*zoom]
@@ -71,32 +74,34 @@ def _createRayMap(snap,los=None,hydro='rho',wsink=False,zoom=1.0,starC=False):
 def _createRayMap_sink(snap,los=None,hydro='rho',wsink=True,zoom=1.0,starC=False):
     ro = snap.RawData()
     dmap = rayMap.RayTraceMap(snap,hydro,los,zoom=zoom,starC=starC)
-    im   = dmap.getRaytraceMap()
+    cx, cy,im   = dmap.getRaytraceMap()
     boxlen = ro.info["boxlen"]
     # Plot with sinks
     sinkx, sinky, sinkm = ProjectSinks(ro,los)
     # Shift sink position if zooming in
-    sinkx -= 0.5*(1.0-zoom)*boxlen
-    sinky -= 0.5*(1.0-zoom)*boxlen
+    sinkx -= (cx - 0.5*zoom)*boxlen
+    sinky -= (cy - 0.5*zoom)*boxlen
     return [im, sinkx, sinky, sinkm, boxlen*zoom]
 
 def _createSliceMap(snap,hydro='rho',los=None,zoom=1.0,starC=False):
     ro = snap.RawData()
     dmap = sliceMap.SliceMap(snap,hydro,los,zoom=zoom,starC=starC)
-    im   = dmap.getSliceMap()
+    cx, cy, im   = dmap.getSliceMap()
     boxlen = ro.info["boxlen"] 
     return [im, boxlen*zoom]
 
 def _createSliceMap_sink(snap,hydro='rho',los=None,zoom=1.0,starC=False):
     ro = snap.RawData()
     dmap = sliceMap.SliceMap(snap,hydro,los,zoom=zoom,starC=starC)
-    im   = dmap.getSliceMap()
+    cx, cy, im   = dmap.getSliceMap()
     boxlen = ro.info["boxlen"] 
     # Plot with sinks
     sinkx, sinky, sinkm = ProjectSinks(ro,los)
     # Shift sink position if zooming in
-    sinkx -= 0.5*(1.0-zoom)*boxlen
-    sinky -= 0.5*(1.0-zoom)*boxlen
+    sinkx -= (cx - 0.5*zoom)*boxlen
+    sinky -= (cy - 0.5*zoom)*boxlen
+    #sinkx -= 0.5*(1.0-zoom)*boxlen
+    #sinky -= 0.5*(1.0-zoom)*boxlen
     return [im, sinkx, sinky, sinkm, boxlen*zoom]
 
 def rgb(r,g,b):
@@ -124,9 +129,9 @@ def MakeImage(datas,hydros,snap,wsink,ax,dolengthscale,cmap,plottime=False,timeL
     for data, hydro in zip(datas, hydros):
         # NOTE: for different hydro variables, only im should be different
         if wsink:
-            im, sinkx, sinky, sinkm, boxlen = data
+            im, sinkx, sinky, sinkm, zoomedboxlen = data
         else:
-            im, boxlen = data
+            im, zoomedboxlen = data
 
         # Specific hack for Lcool (ignore heating, cooling = +ve)
         if hydro == "Lcool" or "emission" in hydro:
@@ -156,8 +161,8 @@ def MakeImage(datas,hydros,snap,wsink,ax,dolengthscale,cmap,plottime=False,timeL
                 im = np.log10(im) # NOTE: make sure you don't have -ve or zero values here!
         # Make image mesh
         xl, yl = im.shape
-        xarr = np.arange(0,boxlen*1.0000001,boxlen/(xl-1.0))
-        yarr = np.arange(0,boxlen*1.0000001,boxlen/(yl-1.0))
+        xarr = np.arange(0,zoomedboxlen*1.0000001,zoomedboxlen/(xl-1.0))
+        yarr = np.arange(0,zoomedboxlen*1.0000001,zoomedboxlen/(yl-1.0))
         # Plot image map
         if len(ims) == 1:
             finalim = im
@@ -191,27 +196,27 @@ def MakeImage(datas,hydros,snap,wsink,ax,dolengthscale,cmap,plottime=False,timeL
     for contour in contours:
         if contour == "Wind":
             dmap = rayMap.RayTraceMap(snap,"xrayemission2",los,zoom=zoom) # Returns hot emission
-            contourim   = dmap.getRaytraceMap()
+            dum1, dum2, contourim   = dmap.getRaytraceMap()
             contourlims = [1e-37]
             contourcolour = "c"
         if contour == "Ionised":
             dmap = rayMap.RayTraceMap(snap,"xHIImax",los,zoom=zoom) # Returns max xHII
-            contourim   = dmap.getRaytraceMap()
+            dum1, dum2, contourim   = dmap.getRaytraceMap()
             contourlims = [1e-2] # Find any xHII above a small value
             contourcolour = "r"
         if contour == "WindSlice":
             dmap = sliceMap.SliceMap(snap,"xrayemission2",los=los,zoom=zoom,starC=starC)
-            contourim   = dmap.getSliceMap()
+            dum1, dum2, contourim   = dmap.getSliceMap()
             contourlims = [1e-29]
             contourcolour = "c"
         if contour == "IonisedSlice":
             dmap = sliceMap.SliceMap(snap,"xHII",los=los,zoom=zoom,starC=starC)
-            contourim   = dmap.getSliceMap()
+            dum1, dum2, contourim   = dmap.getSliceMap()
             contourlims = [1e-2]
             contourcolour = "r"
         if contour == "FreeStreamSlice":
             dmap = sliceMap.SliceMap(snap,"spd",los=los,zoom=zoom,starC=starC)
-            contourim   = dmap.getSliceMap()
+            dum1, dum2, contourim   = dmap.getSliceMap()
             contourlims = [1000]
             contourcolour = "m"
         if contour == "Damkoehler4Slice":
@@ -219,12 +224,12 @@ def MakeImage(datas,hydros,snap,wsink,ax,dolengthscale,cmap,plottime=False,timeL
             hydrofuncs.allhydros.AddGlobals({"Ldamkoehler":lbubble})
             hydrofuncs.allhydros.AddGlobals({"starpos":starpos})
             dmap = sliceMap.SliceMap(snap,"Damkoehler4",los=los,zoom=zoom,starC=starC)
-            contourim   = dmap.getSliceMap()
+            dum1, dum2, contourim   = dmap.getSliceMap()
             contourlims = [1]
             contourcolour = "b"
         if contour == "MaskCDSlice":
             dmap = sliceMap.SliceMap(snap,"MaskCD",los=los,zoom=zoom,starC=starC)
-            contourim   = dmap.getSliceMap()
+            dum1, dum2, contourim   = dmap.getSliceMap()
             contourlims = [1]
             contourcolour = "b"
         contourim = np.flipud(contourim)
@@ -234,8 +239,8 @@ def MakeImage(datas,hydros,snap,wsink,ax,dolengthscale,cmap,plottime=False,timeL
     # Draw a box around a region we want to zoom in on
     if zoombox > 0.0:
         #import pdb; pdb.set_trace()
-        zbstart = (1.0 - zoombox)/2.0 * boxlen
-        zblength = zoombox * boxlen
+        zbstart = (1.0 - zoombox)/2.0 * zoomedboxlen
+        zblength = zoombox * zoomedboxlen
         zbcolour = mplcm.get_cmap(cmap)(0.0)
         p = plt.Rectangle((zbstart, zbstart), zblength, zblength, fill=False,color=zbcolour)
         #p.set_transform(ax.transAxes)
@@ -246,8 +251,8 @@ def MakeImage(datas,hydros,snap,wsink,ax,dolengthscale,cmap,plottime=False,timeL
     #cmap = "YlGnBu_r"
     #cmap = "RdPu_r"
     cax.set_rasterized(True)
-    ax.set_xlim(0,boxlen)
-    ax.set_ylim(0,boxlen)
+    ax.set_xlim(0,zoomedboxlen)
+    ax.set_ylim(0,zoomedboxlen)
    
     if wsink: 
         # Plot sinks
@@ -258,7 +263,7 @@ def MakeImage(datas,hydros,snap,wsink,ax,dolengthscale,cmap,plottime=False,timeL
         if lenm > 0:
             area = np.pi * sinkm / 50.0
             if flipsinks:
-                sinkx = boxlen - sinkx
+                sinkx = zoomedboxlen - sinkx
             # Draw all sinks
             ax.scatter(sinky,sinkx,s=area,c="w",alpha=0.5,edgecolors='w')
             rdm.AddPoints(sinky,sinkx,label=label+" SINKS")
@@ -275,23 +280,23 @@ def MakeImage(datas,hydros,snap,wsink,ax,dolengthscale,cmap,plottime=False,timeL
     scalecol = "w"
     if dolengthscale:
         # length scale in pc (hopefully this is what units boxlen is in)
-        lscale = FindLscale(boxlen)
-        x1 = 0.98 * boxlen
+        lscale = FindLscale(zoomedboxlen)
+        x1 = 0.98 * zoomedboxlen
         x2 = x1 - lscale
-        textx = x2 - 0.02 * boxlen
+        textx = x2 - 0.02 * zoomedboxlen
         textalign = "right"
         # HACK
         if not label or Slice:
-            x1 = 0.02 * boxlen
+            x1 = 0.02 * zoomedboxlen
             x2 = x1 + lscale
-            textx = x2 + 0.02 * boxlen
+            textx = x2 + 0.02 * zoomedboxlen
             textalign = "left"
         if not Slice:
-            y1 = 0.90 * boxlen
+            y1 = 0.90 * zoomedboxlen
             y2 = y1
             verticalalignment="center"
         else:
-            y1 = 0.04 * boxlen
+            y1 = 0.04 * zoomedboxlen
             y2 = y1
             verticalalignment ="center"
         line = ax.plot([x1,x2],[y1,y2],"w",path_effects=[PathEffects.withStroke(linewidth=OUTLINEWIDTH+3, foreground='k')])
@@ -301,8 +306,8 @@ def MakeImage(datas,hydros,snap,wsink,ax,dolengthscale,cmap,plottime=False,timeL
         txt.set_path_effects([PathEffects.withStroke(linewidth=OUTLINEWIDTH, foreground='k')])
     # Add label
     if label:
-        xt = 0.98 * boxlen
-        yt = 0.02 * boxlen
+        xt = 0.98 * zoomedboxlen
+        yt = 0.02 * zoomedboxlen
         txt = ax.text(xt,yt,label,
                 horizontalalignment="right",
                 verticalalignment="bottom",
@@ -310,8 +315,8 @@ def MakeImage(datas,hydros,snap,wsink,ax,dolengthscale,cmap,plottime=False,timeL
         txt.set_path_effects([PathEffects.withStroke(linewidth=OUTLINEWIDTH, foreground='k')])
     # Add time 
     if plottime:
-        xt = 0.02 * boxlen
-        yt = 0.02 * boxlen
+        xt = 0.02 * zoomedboxlen
+        yt = 0.02 * zoomedboxlen
         txt = ax.text(xt,yt,timeL,
                 horizontalalignment="left",
                 verticalalignment="bottom",
@@ -556,7 +561,8 @@ if __name__=="__main__":
         #setname = "windset_"+smass+"Msun"
         #simwindname = "UVWIND_"+smass
         #times = np.array([0.5, 0.75, 1.])
-        times = np.array([0.2]) # np.array([0.9]) # [0.9] # 3.5 Myr = tstarformed + 0.2 Myr 
+#        times = np.array([0.2]) # np.array([0.9]) # [0.9] # 3.5 Myr = tstarformed + 0.2 Myr
+        times = np.array([0.3]) # np.array([0.9]) # [0.9] # 3.5 Myr = tstarformed + 0.2 Myr 
         zoom = 0.5
         #if dense:
         #    zoom = 1.0
@@ -568,7 +574,7 @@ if __name__=="__main__":
         timesin = [(time,"MyrFirstStar") for time in times]
         for los in "yxz":
             figname = newsetname+"_"+los
-            zoom2 = 0.5
+            zoom2 = 0.25
             figname2 = figname.replace("zoom"+str(zoom).replace(".","p"),
                                         "zoom"+str(zoom2).replace(".","p"),)
             # Run for movie
@@ -641,23 +647,23 @@ if __name__=="__main__":
             #                timeL=[timeL[-1]],zoom=zoom,forcerun=True)
             
             if setname == "single":
-                for hydro in ["spd",
-                              "vdispersion1px","vdispersion1px_speedcompare",
-                              "vdispersion2px","vdispersion2px_speedcompare",
-                              "vorticity1px_timescale",
-                              "vorticity2px_timescale",
-                              "vorticity4px_timescale",
-                              "vorticity1px_speedcompare","vorticity2px_speedcompare","vorticity4px_speedcompare",
-                              "vorticity1px","vorticity2px","vorticity4px"]:
-                    #"Lcool","T","rho","xHII","xHeII","xHeIII",
-                    #"P","vradfrac3","vrad","vx","vy","vz"]:
-                    MakeFigure([simset[0]],[timesin[-1]],name=figname+"singleslice",los=los,hydro=hydro,
-                               Slice=True,wsink=True,starC=True,
-                               timeL=[timeL[-1]],zoom=zoom,forcerun=True)
+                for z in [zoom,zoom2]:
+                    for hydro in ["T","rho","spd",
+                                  "vdispersion1px","vdispersion1px_speedcompare",
+                                  "vdispersion2px","vdispersion2px_speedcompare",
+                                  "vorticity1px_timescale",
+                                  "vorticity2px_timescale",
+                                  "vorticity4px_timescale",
+                                  "vorticity1px_speedcompare","vorticity2px_speedcompare","vorticity4px_speedcompare",
+                                  "vorticity1px","vorticity2px","vorticity4px"]:
+                        #"Lcool","T","rho","xHII","xHeII","xHeIII",
+                        #"P","vradfrac3","vrad","vx","vy","vz"]:
+                        MakeFigure([simset[0]],[timesin[-1]],name=figname+"singleslice",los=los,hydro=hydro,
+                                   Slice=True,wsink=True,starC=True,
+                                   timeL=[timeL[-1]],zoom=z,forcerun=True)
 
-                    
             # Slices
-            for hydro in ["Lcool","T","rho","xHII","xHeII","xHeIII","P"]:
+            for hydro in ["vorticity2px_timescale","Lcool","T","rho","xHII","xHeII","xHeIII","P"]:
                 MakeFigure(simset,[timesin[-1]],name=figname,los=los,hydro=hydro,
                            Slice=True,wsink=True,starC=True,
                            timeL=[timeL[-1]],zoom=zoom,forcerun=True)
