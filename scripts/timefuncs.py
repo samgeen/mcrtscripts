@@ -15,6 +15,8 @@ import HamuLite as Hamu
 
 from pymses.utils import constants as C
 
+import stellars
+
 class ErrFunc(object):
     # Wrap a function around a possible error
     def __init__(self,func):

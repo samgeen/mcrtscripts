@@ -7,11 +7,12 @@ from startup import *
 
 import matplotlib.patheffects as pe
 
+import sinks, stellars
 
 def findmainsinkmass(snap):
     stellar = stellars.FindStellar(snap)
     if len(stellar.mass) == 0:
-        print("No stellar objects in simname",simname,"at time",time)
+        print("No stellar objects, returning 0.0")
         return 0.0
     imax = np.where(stellar.mass == np.max(stellar.mass))[0][0]
     sinkid = stellar.sinkid[imax]-1
@@ -25,7 +26,7 @@ def plotforsims(labels):
     for simname in simnames:
         sim = hamusims[simname]
         label = labels[simname]
-        tcreated = FindTcreatedFirstStar(sim)
+        tcreated = timefuncs.FindTcreatedFirstStar(sim)
         times, sinkmasses = timefuncs.timefunc(sim,findmainsinkmass)
         times -= tcreated
         plt.plot()
