@@ -555,11 +555,39 @@ def MakeFigure(simnames,times,name,los=None,hydro="rho",Slice=False,wsink=False,
     os.system("pdfcrop "+figname+" "+figname)
     print("Done!")
 
+def hotchampagneplot():
+    # Slices
+    simname = "SEED2_35MSUN_CDMASK_WINDUV"
+    sim = hamusims[simname]
+    # Choose outputs to plot
+    outnums = [52,53,54,55]
+    timetuples = [(o,"outputNumber") for o in outnums]
+    # Get times in Myr
+    outsnaps = {snap.OutputNumber():snap for snap in sim.Snapshots()}
+    myr   = outsnaps[outnums[0]].RawData().info["unit_time"].express(C.Myr)
+    time = outsnaps[int(time)].Time()
+    tcreated = FindTcreatedFirstStar(sim)
+    timesMyr = [outsnaps[o].Time() * myr - tcreated for o in outnums]
+    timeL = [str(x)+r' Myr' for x in timesMyr]
+    # Set up rest of plot
+    los = "x"
+    zoom = 0.25
+    newsetname = "hotchampagne_zoom"+str(zoom)+"_"
+    newsetname = newsetname.replace(".","p") # the extra dot confuses latex
+    figname = newsetname+"_"+los
+    # Make slices
+    for hydro in ["vorticity2px_timescale","T","rho","xHII","P"]:
+        MakeFigure(simset,timetuples,name=figname,los=los,hydro=hydro,
+                    Slice=True,wsink=True,starC=True,
+                    timeL=timeL,zoom=zoom,forcerun=True)
+
 if __name__=="__main__":
 
     # Should we force some figures to run?
     forcerun=True
-
+    
+    # Yes I did intend for this to sound weird
+    hotchampagneplot()
     
     for setname, simset in simsets.items():
         #simset = ["NOFB","UV_"+smass,"UVWINDPRESS_"+smass]
@@ -643,7 +671,8 @@ if __name__=="__main__":
                                    los=los,hydro=hydro,Slice=True,wsink=True,starC=True,
                                    timeL=timesmergedL,zoom=Damzoom,forcerun=True,contours=contours)
             '''
-            
+
+        
 
             # Emission and NH maps
             for hydro in [coolhydros,"NH"]:
