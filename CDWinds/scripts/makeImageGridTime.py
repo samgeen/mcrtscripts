@@ -576,7 +576,7 @@ def hotchampagneplot():
     figname = newsetname+"_"+los
     # Make slices
     for hydro in ["vorticity2px_timescale","T","rho","xHII","P"]:
-        MakeFigure(simset,timetuples,name=figname,los=los,hydro=hydro,
+        MakeFigure([simname],timetuples,name=figname,los=los,hydro=hydro,
                     Slice=True,wsink=True,starC=True,
                     timeL=timeL,zoom=zoom,forcerun=True)
 
