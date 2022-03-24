@@ -28,8 +28,8 @@ def plotforsims(labels):
     for simname in simnames:
         print("Running for sim", simname)
         isim += 1
-        if isim > len(simnames)//2:
-            linestyles.isims = 0
+        #if isim > len(simnames)//2:
+        #    linestyles.isim = 0
         sim = hamusims[simname]
         label = labels[simname]
         tcreated = timefuncs.FindTcreatedFirstStar(sim)
