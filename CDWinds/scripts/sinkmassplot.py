@@ -36,7 +36,7 @@ def plotforsims(labels,plotdiff=False):
         y = sinkmasses
         if plotdiff:
             difftxt = "_diff"
-            y = np.diff(sinkmasses) / np.diff(times)
+            y = np.diff(sinkmasses) / np.diff(times) / 1000.0 # give in kyr
             x = 0.5*(times[1:] + times[:-1])
         colour = linestyles.Colour(simname)
         line = "-"
@@ -51,7 +51,7 @@ def plotforsims(labels,plotdiff=False):
     plt.xlabel("Time / Myr")
     plt.ylabel("Main Sink Mass / M$_{\odot}$")
     if plotdiff:
-        plt.ylabel("Main Sink Accretion Rate / M$_{\odot} / Myr$")
+        plt.ylabel("Main Sink Accretion Rate / M$_{\odot} / kyr$")
     plt.savefig("../plots/mainsinkmass"+difftxt+".pdf")
 
 
