@@ -9,7 +9,7 @@ import matplotlib.patheffects as pe
 
 import sinks, stellars
 
-def findmainsinkmass(snap):
+def _findmainsinkmass(snap):
     stellar = stellars.FindStellar(snap)
     if len(stellar.mass) == 0:
         print("No stellar objects, returning 0.0")
@@ -19,11 +19,17 @@ def findmainsinkmass(snap):
     sink = sinks.FindSinks(snap)
     mainsinkmass = sink.mass[sinkid]
     return mainsinkmass
+findmainsinkmass = Hamu.Algorithm(_findmainsinkmass)
 
 def plotforsims(labels):
     plt.clf()  
     simnames = labels.keys()
+    isim = 0
     for simname in simnames:
+        print("Running for sim", simname)
+        isim += 1
+        if isim > len(simnames)//2:
+            linestyles.isims = 0
         sim = hamusims[simname]
         label = labels[simname]
         tcreated = timefuncs.FindTcreatedFirstStar(sim)
@@ -32,8 +38,8 @@ def plotforsims(labels):
         plt.plot()
         colour = linestyles.Colour(simname)
         line = "-"
-        if "NOFB" in simname:
-            line = "--"
+        #if "NOFB" in simname:
+        #    line = "--"
         plt.gca().plot(times,sinkmasses,color=colour,label=label,
                 linestyle=line,alpha=0.9,                                                                      
                 path_effects=[pe.Stroke(linewidth=5, foreground='k'), pe.Normal()]) 
@@ -54,10 +60,10 @@ if __name__ == "__main__":
     labels["SEED2_35MSUN_CDMASK_NOFB"] = "Seed2, No Feedback"
     labels["SEED3_35MSUN_CDMASK_NOFB"] = "Seed3, No Feedback"
     labels["SEED4_35MSUN_CDMASK_NOFB"] = "Seed4, No Feedback"
-    labels["SEED0_35MSUN_CDMASK_WINDUV"] = "Seed0, Wind \& UV"
-    labels["SEED1_35MSUN_CDMASK_WINDUV"] = "Seed1, Wind \& UV"
-    labels["SEED2_35MSUN_CDMASK_WINDUV"] = "Seed2, Wind \& UV"
-    labels["SEED3_35MSUN_CDMASK_WINDUV"] = "Seed3, Wind \& UV"
-    labels["SEED4_35MSUN_CDMASK_WINDUV"] = "Seed4, Wind \& UV"
+    #labels["SEED0_35MSUN_CDMASK_WINDUV"] = "Seed0, Wind \& UV"
+    #labels["SEED1_35MSUN_CDMASK_WINDUV"] = "Seed1, Wind \& UV"
+    #labels["SEED2_35MSUN_CDMASK_WINDUV"] = "Seed2, Wind \& UV"
+    #labels["SEED3_35MSUN_CDMASK_WINDUV"] = "Seed3, Wind \& UV"
+    #labels["SEED4_35MSUN_CDMASK_WINDUV"] = "Seed4, Wind \& UV"
 
     plotforsims(labels)
