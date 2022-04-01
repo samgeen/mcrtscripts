@@ -599,7 +599,7 @@ def run(simfunc,simnamesets,plotlabels,compare=False,secondfuncs=None,gradient=F
                             legloc2 = "lower right"
                             if "30" in simnames[1]:
                                 legloc2 = "center left"
-                            legend2 = ax.legend(handles=legelements, loc=legloc2,framealpha=0.0,fontsize="small")
+                            legend2 = ax.legend(handles=legelements, loc=legloc2,framealpha=0.0,fontsize="normalsize")
             # Overplot theoretical fits
         #if funcname == "momentum" and not compare:
             # Flat density profile
