@@ -25,6 +25,8 @@ import hydrofuncs
 #cmap = brewer2mpl.get_map('RdPu', 'Sequential', 9,reverse=True).mpl_colormap
 #cmap = brewer2mpl.get_map('OrRd', 'Sequential', 9,reverse=True).mpl_colormap
 
+simlabels = {}
+
 isims = {}
 isim = 0
 

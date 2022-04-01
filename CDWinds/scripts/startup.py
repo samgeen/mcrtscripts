@@ -148,10 +148,11 @@ windonlylabels = {"SEED1_35MSUN_CDMASK_WIND":"Wind Only, Mask On",
 windonlyset = windonlylabels.keys()
 
 hotchampagnelabels = {"SEED2_35MSUN_CDMASK_WINDUV":"Seed Carnot"}
-hotchampagneset = .hotchampagnelabels.keys()
+hotchampagneset = hotchampagnelabels.keys()
 
 simsets = {"windonly":windonlyset,"single":singleset, "fb":fbset, "physics":physicsset, "seeds":seedset,"hotchampagne":hotchampagneset}
-simlabels = {"windonly":windonlylabels,"single":singlelabels, "fb":fblabels, "physics":physicslabels, "seeds":seedlabels,"hotchampagne":hotchampagnelabels}
+simlabels = linestyles.simlabels
+simlabels.update({"windonly":windonlylabels,"single":singlelabels, "fb":fblabels, "physics":physicslabels, "seeds":seedlabels,"hotchampagne":hotchampagnelabels})
     
 # Populate list of Hamu simulations
 # TODO - make these on demand rather than on loadup?

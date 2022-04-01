@@ -389,6 +389,7 @@ def run(simfunc,simnamesets,plotlabels,compare=False,secondfuncs=None,gradient=F
     first = True
     rdm = rdmfile.RDMFile(__file__)
     for ax, simnames, plotlabel in zip(axes,simnamesets,plotlabels):
+        simnames = list(simnames)
         linenames = []
         # Do func-related stuff for all plots
         ax.set_xscale("linear")
