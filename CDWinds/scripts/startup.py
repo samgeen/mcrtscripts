@@ -126,13 +126,13 @@ seedlabels = {"SEED0_35MSUN_CDMASK_WINDUV":"Seed Ampere",
 seedset = seedlabels.keys()
 
 
-physicslabels = {"SEED1_35MSUN_CDMASK_WINDUV": "Mask \& Refinement",
+physicslabels = {"SEED1_35MSUN_CDMASK_WINDUV": "Mask & Refinement",
                  "SEED1_35MSUN_CDMASK_WINDUV_NOREFINE": "Mask, No Refinement",
                  "SEED1_35MSUN_NOCDMASK_WINDUV": "No Mask, Refinement",
                  "SEED1_35MSUN_NOCDMASK_WINDUV_NOREFINE":"No Mask, No Refinement"}
 physicsset = physicslabels.keys()
 
-fblabels = {"SEED1_35MSUN_CDMASK_WINDUV":"Wind \& UV", 
+fblabels = {"SEED1_35MSUN_CDMASK_WINDUV":"Wind & UV", 
          "SEED1_35MSUN_CDMASK_WIND":"Wind Only", 
          "SEED1_35MSUN_CDMASK_UV":"UV Only",
          "SEED1_35MSUN_CDMASK_NOFB":"No Feedback"}
