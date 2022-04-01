@@ -286,7 +286,7 @@ def MakeImage(datas,hydros,snap,wsink,ax,dolengthscale,cmap,plottime=False,timeL
         textx = x2 - 0.02 * zoomedboxlen
         textalign = "right"
         # HACK
-        if not label:
+        if label:
             x1 = 0.02 * zoomedboxlen
             x2 = x1 + lscale
             textx = x2 + 0.02 * zoomedboxlen
