@@ -286,11 +286,12 @@ def MakeImage(datas,hydros,snap,wsink,ax,dolengthscale,cmap,plottime=False,timeL
         textx = x2 - 0.02 * zoomedboxlen
         textalign = "right"
         # HACK
-        if not label or Slice:
+        if not label:
             x1 = 0.02 * zoomedboxlen
             x2 = x1 + lscale
             textx = x2 + 0.02 * zoomedboxlen
             textalign = "left"
+        '''
         if not Slice:
             y1 = 0.90 * zoomedboxlen
             y2 = y1
@@ -299,6 +300,7 @@ def MakeImage(datas,hydros,snap,wsink,ax,dolengthscale,cmap,plottime=False,timeL
             y1 = 0.04 * zoomedboxlen
             y2 = y1
             verticalalignment ="center"
+        '''
         line = ax.plot([x1,x2],[y1,y2],"w",path_effects=[PathEffects.withStroke(linewidth=OUTLINEWIDTH+3, foreground='k')])
         txt = ax.text(textx,y2, "  "+str(lscale)+" pc",color=scalecol,
                 horizontalalignment=textalign,
