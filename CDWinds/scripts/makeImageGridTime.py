@@ -329,6 +329,7 @@ def MakeFigure(simnames,times,name,los=None,hydro="rho",Slice=False,wsink=False,
                plotcolorbar=True,doplottime=False,velocitybins=False,altname=None):
     ncols = len(simnames)
     nrows = len(times)
+    simnames = list(simnames)
 
     rdm = rdmfile.RDMFile(__file__)
 

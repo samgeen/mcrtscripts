@@ -147,7 +147,7 @@ windonlylabels = {"SEED1_35MSUN_CDMASK_WIND":"Wind Only, Mask On",
                "SEED1_35MSUN_NOCDMASK_WIND":"Wind Only, Mask Off"}
 windonlyset = windonlylabels.keys()
 
-hotchampagnelabels = {"SEED2_35MSUN_CDMASK_WINDUV":"Seed Carnot"}
+hotchampagnelabels = {"SEED2_35MSUN_CDMASK_WINDUV":""} # Only one simulation, no label needed
 hotchampagneset = hotchampagnelabels.keys()
 
 simsets = {"windonly":windonlyset,"single":singleset, "fb":fbset, "physics":physicsset, "seeds":seedset,"hotchampagne":hotchampagneset}
