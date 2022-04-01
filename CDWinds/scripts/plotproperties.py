@@ -712,6 +712,7 @@ def runall():
     #        ("Diffuse Cloud","Dense Cloud"),compare=False)
 
     for setname, simset in simsets.items():
+        linestyles.CURRSIMSET = setname
         #setname = "physics"
         #simset = physicsset
         #    if True:

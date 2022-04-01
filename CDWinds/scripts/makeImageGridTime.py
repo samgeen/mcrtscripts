@@ -557,6 +557,7 @@ def MakeFigure(simnames,times,name,los=None,hydro="rho",Slice=False,wsink=False,
 
 def hotchampagneplot():
     # Slices
+    linestyles.CURRSIMSET = "hotchampagne"
     simname = "SEED2_35MSUN_CDMASK_WINDUV"
     sim = hamusims[simname]
     # Choose outputs to plot
@@ -567,7 +568,7 @@ def hotchampagneplot():
     myr   = outsnaps[outnums[0]].RawData().info["unit_time"].express(C.Myr)
     tcreated = timefuncs.FindTcreatedFirstStar(sim)
     timesMyr = [outsnaps[o].Time() * myr - tcreated for o in outnums]
-    timeL = [str(x)+r' Myr' for x in timesMyr]
+    timeL = ["%.2f" % x + r' Myr' for x in timesMyr]
     # Set up rest of plot
     los = "x"
     zoom = 0.25
@@ -589,6 +590,7 @@ if __name__=="__main__":
     hotchampagneplot()
     
     for setname, simset in simsets.items():
+        linestyles.CURRSIMSET = setname
         #simset = ["NOFB","UV_"+smass,"UVWINDPRESS_"+smass]
         #setname = "windset_"+smass+"Msun"
         #simwindname = "UVWIND_"+smass

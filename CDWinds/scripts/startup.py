@@ -116,31 +116,42 @@ else:
     simfolders["SEED4_35MSUN_CDMASK_NOFB"] = windshellfolder+"N33_nofb/"
 allsims = simfolders.keys()
 
+
 # Simulation sets
-seedset = ["SEED0_35MSUN_CDMASK_WINDUV",
-           "SEED1_35MSUN_CDMASK_WINDUV",
-           "SEED2_35MSUN_CDMASK_WINDUV",
-           "SEED3_35MSUN_CDMASK_WINDUV",
-           "SEED4_35MSUN_CDMASK_WINDUV"]
+seedlabels = {"SEED0_35MSUN_CDMASK_WINDUV":"Seed Ampere",
+              "SEED1_35MSUN_CDMASK_WINDUV":"Seed Bellecour",
+              "SEED2_35MSUN_CDMASK_WINDUV":"Seed Carnot",
+              "SEED3_35MSUN_CDMASK_WINDUV":"Seed Duhamel",
+              "SEED4_35MSUN_CDMASK_WINDUV":"Seed d'Enghien"}
+seedset = seedlabels.keys()
 
-physicsset = ["SEED1_35MSUN_CDMASK_WINDUV",
-              "SEED1_35MSUN_CDMASK_WINDUV_NOREFINE",
-              "SEED1_35MSUN_NOCDMASK_WINDUV",
-              "SEED1_35MSUN_NOCDMASK_WINDUV_NOREFINE"]
-#              "SEED1_35MSUN_WINDUV_WEAKB"]
 
-fbset = ["SEED1_35MSUN_CDMASK_WINDUV", 
-         "SEED1_35MSUN_CDMASK_WIND", 
-         "SEED1_35MSUN_CDMASK_UV",
-         "SEED1_35MSUN_CDMASK_NOFB"]
+physicslabels = {"SEED1_35MSUN_CDMASK_WINDUV": "Mask \& Refinement",
+                 "SEED1_35MSUN_CDMASK_WINDUV_NOREFINE": "Mask, No Refinement",
+                 "SEED1_35MSUN_NOCDMASK_WINDUV": "No Mask, Refinement",
+                 "SEED1_35MSUN_NOCDMASK_WINDUV_NOREFINE":"No Mask, No Refinement"}
+physicsset = physicslabels.keys()
+
+fblabels = {"SEED1_35MSUN_CDMASK_WINDUV":"Wind \& UV", 
+         "SEED1_35MSUN_CDMASK_WIND":"Wind Only", 
+         "SEED1_35MSUN_CDMASK_UV":"UV Only",
+         "SEED1_35MSUN_CDMASK_NOFB":"No Feedback"}
+fbset = fblabels.keys()
 # "SEED1_35MSUN_CDMASK_WINDUV_NOB" - no star yet
 
-singleset = ["SEED1_35MSUN_CDMASK_WINDUV"] 
+singlelabels = {"SEED1_35MSUN_CDMASK_WINDUV":"Fiducial Run"}
+singleset = singlelabels.keys()
 
-windonlyset = ["SEED1_35MSUN_CDMASK_WIND",
-               "SEED1_35MSUN_NOCDMASK_WIND"]
 
-simsets = {"windonly":windonlyset,"single":singleset, "fb":fbset, "physics":physicsset, "seeds":seedset}
+windonlylabels = {"SEED1_35MSUN_CDMASK_WIND":"Wind Only, Mask On",
+               "SEED1_35MSUN_NOCDMASK_WIND":"Wind Only, Mask Off"}
+windonlyset = windonlylabels.keys()
+
+hotchampagnelabels = {"SEED2_35MSUN_CDMASK_WINDUV":"Seed Carnot"}
+hotchampagneset = .hotchampagnelabels.keys()
+
+simsets = {"windonly":windonlyset,"single":singleset, "fb":fbset, "physics":physicsset, "seeds":seedset,"hotchampagne":hotchampagneset}
+simlabels = {"windonly":windonlylabels,"single":singlelabels, "fb":fblabels, "physics":physicslabels, "seeds":seedlabels,"hotchampagne":hotchampagnelabels}
     
 # Populate list of Hamu simulations
 # TODO - make these on demand rather than on loadup?

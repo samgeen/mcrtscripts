@@ -16,6 +16,8 @@ from prettyplotlib import brewer2mpl
 import option_d
 import option_c
 
+CURRSIMSET = None
+
 cmap = option_d.test_cm
 import sys
 sys.path.append("../../scripts/")
@@ -57,15 +59,14 @@ def Colour(simname):
     #          ]
     global isims, isim
     colours = ["#a6cee3",
- 	       	"#1f78b4",
-		"#b2df8a",
-		"#33a02c",
-		"#fb9a99",
-		"#e31a1c",
-		"#fdbf6f",
-		"#ff7f00",
-                "#ff5900"
-		]
+               "#1f78b4",
+               "#b2df8a",
+               "#33a02c",
+               "#fb9a99",
+               "#e31a1c",
+               "#fdbf6f",
+               "#ff7f00",
+               "#ff5900"]
     if not simname in isims:
         isims[simname] = isim
         isim += 1
@@ -80,6 +81,10 @@ def Linestyle(simname):
     return "-"
 
 def Label(simname):
-    label = simname.replace("_35MSUN","")
-    label = label.replace("_","\_") # TODO: fix this
+    global CURRSIMSET
+    if CURRSIMSET is not None:
+        label = simlabels[CURRSIMSET][simname]
+    else:
+        label = simname.replace("_35MSUN","")
+        label = label.replace("_","\_") # TODO: fix this
     return label
