@@ -283,7 +283,7 @@ def MakeImage(datas,hydros,snap,wsink,ax,dolengthscale,cmap,plottime=False,timeL
         lscale = FindLscale(zoomedboxlen)
         x1 = 0.98 * zoomedboxlen
         x2 = x1 - lscale
-        textx = x2 - 0.05 * zoomedboxlen
+        textx = x2 - 0.05\\wsl$\Ubuntu\home\samgeen\dump\snelluis\newscalinglogs * zoomedboxlen
         textalign = "right"
         # HACK
         if label:
@@ -291,7 +291,7 @@ def MakeImage(datas,hydros,snap,wsink,ax,dolengthscale,cmap,plottime=False,timeL
             x2 = x1 + lscale
             textx = x2 + 0.02 * zoomedboxlen
             textalign = "left"
-        if plottime:
+        if not Slice:
             y1 = 0.90 * zoomedboxlen
             y2 = y1
             verticalalignment="center"

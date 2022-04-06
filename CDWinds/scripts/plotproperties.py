@@ -28,6 +28,8 @@ import solvecriteria
 Hamu.IGNOREERRORS = False
 Hamu.ERRORCODE = -100.0
 
+fontsize = "medium"
+
 def _tsfeinsnap(snap):
     mgas = 1e4
     sink = sinks.FindSinks(snap)
@@ -401,6 +403,7 @@ def run(simfunc,simnamesets,plotlabels,compare=False,secondfuncs=None,gradient=F
         ax.set_xlabel("Time after star formed / Myr")
         textloc = 0.95
         xticks = None
+        ncollegend = 1
         if funcname == "maxdensity":
             ax.set_ylim([0.1,1e11])
         if funcname == "nphotonsHII":
@@ -419,11 +422,14 @@ def run(simfunc,simnamesets,plotlabels,compare=False,secondfuncs=None,gradient=F
             ax.set_yscale("linear")
         # HARD-CODE TO ALLOW COMPARISON
         if "maxradius" in funcname:
-            for setname in simnamesets:
-                if "physics" in setname:
-                    ax.set_ylim([0,13])
-                if "seeds" in setname:
-                    ax.set_ylim([0,25])
+            if "physics" in suffix:
+                ax.set_ylim([0,13])
+            if "seeds" in suffix:
+                ax.set_ylim([0,30])
+        if "seeds" in suffix:
+            if "windenergyretained" in funcname:
+                ax.set_ylim([9e-4,1.0])
+            ncollegend=2
         #if funcname == "windradius":
             #tlim = 1e-6
             #ax.set_xlabel("Time after 1st star formed / Myr")
@@ -493,7 +499,7 @@ def run(simfunc,simnamesets,plotlabels,compare=False,secondfuncs=None,gradient=F
                                                                 pe.Normal()]) for ls,lw, n in zip(["-"]+secondlines,
                                                                                                   [5,3,3],
                                                                                                   rlabels)]
-                            legend2 = ax.legend(handles=legelements, loc='upper right',framealpha=0.0,fontsize="x-small")
+                            legend2 = ax.legend(handles=legelements, loc='upper right',framealpha=0.0,fontsize=fontsize)
                         if funcname == "windradiusratio":
                             #import pdb; pdb.set_trace()
                             legelements = [Line2D([0],[0],color=linestyles.Colour(simname),
@@ -504,7 +510,7 @@ def run(simfunc,simnamesets,plotlabels,compare=False,secondfuncs=None,gradient=F
                                                                                                   [5,3],
                                                                                                   ["Simulation",
                                                                                                    "Analytic Model"])]
-                            legend2 = ax.legend(handles=legelements, loc='lower right',framealpha=0.0,fontsize="x-small")
+                            legend2 = ax.legend(handles=legelements, loc='lower right',framealpha=0.0,fontsize=fontsize)
                 else:
                     ntimes, nvals = y.shape
                     lines = ["-","--",":",":-"]
@@ -518,7 +524,7 @@ def run(simfunc,simnamesets,plotlabels,compare=False,secondfuncs=None,gradient=F
                                                         pe.Normal()]) for l, n in zip(lines, linenames)]
                     # Lol hacks
                     if funcname != "windLemittedvscool" or "DENSE" in simname:
-                        legend2 = ax.legend(handles=legelements, loc='lower center',framealpha=0.0)
+                        legend2 = ax.legend(handles=legelements, loc='lower center',framealpha=0.0,fontsize=fontsize)
                     for i in range(0,nvals):
                         if firstline:
                             label = linestyles.Label(simname)
@@ -599,7 +605,7 @@ def run(simfunc,simnamesets,plotlabels,compare=False,secondfuncs=None,gradient=F
                             legloc2 = "lower right"
                             if "30" in simnames[1]:
                                 legloc2 = "center left"
-                            legend2 = ax.legend(handles=legelements, loc=legloc2,framealpha=0.0,fontsize="normalsize")
+                            legend2 = ax.legend(handles=legelements, loc=legloc2,framealpha=0.0,fontsize=fontsize)
             # Overplot theoretical fits
         #if funcname == "momentum" and not compare:
             # Flat density profile
@@ -620,7 +626,6 @@ def run(simfunc,simnamesets,plotlabels,compare=False,secondfuncs=None,gradient=F
         #    ax.set_xlim([3,7.3])
         #else:
         #    ax.set_xlim([1,5])
-        ncollegend = 1
         if first:
             first = False
             legendloc = "upper left"
@@ -665,9 +670,14 @@ def run(simfunc,simnamesets,plotlabels,compare=False,secondfuncs=None,gradient=F
             if funcname == "windenergyretained":
                 ax.set_ylabel("Fraction of wind energy input\nretained in the wind bubble",
                               multialignment='center')
-                legendloc="lower right"
+                if not "seeds" in suffix:
+                    legendloc="lower right"
+            if funcname == "maxradiusatstarpos":
+                ax.set_ylabel("Furthest extent of HII region from star / pc")
+            if funcname == "maxwindradiusatstarpos":
+                ax.set_ylabel("Furthest extent of wind bubble from star / pc")
         if legendloc is not None:
-            legend1 = ax.legend(fontsize="x-small",loc=legendloc,framealpha=0.0,ncol=ncollegend)
+            legend1 = ax.legend(fontsize=fontsize,loc=legendloc,framealpha=0.0,ncol=ncollegend)
             legend1.get_frame().set_linewidth(0.0)
         if legend2 is not None:
             if funcname != "radius" or "DENSE" in simname:
@@ -729,19 +739,16 @@ def runall():
             #         windenergyemitted,windmassemitted,
             #         windenergyretained,windenergy,windradius,freestreamradius]:
 
+        #plotlabel = "\textsc{"+setname+"}"
+        #plotlabel = setname.replace("&","\&")
+        #plotlabel = "\\textsc{"+plotlabel+"}"
+        plotlabel = "" # just don't print anything
+        
         for func in [windradiusratio,radius,windpressure,momentumatstarpos,maxradiusatstarpos,maxwindradiusatstarpos,
                      windLemittedvscool,windenergyemitted,windmassemitted,
-                     windenergyretained,windenergy,windradius,freestreamradius]:
+                     windenergyretained,windenergy,windradius,freestreamradius,Bfieldenergy,energyplusB]:
             run(func,[simset,],
-                [setname,],compare=False,suffix=setname)
-
-        for func in [energyplusB]:
-            run(func,[simset,], # ,"UVWINDPRESS_120_DENSE"]),
-                [setname,],compare=False,suffix=setname)
-
-        for func in [Bfieldenergy]:
-            run(func,[simset,], # ,"UVWINDPRESS_120_DENSE"]),
-                [setname,],compare=False,suffix=setname)
+                [plotlabel,],compare=False,suffix=setname)
 
     '''
         

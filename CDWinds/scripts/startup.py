@@ -114,7 +114,7 @@ else:
     simfolders["SEED2_35MSUN_CDMASK_NOFB"] = windshellfolder+"N30_nofb/"
     simfolders["SEED3_35MSUN_CDMASK_NOFB"] = windshellfolder+"N31_nofb/"
     simfolders["SEED4_35MSUN_CDMASK_NOFB"] = windshellfolder+"N33_nofb/"
-allsims = simfolders.keys()
+allsims = list(simfolders.keys())
 
 
 # Simulation sets
@@ -123,34 +123,38 @@ seedlabels = {"SEED0_35MSUN_CDMASK_WINDUV":"Seed Ampere",
               "SEED2_35MSUN_CDMASK_WINDUV":"Seed Carnot",
               "SEED3_35MSUN_CDMASK_WINDUV":"Seed Duhamel",
               "SEED4_35MSUN_CDMASK_WINDUV":"Seed d'Enghien"}
-seedset = seedlabels.keys()
+seedset = list(seedlabels.keys())
 
 
-physicslabels = {"SEED1_35MSUN_CDMASK_WINDUV": "Mask & Refinement",
-                 "SEED1_35MSUN_CDMASK_WINDUV_NOREFINE": "Mask, No Refinement",
-                 "SEED1_35MSUN_NOCDMASK_WINDUV": "No Mask, Refinement",
-                 "SEED1_35MSUN_NOCDMASK_WINDUV_NOREFINE":"No Mask, No Refinement"}
-physicsset = physicslabels.keys()
+physicslabels = {"SEED1_35MSUN_CDMASK_WINDUV": "Mask \& Refine",
+                 "SEED1_35MSUN_CDMASK_WINDUV_NOREFINE": "Mask, No Refine",
+                 "SEED1_35MSUN_NOCDMASK_WINDUV": "No Mask, Refine",
+                 "SEED1_35MSUN_NOCDMASK_WINDUV_NOREFINE":"No Mask, No Refine"}
+physicsset = list(physicslabels.keys())
 
-fblabels = {"SEED1_35MSUN_CDMASK_WINDUV":"Wind & UV", 
+fblabels = {"SEED1_35MSUN_CDMASK_WINDUV":"Wind \& UV", 
          "SEED1_35MSUN_CDMASK_WIND":"Wind Only", 
          "SEED1_35MSUN_CDMASK_UV":"UV Only",
          "SEED1_35MSUN_CDMASK_NOFB":"No Feedback"}
-fbset = fblabels.keys()
+fbset = list(fblabels.keys())
 # "SEED1_35MSUN_CDMASK_WINDUV_NOB" - no star yet
 
 singlelabels = {"SEED1_35MSUN_CDMASK_WINDUV":"Fiducial Run"}
-singleset = singlelabels.keys()
+singleset = list(singlelabels.keys())
 
 
 windonlylabels = {"SEED1_35MSUN_CDMASK_WIND":"Wind Only, Mask On",
                "SEED1_35MSUN_NOCDMASK_WIND":"Wind Only, Mask Off"}
-windonlyset = windonlylabels.keys()
+windonlyset = list(windonlylabels.keys())
 
 hotchampagnelabels = {"SEED2_35MSUN_CDMASK_WINDUV":""} # Only one simulation, no label needed
-hotchampagneset = hotchampagnelabels.keys()
+hotchampagneset = list(hotchampagnelabels.keys())
 
-simsets = {"windonly":windonlyset,"single":singleset, "fb":fbset, "physics":physicsset, "seeds":seedset,"hotchampagne":hotchampagneset}
+simsets = {"seeds":seedset,
+           "windonly":windonlyset,
+           "single":singleset,
+           "fb":fbset, "physics":physicsset,
+           "hotchampagne":hotchampagneset}
 simlabels = linestyles.simlabels
 simlabels.update({"windonly":windonlylabels,"single":singlelabels, "fb":fblabels, "physics":physicslabels, "seeds":seedlabels,"hotchampagne":hotchampagnelabels})
     
