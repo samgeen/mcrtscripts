@@ -25,19 +25,20 @@ def findstarpos(snap,useMyr=False):
     return pos
 
 
-def plotsolidangles(simname,times,label=None,xlims=None,powfile=None,maxradius=None):
+def plotsolidangles(simname,times):
     '''
     Like prof but with a higher gradient
     '''
     global nray, nprofs,rays,rads
+    powfile = None
+    xlims = None
     #sim = Hamu.Simulation(simname)
     sim = hamusims[simname]
     # HACK
     print("Running for sim", simname)
     snaps = []
     for timetuple in times:
-        tcode = time * Myrins / unit_t
-        snaps.append(timefuncs.findsnapshot(sim,timetuple)
+        snaps.append(timefuncs.findsnapshot(sim,timetuple))
     plt.clf()
     lines = ["-","--",":"]
     iline = -1
@@ -46,7 +47,7 @@ def plotsolidangles(simname,times,label=None,xlims=None,powfile=None,maxradius=N
         iline += 1
         line = lines[iline]
         time, tunit = timetuple
-        str = str(time)
+        tstr = str(time)
         if "Myr" in tunit:
             tstr = str(time)+" Myr"
         starpos = findstarpos(snap)
@@ -55,29 +56,49 @@ def plotsolidangles(simname,times,label=None,xlims=None,powfile=None,maxradius=N
         centre = starpos
         #r,nHs   = rayprof.makeprofsHamu(snap,"nH",centre)
         r,Ts    = rayprof.makeprofsHamu(snap,"T",centre)
-        #r,xHIIs = rayprof.makeprofsHamu(snap,"xHII",centre)
+        r,xHIIs = rayprof.makeprofsHamu(snap,"xHII",centre)
         radii = r[0:nray]
         #nHs = np.reshape(nHs,(nprofs, nray)).T
         Ts = np.reshape(Ts,(nprofs, nray)).T
-        #xHIIs = np.reshape(xHIIs,(nprofs, nray)).T
+        xHIIs = np.reshape(xHIIs,(nprofs, nray)).T
         iraymax = None
         maxr = 0.0
         Tthresh = 1e6
+        xHIIthresh = 0.1
         windinray = radii*0.0
-        for iray in range(0,nray):
-            windinray[np.where(Ts[:,iray] > Tthresh)] += 1.0
-        windinray *= 4.0 * np.pi / nray
-        mask = np.where(windinray > 0.0)
-        radii = radii[mask]
-        windinray = windinray[mask]
-        plt.plot(radii,windinray,linestyle=line,label=tstr)
+        colours = {True: "k", False:"r"}
+        typelines = []
+        for doHII in [True, False]:
+            colour = colours[doHII]
+            for iray in range(0,nray):
+                raymask = np.where(Ts[:,iray] > Tthresh)
+                if doHII:
+                    raymask = np.where((Ts[:,iray] > Tthresh) | (xHIIs[:,iray] > xHIIthresh))
+                windinray[raymask] += 1
+            windinray *= 4.0 * np.pi / nray
+            mask = np.where(windinray > 0.0)
+            radii = radii[mask]
+            windinray = windinray[mask]
+            l1, = plt.plot(radii,windinray,linestyle=line,label=tstr,color=colour)
+            tstr = None
+            typelines.append(l1)
     plt.xlabel("Radius / pc")
-    plt.ylabel("$\Omega_{\mathrm{wind}}(R)$")
+    sub = "wind"
+    if doHII:
+        sub = "HII"
+    plt.ylabel("$\Omega_{\mathrm{wind,HII}}(R)$")
+    leg1 = plt.legend(frameon=False)
+    leg2 = plt.legend(typelines,labels=["HII","wind"],frameon=False,loc="center right")
+    plt.gca().add_artist(leg1)
     suffix = ""
     plt.xscale("linear")
-    plt.yscale("log")
+    plt.yscale("linear")
+    yticks = [i*np.pi for i in [0,1,2,3,4]]
+    yticklabels = ["0","$\pi$","$2 \pi$","$3 \pi$","$4 \pi$"]
+    plt.gca().set_yticks(yticks)
+    plt.gca().set_yticklabels(yticklabels)
     #plt.ylim([1e-14,1e10])
-    filename = "../plots/windsolidangle_"+simname+".pdf"
+    filename = "../plots/windandHIIsolidangle_"+simname+".pdf"
     print("Writing "+filename)
     plt.savefig(filename)
     
@@ -85,5 +106,4 @@ def plotsolidangles(simname,times,label=None,xlims=None,powfile=None,maxradius=N
 if __name__=="__main__":
     timetuples = [(t,"MyrFirstStar") for t in (0.1,0.2,0.3)]
     simname = "SEED1_35MSUN_CDMASK_WINDUV"
-    for simname in sims:
-        plotsolidangles(simname)
+    plotsolidangles(simname,timetuples)
