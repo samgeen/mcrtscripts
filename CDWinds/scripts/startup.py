@@ -156,7 +156,7 @@ simsets = {"seeds":seedset,
            "fb":fbset, "physics":physicsset,
            "hotchampagne":hotchampagneset}
 simlabels = linestyles.simlabels
-simlabels.update({"windonly":windonlylabels,"single":singlelabels, "fb":fblabels, "physics":physicslabels, "seeds":seedlabels,"hotchampagne":hotchampagnelabels})
+simlabels.update({"single":singlelabels, "windonly":windonlylabels, "fb":fblabels, "physics":physicslabels, "seeds":seedlabels,"hotchampagne":hotchampagnelabels})
     
 # Populate list of Hamu simulations
 # TODO - make these on demand rather than on loadup?

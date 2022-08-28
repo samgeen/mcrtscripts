@@ -588,9 +588,11 @@ if __name__=="__main__":
     forcerun=True
     
     # Yes I did intend for this to sound weird
-    hotchampagneplot()
-    
-    for setname, simset in simsets.items():
+    #hotchampagneplot()
+
+    # HACK
+    #for setname, simset in simsets.items():
+    for setname, simset in zip(["single"],[simsets["single"]]):
         linestyles.CURRSIMSET = setname
         #simset = ["NOFB","UV_"+smass,"UVWINDPRESS_"+smass]
         #setname = "windset_"+smass+"Msun"
@@ -615,6 +617,7 @@ if __name__=="__main__":
             # Run for movie
             imovie = 0
             tmovies = []#np.linspace(0.1,1.0,50)
+            ''' 
             for tmovie in tmovies:
                 imovie += 1
                 timein = (tmovie,"MyrFirstStar")
@@ -628,11 +631,14 @@ if __name__=="__main__":
                 #    MakeFigure([simset[-1]],[timein],name=figname+"movieslice",los=los,hydro=hydro,
                 #               Slice=True,wsink=True,starC=True,
                 #               timeL=[tmovieL],zoom=zoom,forcerun=True)
+
+            '''
             # Merged emission map - just wind
             coolhydros = ["coolemission","ionemission4","xrayemission3"]
             timesmerged = [0.1,0.2,0.3]
             timesmergedIn = [(time,"MyrFirstStar") for time in timesmerged]
             timesmergedL = [str(x)+r' Myr' for x in timesmerged]
+
             # Doesn't really work, just stitch together sequences with a script
             #if mass == 30:
             #    windsimnames = ["UVWIND_"+x for x in ["30","60","120","120_DENSE"]]
@@ -676,6 +682,32 @@ if __name__=="__main__":
 
         
 
+            # Single slices
+            #for hydro in ["vorticity1px_timescale","vorticity1px_speedcompare"]:
+            #    MakeFigure([simset[0]],[timesin[-1]],name=figname+"singleslice",los=los,hydro=hydro,
+            #                Slice=True,wsink=True,starC=True,
+            #                timeL=[timeL[-1]],zoom=zoom,forcerun=True)
+            
+            if setname == "single":
+                for z in [zoom,zoom2]:
+                    for hydro in ["NpFUV","NpHII","NpHeII","NpHeIII",
+                                  "T","rho","spd",
+                                  "vdispersion1px","vdispersion1px_speedcompare",
+                                  "vdispersion2px","vdispersion2px_speedcompare",
+                                  "vorticity1px_timescale",
+                                  "vorticity2px_timescale",
+                                  "vorticity4px_timescale",
+                                  "vorticity1px_speedcompare","vorticity2px_speedcompare","vorticity4px_speedcompare",
+                                  "vorticity1px","vorticity2px","vorticity4px"]:
+                        #"Lcool","T","rho","xHII","xHeII","xHeIII",
+                        #"P","vradfrac3","vrad","vx","vy","vz"]:
+                        MakeFigure([simset[0]],[(59,"outputNumber")],name=figname+"singleslice",los=los,hydro=hydro,
+                                   Slice=True,wsink=True,starC=True,
+                                   timeL=["-1"],zoom=z,forcerun=True)
+                        MakeFigure([simset[0]],[timesin[-1]],name=figname+"singleslice",los=los,hydro=hydro,
+                                   Slice=True,wsink=True,starC=True,
+                                   timeL=[timeL[-1]],zoom=z,forcerun=True)
+            
             # Emission and NH maps
             for hydro in [coolhydros,"NH"]:
                 contourslist = [[],["Wind","Ionised"]]
@@ -689,27 +721,6 @@ if __name__=="__main__":
                                doplottime=True,contours=contours,
                                plotcolorbar=True)
 
-            # Single slices
-            #for hydro in ["vorticity1px_timescale","vorticity1px_speedcompare"]:
-            #    MakeFigure([simset[0]],[timesin[-1]],name=figname+"singleslice",los=los,hydro=hydro,
-            #                Slice=True,wsink=True,starC=True,
-            #                timeL=[timeL[-1]],zoom=zoom,forcerun=True)
-            
-            if setname == "single":
-                for z in [zoom,zoom2]:
-                    for hydro in ["T","rho","spd",
-                                  "vdispersion1px","vdispersion1px_speedcompare",
-                                  "vdispersion2px","vdispersion2px_speedcompare",
-                                  "vorticity1px_timescale",
-                                  "vorticity2px_timescale",
-                                  "vorticity4px_timescale",
-                                  "vorticity1px_speedcompare","vorticity2px_speedcompare","vorticity4px_speedcompare",
-                                  "vorticity1px","vorticity2px","vorticity4px"]:
-                        #"Lcool","T","rho","xHII","xHeII","xHeIII",
-                        #"P","vradfrac3","vrad","vx","vy","vz"]:
-                        MakeFigure([simset[0]],[timesin[-1]],name=figname+"singleslice",los=los,hydro=hydro,
-                                   Slice=True,wsink=True,starC=True,
-                                   timeL=[timeL[-1]],zoom=z,forcerun=True)
 
             # Slices
             for hydro in ["vorticity2px_timescale","Lcool","T","rho","xHII","xHeII","xHeIII","P"]:
