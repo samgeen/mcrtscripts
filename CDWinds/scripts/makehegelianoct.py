@@ -62,24 +62,35 @@ class Octree:
         xs *= 2
         ys *= 2
         zs *= 2
-        ixs = int(xs)
-        iys = int(ys)
-        izs = int(zs)
-        ics = 4*ixs = 2*iys + izs
+        ixs = xs.astype(np.int32)
+        iys = ys.astype(np.int32)
+        izs = zs.astype(np.int32)
+        ics = 4*ixs + 2*iys + izs
+        #print(ics)
         # Check if leafs reached using basic method (do we only have one sub-oct left?)
-        if len(xs == 8):
+        #print(xs, ys,zs, len(xs))
+        #if len(xs) < 8:
+        #    print("Wrong number of leaf cells, something went wrong")
+        #    raise ValueError
+        #if ixs.max() > 1:
+        #    print("ixs bad")
+        #    raise ValueError
+        if len(xs) == 1:
             # Set list indices in correct position order in oct
-            self._indices = indices[ics]
+            self._indices = np.atleast_1d(indices)
         else:
             # Zoom on new octs
+            #xs -= 0.5*(xs.min()+xs.max())
+            #ys -= 0.5*(ys.min()+ys.max())
+            #zs -= 0.5*(zs.min()+zs.max())
             xs -= ixs
             ys -= iys
             zs -= izs
             # Make and fill new octs
             self._children = []
             for ic in range(0,8):
-                mask = ic == ics
-                self._children.append(Octree([xs[mask],ys[mask],zs[mask],indices[mask]]))
+                mask = ics == ic
+                self._children.append(Octree(xs[mask],ys[mask],zs[mask],indices[mask]))
 
     def WriteToArray(self,startpos=0):
         # Write the octree to a linear array
@@ -92,7 +103,7 @@ class Octree:
             newarr = np.zeros(nchildren)
             # Make a new start position for arrays to begin at
             newstart = startpos+nchildren
-            for ic, child in enumerate(self._children()):
+            for ic, child in enumerate(self._children):
                 # Write the child's octree cell indices
                 newarr[ic] = newstart
                 # Iteratively populate the child array
@@ -121,55 +132,53 @@ def makeoctree(snap,folder,hydros,pos,radius):
     unitcm = ro.info["unit_length"].express(C.cm)/ro.info["boxlen"]
     boxlencm = ro.info["boxlen"]*unitcm
     # Sample for each hydro variable
-    hydros = ["stars"]+hydros+["x","y","z","amrlevel"]
+    hydros = ["octarray","stars"]+hydros+["x","y","z","amrlevel"]
     cell_source = CellsToPoints(amr)
     samples = cell_source.flatten()
     cells = samples
     octree = Octree(cells.points[:,0],cells.points[:,1],cells.points[:,2])
-    octarray = Octree.WriteToArray()
+    octarray = octree.WriteToArray()
     dtype = "f"
     filename = folder+"/"+"celloctree_"+str(snap.OutputNumber()).zfill(5)+".hdf5"
+    print("Making", filename,"...",)
     f = h5py.File(filename,"w")
     for hydro in hydros:
-        if not os.path.exists(filename):
-            print("Making", filename,"...",)
-            if hydro not in "xyz amrlevel stars":
-                scale = hydrofuncs.scale_by_units(ro,hydro)
-                hydrocube = scale(samples)
-                #hydrocube = hydrocube.reshape([lsize,lsize,lsize])
-            else:
-                if hydro == "x":
-                    hydrocube = cells.points[:,0]*boxlencm
-                if hydro == "y":
-                    hydrocube = cells.points[:,1]*boxlencm
-                if hydro == "z":
-                    hydrocube = cells.points[:,2]*boxlencm
-                if hydro == "octarray":
-                    dtype = "i"
-                    hydrocube = octarray
-                    dtype = "i"
-                if hydro == "amrlevel":
-                    hydrocube = cells.get_sizes()
-                    # Get level from cell sizes
-                    # 1.0001 limits issues with int casting 0.9999->0
-                    hydrocube = -np.log2(hydrocube)*1.0001
-                    hydrocube = hydrocube.astype(np.int32)
-                    minlevel = hydrocube.min()
-                    maxlevel = hydrocube.max()
-                    # Make info file
-                    infoname = folder+"/infos/"+\
-                        "/info_"+str(snap.OutputNumber()).zfill(5)+".yaml"
-                    makeinfofile(infoname,boxlencm,minlevel,maxlevel)
-                if hydro == "stars":
-                    # Make star file
-                    makestarfiles(snap,folder)
-            if hydro != "stars":
-                minmax = (hydrocube.min(),hydrocube.max())
-                print(" min/max=",minmax,"of",len(hydrocube),"cells")
-                #np.save(filename, hydrocube.astype("float32"))
-                dset = f.create_dataset(hydro,hydrocube,dtype=dtype)
+        print(hydro,"...")
+        if hydro not in "xyz amrlevel stars octarray":
+            scale = hydrofuncs.scale_by_units(ro,hydro)
+            hydrocube = scale(samples)
+            #hydrocube = hydrocube.reshape([lsize,lsize,lsize])
         else:
-            print(filename, "exists, ignoring")
+            if hydro == "x":
+                hydrocube = cells.points[:,0]*boxlencm
+            if hydro == "y":
+                hydrocube = cells.points[:,1]*boxlencm
+            if hydro == "z":
+                hydrocube = cells.points[:,2]*boxlencm
+            if hydro == "octarray":
+                dtype = "i"
+                hydrocube = octarray
+            if hydro == "amrlevel":
+                dtype = "i"
+                hydrocube = cells.get_sizes()
+                # Get level from cell sizes
+                # 1.0001 limits issues with int casting 0.9999->0
+                hydrocube = -np.log2(hydrocube)*1.0001
+                hydrocube = hydrocube.astype(np.int32)
+                minlevel = hydrocube.min()
+                maxlevel = hydrocube.max()
+                # Make info file
+                infoname = folder+"/infos/"+\
+                    "/info_"+str(snap.OutputNumber()).zfill(5)+".yaml"
+                makeinfofile(infoname,boxlencm,minlevel,maxlevel)
+        if hydro == "stars":
+            # Make star file
+            makestarfiles(snap,folder)
+        if hydro != "stars":
+            minmax = (hydrocube.min(),hydrocube.max())
+            print(hydro,"type",dtype," min/max=",minmax,"of",hydrocube.shape,"cells")
+            dset = f.create_dataset(hydro,hydrocube.shape,dtype=dtype)
+            dset[:] = hydrocube
     f.close()
     print("Done!")
 
