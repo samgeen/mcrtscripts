@@ -427,9 +427,14 @@ def run(simfunc,simnamesets,plotlabels,compare=False,secondfuncs=None,gradient=F
             if "seeds" in suffix:
                 ax.set_ylim([0,30])
         if "seeds" in suffix:
-            if "windenergyretained" in funcname:
-                ax.set_ylim([9e-4,1.0])
             ncollegend=2
+        if "windenergyretained" in funcname:
+            if "seeds" in suffix:
+                ax.set_ylim([9e-4,1.0])
+            if "windonly" in suffix:
+                ax.set_ylim([4e-4,4e-2])
+            else:
+                ax.set_ylim([2e-3,0.15])
         #if funcname == "windradius":
             #tlim = 1e-6
             #ax.set_xlabel("Time after 1st star formed / Myr")
@@ -722,6 +727,8 @@ def runall():
     #    run(func,(["NOFB"],["NOFB_DENSE"]),
     #        ("Diffuse Cloud","Dense Cloud"),compare=False)
 
+    simsets["fbwind"] = fbwindset
+    simlabels["fbwind"] = fbwindlabels
     for setname, simset in simsets.items():
         linestyles.CURRSIMSET = setname
         #setname = "physics"

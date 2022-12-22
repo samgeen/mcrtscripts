@@ -25,6 +25,8 @@ rc('ytick', labelsize=8)
 IMSIZE = columndensity.IMSIZE
 OUTLINEWIDTH = 1
 
+FONTSIZE = "x-large"
+
 def FindLscale(boxlen):
     # Find the best match for the length scale bar
     lscales = np.array([1,2,5,10,20,50,100,200,500])
@@ -194,6 +196,8 @@ def MakeImage(datas,hydros,snap,wsink,ax,dolengthscale,cmap,plottime=False,timeL
         
     # Overlay any contours requested
     for contour in contours:
+        contouralpha = 0.75
+        nocontours = False
         if contour == "Wind":
             dmap = rayMap.RayTraceMap(snap,"xrayemission2",los,zoom=zoom) # Returns hot emission
             dum1, dum2, contourim   = dmap.getRaytraceMap()
@@ -202,7 +206,7 @@ def MakeImage(datas,hydros,snap,wsink,ax,dolengthscale,cmap,plottime=False,timeL
         if contour == "Ionised":
             dmap = rayMap.RayTraceMap(snap,"xHIImax",los,zoom=zoom) # Returns max xHII
             dum1, dum2, contourim   = dmap.getRaytraceMap()
-            contourlims = [1e-2] # Find any xHII above a small value
+            contourlims = [1e-1] # NOTE: WAS 1e-2 BEFORE # Find any xHII above a small value
             contourcolour = "r"
         if contour == "WindSlice":
             dmap = sliceMap.SliceMap(snap,"xrayemission2",los=los,zoom=zoom,starC=starC)
@@ -212,7 +216,7 @@ def MakeImage(datas,hydros,snap,wsink,ax,dolengthscale,cmap,plottime=False,timeL
         if contour == "IonisedSlice":
             dmap = sliceMap.SliceMap(snap,"xHII",los=los,zoom=zoom,starC=starC)
             dum1, dum2, contourim   = dmap.getSliceMap()
-            contourlims = [1e-2]
+            contourlims = [1e-1] # NOTE: WAS 1e-2 BEFORE
             contourcolour = "r"
         if contour == "FreeStreamSlice":
             dmap = sliceMap.SliceMap(snap,"spd",los=los,zoom=zoom,starC=starC)
@@ -228,13 +232,20 @@ def MakeImage(datas,hydros,snap,wsink,ax,dolengthscale,cmap,plottime=False,timeL
             contourlims = [1]
             contourcolour = "b"
         if contour == "MaskCDSlice":
-            dmap = sliceMap.SliceMap(snap,"MaskCD",los=los,zoom=zoom,starC=starC)
-            dum1, dum2, contourim   = dmap.getSliceMap()
-            contourlims = [1]
+            print("Doing MaskCD Contours")
+            if not "No Mask" in label:
+                dmap = sliceMap.SliceMap(snap,"MaskCD",los=los,zoom=zoom,starC=starC)
+                dum1, dum2, contourim   = dmap.getSliceMap()
+                contourlims = [1]
+            else:
+                print("No mask in this run, ignoring")
+                nocontours = True
             contourcolour = "b"
-        contourim = np.flipud(contourim)
-        ax.contour(xarr,yarr,contourim,contourlims,colors=contourcolour,alpha=0.75,linewidths=1.5)
-        rdm.AddArray(finalim,label=label+" contour"+contour)
+            contouralpha=0.45
+        if not nocontours:
+            contourim = np.flipud(contourim)
+            ax.contour(xarr,yarr,contourim,contourlims,colors=contourcolour,alpha=contouralpha,linewidths=1.5)
+            rdm.AddArray(finalim,label=label+" contour"+contour)
 
     # Draw a box around a region we want to zoom in on
     if zoombox > 0.0:
@@ -302,7 +313,7 @@ def MakeImage(datas,hydros,snap,wsink,ax,dolengthscale,cmap,plottime=False,timeL
         line = ax.plot([x1,x2],[y1,y2],"w",path_effects=[PathEffects.withStroke(linewidth=OUTLINEWIDTH+3, foreground='k')])
         txt = ax.text(textx,y2, "  "+str(lscale)+" pc",color=scalecol,
                 horizontalalignment=textalign,
-                verticalalignment=verticalalignment,fontsize="large")
+                      verticalalignment=verticalalignment,fontsize=FONTSIZE)
         txt.set_path_effects([PathEffects.withStroke(linewidth=OUTLINEWIDTH, foreground='k')])
     # Add label
     if label:
@@ -311,16 +322,16 @@ def MakeImage(datas,hydros,snap,wsink,ax,dolengthscale,cmap,plottime=False,timeL
         txt = ax.text(xt,yt,label,
                 horizontalalignment="right",
                 verticalalignment="bottom",
-                color=scalecol,fontsize="large")
+                      color=scalecol,fontsize=FONTSIZE)
         txt.set_path_effects([PathEffects.withStroke(linewidth=OUTLINEWIDTH, foreground='k')])
     # Add time 
     if plottime:
         xt = 0.02 * zoomedboxlen
         yt = 0.02 * zoomedboxlen
         txt = ax.text(xt,yt,timeL,
-                horizontalalignment="left",
-                verticalalignment="bottom",
-                color=scalecol,fontsize="large")
+                      horizontalalignment="left",
+                      verticalalignment="bottom",
+                      color=scalecol,fontsize=FONTSIZE)
         txt.set_path_effects([PathEffects.withStroke(linewidth=OUTLINEWIDTH, foreground='k')])
     return cax
 
@@ -528,9 +539,9 @@ def MakeFigure(simnames,times,name,los=None,hydro="rho",Slice=False,wsink=False,
         #cbar.set_label(label,fontsize="medium",color="k")
         #cbar.ax.tick_params(labelsize="medium",labelcolor="k")
         #cbar.solids.set_edgecolor("face")
-        cbar.set_label(label,fontsize="large",color="w",
+        cbar.set_label(label,fontsize=FONTSIZE,color="w",
                        path_effects=[PathEffects.withStroke(linewidth=OUTLINEWIDTH, foreground='k')])
-        cbar.ax.tick_params(labelsize="large",labelcolor="w")
+        cbar.ax.tick_params(labelsize=FONTSIZE,labelcolor="w")
         for t in cbar.ax.get_xticklabels()+cbar.ax.get_yticklabels():
             t.set_path_effects([PathEffects.withStroke(linewidth=OUTLINEWIDTH, foreground='k')])
         cbar.solids.set_edgecolor("face")
@@ -562,7 +573,7 @@ def hotchampagneplot():
     simname = "SEED2_35MSUN_CDMASK_WINDUV"
     sim = hamusims[simname]
     # Choose outputs to plot
-    outnums = [52,53,54,55]
+    outnums = [53,54,55,56] #[52,53,54,55,6]2
     timetuples = [(o,"outputNumber") for o in outnums]
     # Get times in Myr
     outsnaps = {snap.OutputNumber():snap for snap in sim.Snapshots()}
@@ -577,7 +588,7 @@ def hotchampagneplot():
     newsetname = newsetname.replace(".","p") # the extra dot confuses latex
     figname = newsetname+"_"+los
     # Make slices
-    for hydro in ["vorticity2px_timescale","T","rho","xHII","P"]:
+    for hydro in ["T","vorticity2px_timescale","rho","xHII","P"]:
         MakeFigure([simname],timetuples,name=figname,los=los,hydro=hydro,
                     Slice=True,wsink=True,starC=True,doplottime=True,
                     timeL=timeL,zoom=zoom,forcerun=True)
@@ -588,11 +599,11 @@ if __name__=="__main__":
     forcerun=True
     
     # Yes I did intend for this to sound weird
-    #hotchampagneplot()
+    hotchampagneplot()
 
     # HACK
-    #for setname, simset in simsets.items():
-    for setname, simset in zip(["single"],[simsets["single"]]):
+    for setname, simset in simsets.items():
+    #for setname, simset in zip(["single"],[simsets["single"]]):
         linestyles.CURRSIMSET = setname
         #simset = ["NOFB","UV_"+smass,"UVWINDPRESS_"+smass]
         #setname = "windset_"+smass+"Msun"
@@ -609,9 +620,9 @@ if __name__=="__main__":
         #timesin = [(time*tffcloud_code,"code") for time in times]
         timeL = [str(x)+r' Myr' for x in times]
         timesin = [(time,"MyrFirstStar") for time in times]
-        for los in "yxz":
+        zoom2 = 0.25
+        for los in "xyz":
             figname = newsetname+"_"+los
-            zoom2 = 0.25
             figname2 = figname.replace("zoom"+str(zoom).replace(".","p"),
                                         "zoom"+str(zoom2).replace(".","p"),)
             # Run for movie
@@ -662,6 +673,44 @@ if __name__=="__main__":
             DEBUG = False
 
 
+
+
+            # Temperature slice (all sims)
+            for z in [0.15,0.5,0.25,0.1]:
+                print("ZOOM:", z)
+                currcontours = []
+                if setname =="windonly" or setname =="physics":
+                    currcontours = ["MaskCDSlice"]
+                figname2 = figname.replace("zoom"+str(zoom).replace(".","p"),
+                                           "zoom"+str(z).replace(".","p"),)
+                # Separate emission maps and related images
+                for hydro in ["ionemission4","xrayemission2","coolemission","NH","xHIImax","fastmass6"][::-1]:
+                    MakeFigure(simset,[timesin[-1]],name=figname2,los=los,hydro=hydro,Slice=False,wsink=True,
+                               timeL=[timeL[-1]],zoom=z,starC=True)
+
+                
+
+
+                #MakeFigure(simset,timesin,name=figname2,los=los,hydro='MaskCD',
+                #           Slice=True,wsink=True,timeL=timeL,zoom=z,starC=True,forcerun=True,
+                #           contours=currcontours)
+                MakeFigure(simset,timesin,name=figname2,los=los,hydro='T',
+                           Slice=True,wsink=True,timeL=timeL,zoom=z,starC=True,forcerun=True,
+                           contours=currcontours)
+
+            
+
+            # Slices
+            for hydro in ["rho","vorticity2px_timescale","Lcool","T","xHII","xHeII","xHeIII","P"]:
+                MakeFigure(simset,[timesin[-1]],name=figname,los=los,hydro=hydro,
+                           Slice=True,wsink=True,starC=True,
+                           timeL=[timeL[-1]],zoom=zoom,forcerun=True)
+                MakeFigure(simset,timesmergedIn,name=figname,los=los,hydro=hydro,
+                           Slice=True,wsink=True,starC=True,
+                           timeL=timesmergedL,zoom=zoom,forcerun=True,doplottime=True)
+                                
+
+            
             # Damkoehler comparison plot
             '''
             if setname == "single":
@@ -721,22 +770,6 @@ if __name__=="__main__":
                                doplottime=True,contours=contours,
                                plotcolorbar=True)
 
-
-            # Slices
-            for hydro in ["vorticity2px_timescale","Lcool","T","rho","xHII","xHeII","xHeIII","P"]:
-                MakeFigure(simset,[timesin[-1]],name=figname,los=los,hydro=hydro,
-                           Slice=True,wsink=True,starC=True,
-                           timeL=[timeL[-1]],zoom=zoom,forcerun=True)
-                MakeFigure(simset,timesmergedIn,name=figname,los=los,hydro=hydro,
-                           Slice=True,wsink=True,starC=True,
-                           timeL=timesmergedL,zoom=zoom,forcerun=True)
-                                
-
-            # Separate emission maps and related images
-            for hydro in ["ionemission4","xrayemission2","coolemission","NH","xHIImax","fastmass6"][::-1]:
-                MakeFigure(simset,[timesin[-1]],name=figname,los=los,hydro=hydro,Slice=False,wsink=True,
-                            timeL=[timeL[-1]],zoom=zoom)
-
             for hydro in ["EkinperEtherm"]:
                 #["Ekin","Etherm","EkinperEtherm","xrayemission2"]:
                 MakeFigure(simset,[timesin[-1]],name=figname,los=los,hydro=hydro,
@@ -777,6 +810,4 @@ if __name__=="__main__":
             #                plotcolorbar=(mass==30))
             #MakeFigure(simset,timesin,name=figname,los=los,hydro='maxT',Slice=False,wsink=True,timeL=timeL,zoom=zoom)
 
-            # Temperature slice (all sims)
-            MakeFigure(simset,timesin,name=figname,los=los,hydro='T',Slice=True,wsink=True,timeL=timeL,zoom=zoom,starC=True,forcerun=forcerun)
         

@@ -137,6 +137,9 @@ fblabels = {"SEED1_35MSUN_CDMASK_WINDUV":"Wind \& UV",
          "SEED1_35MSUN_CDMASK_UV":"UV Only",
          "SEED1_35MSUN_CDMASK_NOFB":"No Feedback"}
 fbset = list(fblabels.keys())
+fbwindlabels = {"SEED1_35MSUN_CDMASK_WINDUV":"Wind \& UV", 
+                "SEED1_35MSUN_CDMASK_WIND":"Wind Only"}
+fbwindset = list(fbwindlabels.keys())
 # "SEED1_35MSUN_CDMASK_WINDUV_NOB" - no star yet
 
 singlelabels = {"SEED1_35MSUN_CDMASK_WINDUV":"Fiducial Run"}
@@ -151,9 +154,10 @@ hotchampagnelabels = {"SEED2_35MSUN_CDMASK_WINDUV":""} # Only one simulation, no
 hotchampagneset = list(hotchampagnelabels.keys())
 
 simsets = {"seeds":seedset,
+           "physics":physicsset,
            "windonly":windonlyset,
+           "fb":fbset,
            "single":singleset,
-           "fb":fbset, "physics":physicsset,
            "hotchampagne":hotchampagneset}
 simlabels = linestyles.simlabels
 simlabels.update({"single":singlelabels, "windonly":windonlylabels, "fb":fblabels, "physics":physicslabels, "seeds":seedlabels,"hotchampagne":hotchampagnelabels})
