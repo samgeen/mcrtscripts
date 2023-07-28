@@ -199,12 +199,12 @@ def MakeImage(datas,hydros,snap,wsink,ax,dolengthscale,cmap,plottime=False,timeL
         contouralpha = 0.75
         nocontours = False
         if contour == "Wind":
-            dmap = rayMap.RayTraceMap(snap,"xrayemission2",los,zoom=zoom) # Returns hot emission
+            dmap = rayMap.RayTraceMap(snap,"xrayemission2",los,zoom=zoom,starC=starC) # Returns hot emission
             dum1, dum2, contourim   = dmap.getRaytraceMap()
             contourlims = [1e-37]
             contourcolour = "c"
         if contour == "Ionised":
-            dmap = rayMap.RayTraceMap(snap,"xHIImax",los,zoom=zoom) # Returns max xHII
+            dmap = rayMap.RayTraceMap(snap,"xHIImax",los,zoom=zoom,starC=starC) # Returns max xHII
             dum1, dum2, contourim   = dmap.getRaytraceMap()
             contourlims = [1e-1] # NOTE: WAS 1e-2 BEFORE # Find any xHII above a small value
             contourcolour = "r"
@@ -594,7 +594,7 @@ def hotchampagneplot():
                     timeL=timeL,zoom=zoom,forcerun=True)
 
 if __name__=="__main__":
-
+    
     # Should we force some figures to run?
     forcerun=True
     
@@ -603,7 +603,11 @@ if __name__=="__main__":
 
     # HACK
     for setname, simset in simsets.items():
-    #for setname, simset in zip(["single"],[simsets["single"]]):
+        
+        FONTSIZE = "x-large"
+        if setname == "windonly":
+            FONTSIZE = "large"
+        #for setname, simset in zip(["single"],[simsets["single"]]):
         linestyles.CURRSIMSET = setname
         #simset = ["NOFB","UV_"+smass,"UVWINDPRESS_"+smass]
         #setname = "windset_"+smass+"Msun"
@@ -674,7 +678,26 @@ if __name__=="__main__":
 
 
 
+            # Emission and NH maps
+            for hydro in [coolhydros,"NH"]:
+                contourslist = [[],["Wind","Ionised"]]
+                for contours in contourslist:
+                    contxt = ""
+                    if len(contours) > 0:
+                        contxt = "_contours"
+                        MakeFigure(simset,timesmergedIn,name=figname+"windpressonly_sequence_starC"+contxt,
+                               los=los,hydro=hydro,Slice=False,wsink=True,
+                               timeL=timesmergedL,zoom=zoom,forcerun=True,
+                               doplottime=True,contours=contours,
+                                   plotcolorbar=True,starC=True)
+                        MakeFigure(simset,timesmergedIn,name=figname+"windpressonly_sequence"+contxt,
+                               los=los,hydro=hydro,Slice=False,wsink=True,
+                               timeL=timesmergedL,zoom=zoom,forcerun=True,
+                               doplottime=True,contours=contours,
+                               plotcolorbar=True)
 
+
+            
             # Temperature slice (all sims)
             for z in [0.15,0.5,0.25,0.1]:
                 print("ZOOM:", z)
@@ -757,19 +780,6 @@ if __name__=="__main__":
                                    Slice=True,wsink=True,starC=True,
                                    timeL=[timeL[-1]],zoom=z,forcerun=True)
             
-            # Emission and NH maps
-            for hydro in [coolhydros,"NH"]:
-                contourslist = [[],["Wind","Ionised"]]
-                for contours in contourslist:
-                    contxt = ""
-                    if len(contours) > 0:
-                        contxt = "_contours"
-                        MakeFigure(simset,timesmergedIn,name=figname+"windpressonly_sequence"+contxt,
-                               los=los,hydro=hydro,Slice=False,wsink=True,
-                               timeL=timesmergedL,zoom=zoom,forcerun=True,
-                               doplottime=True,contours=contours,
-                               plotcolorbar=True)
-
             for hydro in ["EkinperEtherm"]:
                 #["Ekin","Etherm","EkinperEtherm","xrayemission2"]:
                 MakeFigure(simset,[timesin[-1]],name=figname,los=los,hydro=hydro,

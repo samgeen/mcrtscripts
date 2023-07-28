@@ -154,8 +154,8 @@ hotchampagnelabels = {"SEED2_35MSUN_CDMASK_WINDUV":""} # Only one simulation, no
 hotchampagneset = list(hotchampagnelabels.keys())
 
 simsets = {"seeds":seedset,
-           "physics":physicsset,
            "windonly":windonlyset,
+           "physics":physicsset,
            "fb":fbset,
            "single":singleset,
            "hotchampagne":hotchampagneset}
